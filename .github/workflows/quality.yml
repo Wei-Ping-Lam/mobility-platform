@@ -1,0 +1,43 @@
+name: mobility-platform-quality
+
+on:
+  pull_request:
+    branches: [main, integration/rigor-upgrade]
+  push:
+    branches: [main, integration/rigor-upgrade]
+
+jobs:
+  test-and-lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+      - name: Install dashboard dependencies
+        run: python -m pip install -r dashboard/requirements.txt
+      - name: Check formatting and imports
+        run: ruff check dashboard
+      - name: Check whitespace
+        run: git diff --check
+      - name: Run tests
+        run: pytest
+      - name: Verify raw data is not tracked
+        shell: bash
+        run: |
+          if git ls-files --error-unmatch 'Rice WC Hack/*' >/dev/null 2>&1; then
+            echo 'Raw Rice WC Hack data must remain untracked.'
+            exit 1
+          fi
+      - name: Verify application does not import raw data at startup
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+
+          app = Path("dashboard/app.py").read_text(encoding="utf-8")
+          forbidden = ("read_csv", "glob(", "Rice WC Hack")
+          assert not any(token in app for token in forbidden), "dashboard/app.py must remain cache-only"
+          print("cache-only application shell check passed")
+          PY
+

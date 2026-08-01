@@ -15,6 +15,20 @@
 
 ---
 
+## Current platform contract
+
+The live dashboard does not scan these files at startup. The offline ETL reads
+them in bounded chunks, validates partitions, keys, dates, coordinates, ranges,
+nulls, and known sentinels, and writes compact Parquet artifacts plus
+`dashboard/cache/manifest.json` and `dashboard/cache/qa_report.json`. The
+manifest records raw-to-derived row counts, coverage warnings, artifact hashes,
+and quality checks. Combined source markets are allocated only through the
+explicit mappings in `dashboard/mobility_platform/mappings.py` and retain a
+partial-evidence warning.
+
+The source data are noisy educational data. Store visits and commercial spend
+are mobility/economic proxies, not stadium attendance or ticketed-fan behavior.
+
 ## Overview
 
 | Dataset | Files | Compressed Size | Records (est.) | Date Range | Granularity |

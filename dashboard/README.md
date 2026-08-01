@@ -91,3 +91,9 @@ git diff --check
 
 See [WORKSTREAMS.md](../WORKSTREAMS.md) for branch, worktree, ownership, and
 integration rules.
+
+The end-to-end data lifecycle is diagrammed in
+[`docs/METHODOLOGY.md`](../docs/METHODOLOGY.md). Release validation and model
+limitations are maintained in [`docs/VALIDATION.md`](../docs/VALIDATION.md) and
+[`docs/MODEL_CARD.md`](../docs/MODEL_CARD.md).
+The editable assumption register is in [`docs/ASSUMPTIONS.md`](../docs/ASSUMPTIONS.md).
