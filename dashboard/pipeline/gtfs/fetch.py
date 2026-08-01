@@ -42,6 +42,8 @@ GTFS_FEEDS = {
 }
 
 HEADERS = {"User-Agent": "Mobility-Readiness-Platform/0.2"}
+EVENT_WINDOW_START = pd.Timestamp("2026-06-11")
+EVENT_WINDOW_END = pd.Timestamp("2026-07-19")
 
 
 def haversine_miles(lat: float, lon: float, lats: np.ndarray, lons: np.ndarray) -> np.ndarray:
@@ -79,12 +81,68 @@ def _read_table(zf: zipfile.ZipFile, filename: str, usecols: list[str] | None = 
         return pd.DataFrame()
 
 
+def _parse_gtfs_dates(frame: pd.DataFrame, column: str) -> pd.Series:
+    return pd.to_datetime(frame[column].astype(str), format="%Y%m%d", errors="coerce")
+
+
+def _calendar_details(zf: zipfile.ZipFile) -> dict[str, object]:
+    calendar = _read_table(zf, "calendar.txt", ["service_id", "start_date", "end_date"])
+    calendar_dates = _read_table(zf, "calendar_dates.txt", ["service_id", "date", "exception_type"])
+    starts: list[pd.Timestamp] = []
+    ends: list[pd.Timestamp] = []
+    event_services: set[object] = set()
+
+    if not calendar.empty:
+        calendar["start"] = _parse_gtfs_dates(calendar, "start_date")
+        calendar["end"] = _parse_gtfs_dates(calendar, "end_date")
+        valid_rows = calendar.dropna(subset=["start", "end"])
+        starts.extend(valid_rows["start"].tolist())
+        ends.extend(valid_rows["end"].tolist())
+        event_services.update(
+            valid_rows.loc[
+                (valid_rows["start"] <= EVENT_WINDOW_END) & (valid_rows["end"] >= EVENT_WINDOW_START),
+                "service_id",
+            ].tolist()
+        )
+
+    if not calendar_dates.empty:
+        calendar_dates["service_date"] = _parse_gtfs_dates(calendar_dates, "date")
+        valid_dates = calendar_dates.dropna(subset=["service_date"])
+        starts.extend(valid_dates["service_date"].tolist())
+        ends.extend(valid_dates["service_date"].tolist())
+        event_dates = valid_dates[
+            valid_dates["service_date"].between(EVENT_WINDOW_START, EVENT_WINDOW_END, inclusive="both")
+        ]
+        for _, row in event_dates.iterrows():
+            exception_type = int(pd.to_numeric(pd.Series([row.get("exception_type")]), errors="coerce").fillna(0).iloc[0])
+            if exception_type == 1:
+                event_services.add(row["service_id"])
+            elif exception_type == 2:
+                event_services.discard(row["service_id"])
+
+    if not starts or not ends:
+        validity = "unavailable"
+        start_date = end_date = None
+    else:
+        validity = "valid" if event_services else "outside_event_window"
+        start_date = min(starts).date().isoformat()
+        end_date = max(ends).date().isoformat()
+    return {
+        "calendar_validity": validity,
+        "calendar_start": start_date,
+        "calendar_end": end_date,
+        "event_service_ids": event_services,
+    }
 def extract_feed(payload: bytes) -> dict[str, object]:
     stops: list[pd.DataFrame] = []
     route_count = 0
     departures = 0
+    event_window_departures: int | None = 0
     service_hours: set[int] = set()
     required_status: dict[str, bool] = {}
+    calendar_validities: list[str] = []
+    calendar_starts: list[str] = []
+    calendar_ends: list[str] = []
     with zipfile.ZipFile(io.BytesIO(payload)) as outer:
         for zf in _nested_zips(outer):
             stop_df = _read_table(zf, "stops.txt", ["stop_lat", "stop_lon", "stop_id"])
@@ -92,12 +150,25 @@ def extract_feed(payload: bytes) -> dict[str, object]:
                 stops.append(stop_df.dropna(subset=["stop_lat", "stop_lon"])[["stop_lat", "stop_lon"]])
             routes = _read_table(zf, "routes.txt", ["route_id"])
             route_count += int(routes["route_id"].nunique()) if not routes.empty else 0
-            stop_times = _read_table(zf, "stop_times.txt", ["departure_time"])
+            calendar = _calendar_details(zf)
+            calendar_validities.append(str(calendar["calendar_validity"]))
+            if calendar["calendar_start"]:
+                calendar_starts.append(str(calendar["calendar_start"]))
+            if calendar["calendar_end"]:
+                calendar_ends.append(str(calendar["calendar_end"]))
+            stop_times = _read_table(zf, "stop_times.txt", ["trip_id", "departure_time"])
             if not stop_times.empty and "departure_time" in stop_times:
                 parsed = stop_times["departure_time"].astype(str).str.extract(r"^(\d+):")[0]
                 hours = pd.to_numeric(parsed, errors="coerce").dropna().astype(int) % 24
                 departures += len(hours)
                 service_hours.update(hours.tolist())
+                if calendar["event_service_ids"]:
+                    trips = _read_table(zf, "trips.txt", ["trip_id", "service_id"])
+                    if not trips.empty and "trip_id" in stop_times and not trips.empty:
+                        event_trip_ids = set(trips.loc[trips["service_id"].isin(calendar["event_service_ids"]), "trip_id"])
+                        event_window_departures += int(stop_times["trip_id"].isin(event_trip_ids).sum())
+                else:
+                    event_window_departures = None
             for required in ("stops.txt", "routes.txt", "trips.txt", "stop_times.txt"):
                 required_status[required] = required_status.get(required, False) or _find_member(zf, required) is not None
     combined = pd.concat(stops, ignore_index=True).drop_duplicates().reset_index(drop=True) if stops else pd.DataFrame(columns=["stop_lat", "stop_lon"])
@@ -106,6 +177,12 @@ def extract_feed(payload: bytes) -> dict[str, object]:
         "route_count": route_count,
         "departures": departures,
         "service_hours": sorted(service_hours),
+        "event_window_departures": event_window_departures,
+        "calendar_validity": "valid" if "valid" in calendar_validities else ("outside_event_window" if calendar_validities and "unavailable" not in calendar_validities else "unavailable"),
+        "service_span": {
+            "start_date": min(calendar_starts) if calendar_starts else None,
+            "end_date": max(calendar_ends) if calendar_ends else None,
+        },
         "required_files": required_status,
     }
 
@@ -127,12 +204,24 @@ def count_near_venue(stops: pd.DataFrame, venue: dict[str, object]) -> dict[str,
     }
 
 
+def points_near_venue(stops: pd.DataFrame, venue: dict[str, object], radius_miles: float = 2.0) -> list[dict[str, float]]:
+    if stops.empty:
+        return []
+    distances = haversine_miles(float(venue["lat"]), float(venue["lon"]), stops["stop_lat"].to_numpy(), stops["stop_lon"].to_numpy())
+    nearby = stops.loc[distances <= radius_miles, ["stop_lat", "stop_lon"]]
+    return [{"lat": round(float(row.stop_lat), 6), "lon": round(float(row.stop_lon), 6)} for row in nearby.itertuples(index=False)]
+
+
 def fetch_city(city: str, feeds: list[tuple[str, str]]) -> dict[str, object]:
     feed_results = []
     all_stops = []
     route_count = 0
     departures = 0
+    event_window_departures: int | None = 0
     service_hours: set[int] = set()
+    calendar_validities: list[str] = []
+    service_starts: list[str] = []
+    service_ends: list[str] = []
     for agency, url in feeds:
         result: dict[str, object] = {"agency": agency, "url": url, "status": "unavailable"}
         try:
@@ -140,17 +229,41 @@ def fetch_city(city: str, feeds: list[tuple[str, str]]) -> dict[str, object]:
             response.raise_for_status()
             payload = response.content
             extracted = extract_feed(payload)
-            feed_results.append({**result, "status": "observed", "sha256": hashlib.sha256(payload).hexdigest(), "bytes": len(payload), "required_files": extracted["required_files"]})
+            required_complete = all(
+                bool(extracted["required_files"].get(required))
+                for required in ("stops.txt", "routes.txt", "trips.txt", "stop_times.txt")
+            )
+            feed_results.append({
+                **result,
+                "status": "observed" if required_complete else "partial",
+                "sha256": hashlib.sha256(payload).hexdigest(),
+                "bytes": len(payload),
+                "required_files": extracted["required_files"],
+                "calendar_validity": extracted["calendar_validity"],
+                "service_span": extracted["service_span"],
+                "event_window_departures": extracted["event_window_departures"],
+            })
             if not extracted["stops"].empty:
                 all_stops.append(extracted["stops"])
             route_count += int(extracted["route_count"])
             departures += int(extracted["departures"])
+            if extracted["event_window_departures"] is None:
+                event_window_departures = None
+            elif event_window_departures is not None:
+                event_window_departures += int(extracted["event_window_departures"])
             service_hours.update(extracted["service_hours"])
+            calendar_validities.append(str(extracted["calendar_validity"]))
+            span = extracted["service_span"]
+            if span["start_date"]:
+                service_starts.append(str(span["start_date"]))
+            if span["end_date"]:
+                service_ends.append(str(span["end_date"]))
         except (requests.RequestException, zipfile.BadZipFile, OSError, ValueError) as exc:
             feed_results.append({**result, "error": str(exc)})
     stops = pd.concat(all_stops, ignore_index=True).drop_duplicates() if all_stops else pd.DataFrame(columns=["stop_lat", "stop_lon"])
     venue = HOST_CITIES[city]
     score_parts = count_near_venue(stops, venue)
+    score_parts["stop_points_2mi"] = points_near_venue(stops, venue)
     score_parts.update({
         "city": city,
         "venue": venue["venue"],
@@ -160,8 +273,18 @@ def fetch_city(city: str, feeds: list[tuple[str, str]]) -> dict[str, object]:
         "total_agency_stops": int(len(stops)),
         "route_count": int(route_count),
         "scheduled_departures": int(departures),
+        "event_window_departures": event_window_departures,
         "service_hours": sorted(service_hours),
-        "feed_status": "observed" if any(feed["status"] == "observed" for feed in feed_results) else "unavailable",
+        "calendar_validity": "valid" if "valid" in calendar_validities else ("outside_event_window" if calendar_validities and "unavailable" not in calendar_validities else "unavailable"),
+        "service_span": {
+            "start_date": min(service_starts) if service_starts else None,
+            "end_date": max(service_ends) if service_ends else None,
+        },
+        "feed_status": (
+            "observed" if feed_results and all(feed["status"] == "observed" for feed in feed_results)
+            else "partial" if any(feed["status"] in {"observed", "partial"} for feed in feed_results)
+            else "unavailable"
+        ),
         "feeds": feed_results,
     })
     return score_parts
@@ -171,22 +294,23 @@ def score_results(results: dict[str, dict[str, object]]) -> dict[str, dict[str, 
     raw_values = {}
     for city, row in results.items():
         raw = (
-            int(row["stops_0_25mi"]) * 20
-            + int(row["stops_0_5mi"]) * 10
-            + int(row["stops_1mi"]) * 5
-            + int(row["stops_2mi"]) * 2
-            + min(int(row["route_count"]), 20) * 2
+            int(row.get("stops_0_25mi", 0)) * 20
+            + int(row.get("stops_0_5mi", 0)) * 10
+            + int(row.get("stops_1mi", 0)) * 5
+            + int(row.get("stops_2mi", 0)) * 2
+            + min(int(row.get("route_count", 0)), 20) * 2
         )
         raw_values[city] = raw
         row["raw_score"] = raw
     maximum = max(raw_values.values(), default=0)
     for city, row in results.items():
-        if row["feed_status"] == "unavailable":
+        feed_status = str(row.get("feed_status", "unavailable"))
+        if feed_status == "unavailable":
             row["gtfs_transit_score"] = None
             row["score_status"] = "unavailable"
         else:
             row["gtfs_transit_score"] = round(raw_values[city] / maximum * 100) if maximum else 0
-            row["score_status"] = "observed"
+            row["score_status"] = "partial" if feed_status == "partial" else "observed"
     return results
 
 
@@ -198,6 +322,7 @@ def write_snapshot(results: dict[str, dict[str, object]], output_dir: Path) -> N
         "policy": {
             "score_formula": "20*stops_0_25mi + 10*stops_0_5mi + 5*stops_1mi + 2*stops_2mi + 2*min(route_count,20), normalized to observed maximum",
             "missing_feed_policy": "unavailable; never replaced with expert score",
+            "event_window": {"start": EVENT_WINDOW_START.date().isoformat(), "end": EVENT_WINDOW_END.date().isoformat()},
         },
     }
     (output_dir / "gtfs_transit_scores.json").write_text(json.dumps(snapshot, indent=2, default=str), encoding="utf-8")
