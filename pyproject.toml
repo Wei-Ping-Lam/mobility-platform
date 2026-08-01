@@ -10,3 +10,4 @@ exclude = ["Rice WC Hack", ".worktrees"]
 
 [tool.ruff.lint]
 select = ["E", "F", "I"]
+ignore = ["E501"]

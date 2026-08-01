@@ -30,6 +30,8 @@ This repository uses isolated branches and Git worktrees so agents and people ca
 
 The `dashboard/mobility_platform/contracts.py` module owns the stable data contracts:
 
+- Contract version: `0.2.0` (`CONTRACT_VERSION`)
+
 - `DataManifest`
 - `DataQualityReport`
 - `EvidenceMetric`

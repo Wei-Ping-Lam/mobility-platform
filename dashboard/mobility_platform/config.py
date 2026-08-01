@@ -37,7 +37,7 @@ class ProjectPaths:
 
 
 def _contains_dataset_dirs(path: Path) -> bool:
-    return path.is_dir() and any((path / name).is_dir() for name in DATASET_DIRS)
+    return path.is_dir() and all((path / name).is_dir() for name in DATASET_DIRS)
 
 
 def resolve_data_root(repo_root: Path | None = None, explicit: str | Path | None = None) -> Path | None:

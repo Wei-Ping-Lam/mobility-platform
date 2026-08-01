@@ -8,6 +8,9 @@ from enum import StrEnum
 from typing import Any
 
 
+CONTRACT_VERSION = "0.2.0"
+
+
 class EvidenceStatus(StrEnum):
     OBSERVED = "observed"
     DERIVED = "derived"
@@ -54,11 +57,13 @@ class DataManifest:
     artifact_sha256: str | None = None
     status: EvidenceStatus = EvidenceStatus.OBSERVED
     warnings: tuple[str, ...] = field(default_factory=tuple)
+    quality: DataQualityReport | None = None
 
     def to_dict(self) -> dict[str, Any]:
         data = asdict(self)
         data["status"] = self.status.value
         data["warnings"] = list(self.warnings)
+        data["quality"] = self.quality.to_dict() if self.quality else None
         return data
 
 
@@ -84,6 +89,7 @@ class CityMetrics:
     state: str
     score: float | None
     score_status: EvidenceStatus
+    rankable: bool
     transit_score: float | None
     heat_score: float | None
     uhi_score: float | None
@@ -114,6 +120,26 @@ class ScenarioConfig:
     vehicle_emissions_kg_per_km: float = 0.21
     bus_capacity: int = 50
     uptake_rate: float = 0.70
+
+    def __post_init__(self) -> None:
+        nonnegative = {
+            "shuttle_buses_per_hour": self.shuttle_buses_per_hour,
+            "shuttle_hours": self.shuttle_hours,
+            "bike_stations": self.bike_stations,
+            "park_ride_spaces": self.park_ride_spaces,
+            "pedestrian_upgrade_pct": self.pedestrian_upgrade_pct,
+            "average_trip_km_round_trip": self.average_trip_km_round_trip,
+            "bus_capacity": self.bus_capacity,
+        }
+        invalid = [name for name, value in nonnegative.items() if value < 0]
+        if invalid:
+            raise ValueError(f"Scenario values must be nonnegative: {', '.join(invalid)}")
+        if self.average_vehicle_occupancy <= 0:
+            raise ValueError("average_vehicle_occupancy must be greater than zero")
+        if not 0 <= self.vehicle_emissions_kg_per_km:
+            raise ValueError("vehicle_emissions_kg_per_km must be nonnegative")
+        if not 0 <= self.uptake_rate <= 1:
+            raise ValueError("uptake_rate must be between zero and one")
 
 
 @dataclass(frozen=True)
