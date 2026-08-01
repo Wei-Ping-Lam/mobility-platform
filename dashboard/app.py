@@ -17,15 +17,14 @@ from dashboard.domain.scoring import DEFAULT_WEIGHTS, build_city_metrics, normal
 from dashboard.mobility_platform.config import project_paths  # noqa: E402
 from dashboard.mobility_platform.mappings import HOST_CITIES  # noqa: E402
 from dashboard.ui.data import load_artifacts  # noqa: E402
-from dashboard.ui.theme import apply_theme  # noqa: E402
+from dashboard.ui.theme import apply_theme, brand_block, sidebar_status  # noqa: E402
 from dashboard.ui.views import render_executive, render_explorer, render_methods  # noqa: E402
 
-
-st.set_page_config(page_title="FIFA Mobility Readiness", page_icon="⚽", layout="wide", initial_sidebar_state="expanded")
+st.set_page_config(page_title="Mobility Readiness 2026", page_icon="🚇", layout="wide", initial_sidebar_state="expanded")
 apply_theme()
 
 
-@st.cache_data(show_spinner="Loading derived mobility artifacts…")
+@st.cache_data(show_spinner="Loading verified mobility artifacts...")
 def load_dashboard_data():
     paths = project_paths()
     return paths, load_artifacts(paths)
@@ -34,14 +33,25 @@ def load_dashboard_data():
 paths, artifacts = load_dashboard_data()
 
 with st.sidebar:
-    st.markdown("## ⚽ FIFA Mobility Readiness")
-    st.caption("Evidence-first host-city access analysis")
-    mode = st.radio("View", ["Executive", "Explorer", "Methods & QA"], index=0)
-    st.divider()
-    selected_city = st.selectbox("Focus city", ["All cities"] + sorted(HOST_CITIES), index=0)
+    brand_block()
+    st.markdown("<div class='sidebar-kicker'>Workspace</div>", unsafe_allow_html=True)
+    mode_labels = {
+        "Executive": "City overview",
+        "Explorer": "City explorer",
+        "Methods & QA": "Methods & QA",
+    }
+    mode = st.radio(
+        "Workspace",
+        list(mode_labels),
+        index=0,
+        format_func=mode_labels.get,
+        label_visibility="collapsed",
+    )
+    st.markdown("<div class='sidebar-kicker'>Scope and scoring</div>", unsafe_allow_html=True)
+    selected_city = st.selectbox("City focus", ["All cities"] + sorted(HOST_CITIES), index=0)
     profile = st.selectbox("Weight profile", list(DEFAULT_WEIGHTS), index=0)
     weights = dict(DEFAULT_WEIGHTS[profile])
-    with st.expander("Custom weights"):
+    with st.expander("Tune score weights"):
         weights = {
             "transit": st.slider("Transit", 0.0, 1.0, float(weights["transit"]), 0.05),
             "heat": st.slider("Heat safety", 0.0, 1.0, float(weights["heat"]), 0.05),
@@ -49,13 +59,23 @@ with st.sidebar:
             "access": st.slider("Venue support", 0.0, 1.0, float(weights["access"]), 0.05),
         }
     weights = normalize_weights(weights)
-    include_estimates = st.checkbox("Include estimated values", value=False, help="Strict mode excludes estimated components from rankings.")
-    st.divider()
+    include_estimates = st.checkbox(
+        "Include estimated values",
+        value=False,
+        help="Strict mode excludes estimated components from rankings. Enable this only for sensitivity exploration.",
+    )
+    st.markdown("<div class='sidebar-kicker'>Data state</div>", unsafe_allow_html=True)
     if paths.data_root:
-        st.caption(f"Raw data root detected: `{paths.data_root.name}`")
+        sidebar_status(
+            "Local source data detected",
+            "The app still starts from compact derived artifacts; raw files are used only by the offline ETL.",
+        )
     else:
-        st.warning("Raw data root not detected. Run the offline ETL with MOBILITY_DATA_ROOT.")
-    st.caption("Raw datasets are never loaded by the dashboard startup path.")
+        sidebar_status(
+            "Cache-only preview",
+            "Set MOBILITY_DATA_ROOT and run the offline ETL to rebuild complete versioned evidence.",
+        )
+    st.caption("Evidence statuses remain visible on every decision KPI.")
 
 metrics = build_city_metrics(
     artifacts["visits"], artifacts["weather"], artifacts["uhi"], artifacts["poi"], artifacts["gtfs"],
