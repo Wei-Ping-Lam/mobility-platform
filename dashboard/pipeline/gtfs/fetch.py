@@ -15,6 +15,7 @@ import numpy as np
 import pandas as pd
 import requests
 
+from dashboard.mobility_platform.contracts import CONTRACT_VERSION
 from dashboard.mobility_platform.mappings import HOST_CITIES
 
 
@@ -320,6 +321,7 @@ def write_snapshot(results: dict[str, dict[str, object]], output_dir: Path) -> N
         "generated_at_utc": datetime.now(timezone.utc).isoformat(),
         "cities": results,
         "policy": {
+            "contract_version": CONTRACT_VERSION,
             "score_formula": "20*stops_0_25mi + 10*stops_0_5mi + 5*stops_1mi + 2*stops_2mi + 2*min(route_count,20), normalized to observed maximum",
             "missing_feed_policy": "unavailable; never replaced with expert score",
             "event_window": {"start": EVENT_WINDOW_START.date().isoformat(), "end": EVENT_WINDOW_END.date().isoformat()},
