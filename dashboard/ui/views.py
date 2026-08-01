@@ -93,8 +93,8 @@ def render_executive(metrics: pd.DataFrame, artifacts: dict[str, Any]) -> None:
         st.markdown("#### Priority view")
         display = metrics[["city", "score", "rankable", "score_status", "first_last_mile_gap", "transit_score", "heat_score"]].copy()
         display.columns = ["City", "MRS", "Rankable", "Evidence status", "Gap", "Transit", "Heat safety"]
-        display["MRS"] = display["MRS"].round(1)
-        display["Gap"] = display["Gap"].round(1)
+        for column in ["MRS", "Gap", "Transit", "Heat safety"]:
+            display[column] = pd.to_numeric(display[column], errors="coerce").round(1)
         st.dataframe(display, hide_index=True, use_container_width=True)
         st.markdown("#### How to read this")
         st.markdown("A score is rankable only when the required dimensions have observed or derived evidence. Estimated values are never silently mixed into the default ranking.")

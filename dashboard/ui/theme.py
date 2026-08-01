@@ -1,5 +1,7 @@
 """Shared visual language for the dashboard."""
 
+from __future__ import annotations
+
 import streamlit as st
 
 
