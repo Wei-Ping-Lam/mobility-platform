@@ -1,0 +1,12 @@
+[tool.pytest.ini_options]
+testpaths = ["dashboard/tests"]
+pythonpath = ["."]
+addopts = "-ra"
+
+[tool.ruff]
+line-length = 120
+target-version = "py311"
+exclude = ["Rice WC Hack", ".worktrees"]
+
+[tool.ruff.lint]
+select = ["E", "F", "I"]

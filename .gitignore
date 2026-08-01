@@ -5,11 +5,16 @@ daily-weather-rice/
 core-poi-geometry-rice/
 spend-patterns-rice/
 daily-spend-brand-and-state-rice/
+Rice WC Hack/
+
+# Parallel development worktrees
+.worktrees/
 
 # Keep the processed cache so the app runs on Streamlit Cloud without raw data
 !dashboard/cache/
 !dashboard/cache/*.parquet
 !dashboard/cache/*.json
+!dashboard/cache/*.csv
 
 # Python
 __pycache__/
