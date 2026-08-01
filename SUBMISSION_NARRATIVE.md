@@ -1,6 +1,24 @@
 # FIFA 2026 Host City Mobility Readiness Platform
 ## Rice World Cup Hackathon 2026 — Track 1: Transportation & Access
 
+## Evidence-first implementation status
+
+The upgraded implementation uses an offline ETL over all six supplied datasets
+and pinned GTFS snapshots. The Streamlit application reads compact derived
+artifacts and exposes observed, derived, partial, estimated, unavailable, and
+scenario statuses for every major metric.
+
+The original prototype narrative below describes the earlier sample-based
+implementation. For judging, use the upgraded dashboard's `Methods & QA` view,
+`docs/MODEL_CARD.md`, and `docs/VALIDATION.md` as the authoritative methodology.
+In particular:
+
+- A valid GTFS zero-service result remains observed; failed feeds are unavailable.
+- Retail foot traffic is a general mobility-demand proxy, not stadium attendance.
+- Event demand ranges are scenarios unless holdout validation supports predictive language.
+- Traffic outputs are vehicle-pressure and capacity proxies, not measured roadway congestion.
+- General consumer origins are not ticketed-fan origins.
+
 **Team:**   
 **Submission Date:** September 2026  
 **Contact:** 

@@ -1,174 +1,93 @@
 # FIFA 2026 Host City Mobility Readiness Platform
 
-**Rice World Cup Hackathon 2026 — Track 1: Transportation & Access**
+Evidence-first Streamlit dashboard for comparing venue access, heat exposure,
+transit evidence, demand pressure, and transparent intervention scenarios across
+the 11 U.S. FIFA 2026 host cities.
 
-An interactive Streamlit dashboard that predicts visitor movement, identifies first/last-mile gaps, compares transportation resilience across all 11 US FIFA 2026 host cities, and recommends data-driven transit investments.
+## Run the dashboard
 
----
+The dashboard reads compact derived artifacts. It does not scan raw datasets at
+startup.
 
-## Quick Start
-
-```bash
-cd dashboard
-python -m pip install -r requirements.txt
-python -m streamlit run app.py
-# Opens at http://localhost:8501
+```powershell
+$env:MOBILITY_DATA_ROOT = "C:\path\to\Rice WC Hack"
+python -m dashboard.pipeline.etl.build --data-root $env:MOBILITY_DATA_ROOT
+python dashboard/fetch_gtfs.py --output data
+python -m streamlit run dashboard/app.py
 ```
 
----
+If the ETL has not been run, the app can display legacy checked-in cache data,
+but it will show compatibility warnings and strict rankings will be limited.
 
-## Project Structure
+## Views
 
-```
-Rice WC Hack/
-├── dashboard/
-│   ├── app.py               # Main Streamlit application (single-file)
-│   ├── requirements.txt     # Python dependencies
-│   ├── README.md            # This file
-│   └── cache/               # Auto-created; Parquet cache for processed data
-├── store-visits-rice/       # Daily foot traffic (32 × ~210 MB .gz files)
-├── urban-heat-index-rice/   # Urban heat index grid (32 × ~320 KB .gz files)
-├── daily-weather-rice/      # Daily weather observations (31 × ~700 KB .gz files)
-├── core-poi-geometry-rice/  # POI locations & geometry (32 × ~6 MB .gz files)
-├── spend-patterns-rice/     # Consumer spend patterns (32 × ~22 MB .gz files)
-├── daily-spend-brand-and-state-rice/  # Brand spend by state (32 × ~11 MB .gz files)
-└── WorldCupHack_Dictionary.xlsx       # Field definitions for all datasets
-```
+### Executive
 
----
+- Evidence-gated readiness map and ranking.
+- Actual stadium coordinates.
+- Priority city cards and gap summaries.
+- Observed, derived, partial, estimated, unavailable, and scenario badges.
 
-## Dashboard Tabs
+### Explorer
 
-### 1. City Overview Map
-- Interactive US map with all 11 host cities
-- Bubble **size** = number of matches hosted
-- Bubble **color** = composite Mobility Readiness Score (0–100; red → yellow → green)
-- Mini radar chart showing the 4-dimension score breakdown for the selected city
-- City ranking list with score badges and progress bars
+- City-level demand baseline and World Cup scenario range.
+- Venue-level transit and climate comparison.
+- Shuttle, bike-share, park-and-ride, and pedestrian scenario controls.
+- Potential mode shift, residual vehicle pressure, emissions proxy, and cost.
+- Downloadable scenario JSON.
 
-### 2. Visitor Demand Forecast
-- Historical daily visit time series per city (sourced from store-visits data)
-- 7-day rolling average overlay
-- **World Cup surge projection** (June 11 – July 19, 2026):
-  - Baseline × demand multiplier derived from games count
-  - Shaded confidence band showing low–high surge range
-- Bar chart comparing the WC demand multiplier across all cities
+### Methods & QA
 
-### 3. First/Last-Mile Gap Analysis
-- **Bubble chart**: Transit Infrastructure Score (x) vs. First/Last-Mile Gap Score (y)
-  - Bubble size = venue capacity; color = summer temperature
-  - Quadrant overlays identify high-priority cities (weak transit + high gap)
-- **Heat stress scatter**: Urban Heat Island vs. average temperature
-- Ranked gap score table with color gradients (red = highest gap)
+- Artifact manifest and freshness.
+- Dataset coverage by city.
+- Formula and assumption register.
+- Demand holdout validation.
+- City-metrics and manifest downloads.
 
-### 4. City Comparison
-- **Radar chart**: All 11 cities plotted across 4 dimensions simultaneously
-- **Horizontal bar chart**: Composite readiness score ranking
-- **Component heatmap**: Score breakdown table for all cities and dimensions
+## Offline ETL outputs
 
-### 5. Intervention Planner
-- Select any host city and tune 4 intervention levers:
-  | Lever | Description |
-  |---|---|
-  | Event Shuttle Frequency | Buses/hour on match days |
-  | Bike-Share Stations | New docking stations within 1 mile of venue |
-  | Park & Ride Capacity | Spaces served by dedicated transit |
-  | Pedestrian Infrastructure | Shade, cooling stations, accessible pathways |
-- Live output: updated transit score, composite score, gap score, visitors shifted to transit, and estimated CO₂ reduction per match day
-- Before/after grouped bar chart
-- Dynamically generated priority investment recommendations
+The ETL consumes all six supplied datasets:
 
----
+| Artifact | Source |
+| --- | --- |
+| `visits_daily.parquet` | `store-visits-rice` |
+| `visits_daily_category.parquet` | `store-visits-rice` |
+| `weather_city_daily.parquet` | `daily-weather-rice` |
+| `uhi_city_summary.parquet` | `urban-heat-index-rice` |
+| `spend_origins.parquet` | `spend-patterns-rice` |
+| `poi_venue_summary.parquet` | `core-poi-geometry-rice` |
+| `brand_spend_city_daily.parquet` | `daily-spend-brand-and-state-rice` |
+| `manifest.json` and `qa_report.json` | ETL provenance and QA |
 
-## Sidebar Controls
+Combined source markets are allocated equally across their constituent cities
+and are marked as partial evidence. No substring-based city matching is used.
 
-| Control | Effect |
-|---|---|
-| **Focus City** | Filters Overview map and pre-selects city in other tabs |
-| **Score Weights** | Adjusts the relative contribution of each dimension to the composite score; recomputed live without reloading data |
+## GTFS policy
 
----
+GTFS results are pinned snapshots. The snapshot records feed URLs, timestamps,
+SHA-256 hashes, required-file status, route counts, stops, scheduled departures,
+service hours, and venue distances.
 
-## Mobility Readiness Score
+A valid zero-service result is observed evidence. A failed or unavailable feed
+has no score and is never silently replaced by an expert estimate.
 
-The composite score (0–100) is a weighted sum of four dimensions:
+## Analytical honesty
 
-| Dimension | Default Weight | Source |
-|---|---|---|
-| Transit Infrastructure | 35% | Expert-rated transit quality (0–100) |
-| Heat Safety | 20% | Derived from June–July avg temperature + humidity |
-| Urban Heat Island | 15% | Mean UHI intensity from `urban-heat-index-rice` dataset |
-| Venue Accessibility | 30% | Expert-rated walkability/connectivity of venue approach |
+- Retail and commercial foot traffic is a mobility-demand proxy, not stadium attendance.
+- Event demand bands are scenarios unless holdout validation supports predictive language.
+- Traffic outputs estimate vehicle pressure and capacity displacement; they do not measure roadway congestion.
+- Estimated values require explicit opt-in and are excluded from the default strict ranking.
+- All source coverage, assumptions, and statuses are visible in the Methods & QA view.
 
-Weights are adjustable via the sidebar sliders and normalize automatically to sum to 1.
+## Tests and parallel work
 
-### Heat Safety Score Formula
-```
-heat_index = avg_temp_c + 0.5 × max(0, humidity − 40) × (avg_temp_c / 30)
-heat_score = clamp(100 − (heat_index − 20) × 2.2,  0, 100)
+Run tests from the repository root:
+
+```powershell
+pytest
+ruff check dashboard
+git diff --check
 ```
 
-### First/Last-Mile Gap Score Formula
-```
-gap_score = (100 − transit_score) × (1 + max(0, avg_temp_c − 25) / 35)
-```
-Higher gap score = greater unmet mobility need.
-
----
-
-## Data Sources & Loading Strategy
-
-| Dataset | Fields Used | Loading Strategy |
-|---|---|---|
-| `store-visits-rice` | `MARKET`, `LOCAL_DATE`, `DAILY_VISITS`, `CATEGORY` | First 2 of 32 partitions, 250,000 rows each; aggregated to market × date |
-| `urban-heat-index-rice` | `MARKET`, `UHI` | All 32 partitions (~10 MB total) |
-| `daily-weather-rice` | Station ID, temperature, humidity, cooling degree days | All partitions; filtered to ICAO codes for host cities |
-| `core-poi-geometry-rice` | `LATITUDE`, `LONGITUDE`, `NAICS_CODE`, `MARKET` | Not loaded in current version (planned) |
-| `spend-patterns-rice` | `CUSTOMER_HOME_CITY`, `MARKET`, `RAW_TOTAL_SPEND` | Not loaded in current version (planned) |
-
-### Caching
-Processed DataFrames are written to `dashboard/cache/` as Parquet files on first load. Subsequent runs read from cache, making startup near-instant. Delete the `cache/` folder to force a full reload from the raw `.gz` files.
-
-### Market Name Matching
-Dataset market names (e.g. `"Dallas / Houston"`, `"Los Angeles / SF Bay Area"`) are matched to individual host cities using `.str.contains()` against a `market_key` field (e.g. `"Dallas"`, `"SF Bay"`).
-
----
-
-## Host Cities Reference
-
-| City | Venue | Capacity | Primary Transit | Transit Score |
-|---|---|---|---|---|
-| New York/NJ | MetLife Stadium | 82,500 | NJ Transit / Meadowlands | 95 |
-| Boston | Gillette Stadium | 65,878 | MBTA Commuter Rail | 88 |
-| San Francisco | Levi's Stadium | 68,500 | VTA / Caltrain | 85 |
-| Philadelphia | Lincoln Financial Field | 69,796 | SEPTA Broad Street Line | 82 |
-| Seattle | Lumen Field | 72,000 | Sound Transit Link | 75 |
-| Atlanta | Mercedes-Benz Stadium | 71,000 | MARTA Rail | 68 |
-| Los Angeles | SoFi Stadium | 70,240 | Metro C Line | 65 |
-| Miami | Hard Rock Stadium | 65,326 | Metrorail + Shuttle | 55 |
-| Dallas | AT&T Stadium | 80,000 | DART Light Rail | 42 |
-| Houston | NRG Stadium | 72,220 | METRORail | 38 |
-| Kansas City | Arrowhead Stadium | 76,416 | Limited Bus / Shuttle | 35 |
-
----
-
-## Dependencies
-
-| Package | Version | Purpose |
-|---|---|---|
-| `streamlit` | ≥ 1.35 | Web dashboard framework |
-| `plotly` | ≥ 5.20 | Interactive charts and maps |
-| `pandas` | ≥ 2.1 | Data loading and aggregation |
-| `numpy` | ≥ 1.26 | Numerical computations |
-| `pyarrow` | ≥ 14.0 | Parquet cache read/write |
-| `matplotlib` | ≥ 3.8 | Required by `pandas.Styler.background_gradient` |
-
----
-
-## Planned Enhancements
-
-- **Visitor Origin Flow (Sankey)** — Parse `CUSTOMER_HOME_CITY` JSON from `spend-patterns-rice` to map where fans travel from
-- **POI Density Heatmap** — Layer `core-poi-geometry-rice` onto the map to show venue-area amenity coverage
-- **Full Time Series** — Load all 32 store-visit partitions for a complete 2022–2023 baseline
-- **Emissions Model** — Expand CO₂ calculations to include aviation emissions from origin flow data
-- **Modal Split Breakdown** — Show projected car / transit / walk / bike shares per city under each scenario
+See [WORKSTREAMS.md](../WORKSTREAMS.md) for branch, worktree, ownership, and
+integration rules.
