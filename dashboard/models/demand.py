@@ -12,7 +12,11 @@ def seasonal_baseline(visits: pd.DataFrame, city: str) -> pd.DataFrame:
     frame = visits[visits["city"] == city].copy()
     if frame.empty:
         return pd.DataFrame(columns=["date", "actual", "baseline"])
-    frame["date"] = pd.to_datetime(frame["date"])
+    frame["date"] = pd.to_datetime(frame["date"], errors="coerce")
+    frame["daily_visits"] = pd.to_numeric(frame["daily_visits"], errors="coerce")
+    frame = frame.dropna(subset=["date", "daily_visits"])
+    if frame.empty:
+        return pd.DataFrame(columns=["date", "actual", "baseline"])
     frame["year"] = frame["date"].dt.year
     frame["month"] = frame["date"].dt.month
     frame["weekday"] = frame["date"].dt.dayofweek
@@ -26,21 +30,53 @@ def seasonal_baseline(visits: pd.DataFrame, city: str) -> pd.DataFrame:
 
 
 def validation_metrics(visits: pd.DataFrame) -> pd.DataFrame:
+    """Run rolling 2023/2024 holdouts against a seasonal-naive comparator."""
+
     rows = []
-    for city in sorted(visits["city"].dropna().unique()) if not visits.empty else []:
-        series = seasonal_baseline(visits, city)
-        holdout = series[series["date"].dt.year == 2024]
-        if holdout.empty:
-            continue
-        error = holdout["actual"] - holdout["baseline"]
-        denominator = holdout["actual"].abs().sum()
-        rows.append({
-            "city": city,
-            "n": len(holdout),
-            "mae": float(error.abs().mean()),
-            "rmse": float(np.sqrt((error**2).mean())),
-            "wape": float(error.abs().sum() / denominator) if denominator else None,
-        })
+    if visits.empty or not {"city", "date", "daily_visits"}.issubset(visits.columns):
+        return pd.DataFrame()
+    frame = visits.copy()
+    frame["date"] = pd.to_datetime(frame["date"], errors="coerce")
+    frame["daily_visits"] = pd.to_numeric(frame["daily_visits"], errors="coerce")
+    frame = frame.dropna(subset=["city", "date", "daily_visits"])
+    for city in sorted(frame["city"].unique()):
+        city_frame = frame[frame["city"] == city].sort_values("date")
+        for holdout_year in (2023, 2024):
+            holdout_start = pd.Timestamp(f"{holdout_year}-01-01")
+            holdout_end = pd.Timestamp(f"{holdout_year + 1}-01-01")
+            training = city_frame[city_frame["date"] < holdout_start]
+            holdout = city_frame[(city_frame["date"] >= holdout_start) & (city_frame["date"] < holdout_end)].copy()
+            if training.empty or holdout.empty:
+                continue
+            training = training.assign(month=training["date"].dt.month, weekday=training["date"].dt.dayofweek)
+            profile = training.groupby(["month", "weekday"])["daily_visits"].median()
+            holdout["month"] = holdout["date"].dt.month
+            holdout["weekday"] = holdout["date"].dt.dayofweek
+            holdout["candidate"] = [profile.get((month, weekday), np.nan) for month, weekday in zip(holdout["month"], holdout["weekday"])]
+            naive_lookup = training.set_index("date")["daily_visits"]
+            holdout["seasonal_naive"] = [(naive_lookup.get(date - pd.Timedelta(days=364))) for date in holdout["date"]]
+            holdout = holdout.dropna(subset=["candidate", "seasonal_naive"])
+            if holdout.empty:
+                continue
+            actual = holdout["daily_visits"]
+            denominator = float(actual.abs().sum())
+            candidate_error = actual - holdout["candidate"]
+            naive_error = actual - holdout["seasonal_naive"]
+            candidate_wape = float(candidate_error.abs().sum() / denominator) if denominator else None
+            naive_wape = float(naive_error.abs().sum() / denominator) if denominator else None
+            rows.append({
+                "city": city,
+                "holdout_year": holdout_year,
+                "n": len(holdout),
+                "mae": float(candidate_error.abs().mean()),
+                "rmse": float(np.sqrt((candidate_error**2).mean())),
+                "wape": candidate_wape,
+                "seasonal_naive_mae": float(naive_error.abs().mean()),
+                "seasonal_naive_wape": naive_wape,
+                "outperforms_seasonal_naive": bool(
+                    candidate_wape is not None and naive_wape is not None and candidate_wape < naive_wape
+                ),
+            })
     return pd.DataFrame(rows)
 
 

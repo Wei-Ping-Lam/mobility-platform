@@ -1,6 +1,6 @@
 import pandas as pd
 
-from dashboard.domain.scoring import composite_score, intervention_result, normalize_weights
+from dashboard.domain.scoring import build_city_metrics, composite_score, intervention_result, normalize_weights
 from dashboard.mobility_platform.contracts import EvidenceStatus, ScenarioConfig
 
 
@@ -60,3 +60,32 @@ def test_zero_intervention_reproduces_zero_delta():
     assert result.potential_mode_shift == 0
     assert result.vehicle_km_avoided == 0
     assert result.emissions_avoided_kg == 0
+
+
+def test_partial_evidence_mrs_is_visible_but_not_rankable():
+    row = complete_row(transit=88, transit_status="unavailable")
+    score, status, coverage = composite_score(row, include_estimates=False)
+    assert score is not None
+    assert status == EvidenceStatus.PARTIAL.value
+    assert coverage < 1.0
+
+
+def test_city_metrics_expose_explicit_rankability_gate():
+    visits = pd.DataFrame(columns=["city", "date", "daily_visits"])
+    weather = pd.DataFrame({
+        "city": ["Atlanta", "Atlanta"],
+        "date": pd.to_datetime(["2024-06-01", "2024-07-01"]),
+        "avg_temp_c": [30.0, 31.0],
+        "max_temp_c": [35.0, 36.0],
+        "min_temp_c": [24.0, 25.0],
+        "humidity": [60.0, 65.0],
+    })
+    uhi = pd.DataFrame({"city": ["Atlanta"], "venue_p90_uhi": [5.0], "venue_points": [12]})
+    poi = pd.DataFrame({"city": ["Atlanta"], "category": ["Transit"], "poi_count_1mi": [20]})
+    gtfs = {"Atlanta": {"gtfs_transit_score": 5, "score_status": "observed", "total_agency_stops": 20}}
+    metrics = build_city_metrics(visits, weather, uhi, poi, gtfs)
+    atlanta = metrics.loc[metrics["city"] == "Atlanta"].iloc[0]
+    philadelphia = metrics.loc[metrics["city"] == "Philadelphia"].iloc[0]
+    assert bool(atlanta["rankable"])
+    assert not bool(philadelphia["rankable"])
+    assert philadelphia["score_status"] in {"partial", "unavailable"}
