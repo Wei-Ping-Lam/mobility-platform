@@ -13,11 +13,12 @@ REPO_ROOT = Path(__file__).resolve().parents[1]
 if str(REPO_ROOT) not in sys.path:
     sys.path.insert(0, str(REPO_ROOT))
 
-from dashboard.domain.scoring import DEFAULT_WEIGHTS, build_city_metrics, normalize_weights
-from dashboard.mobility_platform.config import project_paths
-from dashboard.ui.data import load_artifacts
-from dashboard.ui.theme import apply_theme
-from dashboard.ui.views import render_executive, render_explorer, render_methods
+from dashboard.domain.scoring import DEFAULT_WEIGHTS, build_city_metrics, normalize_weights  # noqa: E402
+from dashboard.mobility_platform.config import project_paths  # noqa: E402
+from dashboard.mobility_platform.mappings import HOST_CITIES  # noqa: E402
+from dashboard.ui.data import load_artifacts  # noqa: E402
+from dashboard.ui.theme import apply_theme  # noqa: E402
+from dashboard.ui.views import render_executive, render_explorer, render_methods  # noqa: E402
 
 
 st.set_page_config(page_title="FIFA Mobility Readiness", page_icon="⚽", layout="wide", initial_sidebar_state="expanded")
@@ -37,7 +38,7 @@ with st.sidebar:
     st.caption("Evidence-first host-city access analysis")
     mode = st.radio("View", ["Executive", "Explorer", "Methods & QA"], index=0)
     st.divider()
-    selected_city = st.selectbox("Focus city", ["All cities"] + sorted(artifacts["gtfs"].keys() or []), index=0)
+    selected_city = st.selectbox("Focus city", ["All cities"] + sorted(HOST_CITIES), index=0)
     profile = st.selectbox("Weight profile", list(DEFAULT_WEIGHTS), index=0)
     weights = dict(DEFAULT_WEIGHTS[profile])
     with st.expander("Custom weights"):
