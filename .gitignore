@@ -1,0 +1,21 @@
+# Raw data — too large for GitHub (6.8 GB+)
+store-visits-rice/
+urban-heat-index-rice/
+daily-weather-rice/
+core-poi-geometry-rice/
+spend-patterns-rice/
+daily-spend-brand-and-state-rice/
+
+# Keep the processed cache so the app runs on Streamlit Cloud without raw data
+!dashboard/cache/
+!dashboard/cache/*.parquet
+!dashboard/cache/*.json
+
+# Python
+__pycache__/
+*.py[cod]
+.env
+
+# OS
+.DS_Store
+Thumbs.db

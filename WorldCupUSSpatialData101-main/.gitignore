@@ -1,0 +1,9 @@
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Local analysis outputs
+data/raw/
+data/processed/
+work/
+*.log

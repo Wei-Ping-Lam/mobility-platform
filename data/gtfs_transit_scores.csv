@@ -1,0 +1,12 @@
+city,venue,venue_lat,venue_lon,agencies,total_agency_stops,stops_0_5mi,stops_1mi,stops_2mi,stops_5mi,nearest_stop_mi,raw_score,gtfs_transit_score,notes
+Atlanta,Mercedes-Benz Stadium,33.7554,-84.4009,MARTA,7057,26,144,488,1862,0.103,1956,71,MARTA Rail serves venue directly
+Boston,Gillette Stadium (Foxborough),42.0909,-71.2643,MBTA,8928,1,1,1,29,0.324,17,5,Suburban venue; MBTA commuter rail game-day shuttles only
+Dallas,AT&T Stadium (Arlington),32.748,-97.0929,DART,6974,0,0,0,0,5.303,0,5,No DART service within 5.3 miles; car-dependent
+Houston,NRG Stadium,29.6851,-95.4106,METRO Houston,8793,12,89,342,2055,0.177,1249,45,METRO bus & rail serve area
+Kansas City,Arrowhead Stadium,39.0489,-94.4839,RideKC/KCATA,2297,2,15,125,910,0.451,345,12,Limited bus service; mostly event shuttles
+Los Angeles,SoFi Stadium (Inglewood),33.9534,-118.3387,"LA Metro Rail, LA Metro Bus",12244,11,78,329,1604,0.285,1158,42,Metro C Line nearby but not walkable
+Miami,Hard Rock Stadium (Miami Gardens),25.9579,-80.2388,MDT,6930,4,31,202,897,0.451,599,22,Metrobus service; Metrorail requires shuttle transfer
+New York/NJ,MetLife Stadium (East Rutherford),40.8135,-74.0745,NJ Transit,227,1,1,2,16,0.129,19,5,NJ Transit rail only 227 stops; MetLife is suburban and car-dependent despite NYC transit
+Philadelphia,Lincoln Financial Field,39.9008,-75.1675,"SEPTA Rail, SEPTA Bus",0,0,0,0,0,99.0,0,5,SEPTA data unavailable (URL issue); score is expert estimate — actual SEPTA service is good
+San Francisco,Levi's Stadium (Santa Clara),37.4033,-121.97,VTA,3329,12,74,193,813,0.223,876,32,VTA light rail nearby; Caltrain requires shuttle
+Seattle,Lumen Field,47.5952,-122.3316,"Sound Transit, King Co Metro",6714,60,200,580,1810,0.116,2760,100,Best venue transit in tournament; Link Light Rail adjacent

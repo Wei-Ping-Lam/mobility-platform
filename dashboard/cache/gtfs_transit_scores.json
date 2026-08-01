@@ -1,0 +1,148 @@
+{
+  "Atlanta": {
+    "stops_0_5mi": 26,
+    "stops_1mi": 144,
+    "stops_2mi": 488,
+    "stops_5mi": 1862,
+    "nearest_stop_mi": 0.103,
+    "total_agency_stops": 7057,
+    "agencies": [
+      "MARTA"
+    ],
+    "raw_score": 1956,
+    "gtfs_transit_score": 71
+  },
+  "Boston": {
+    "stops_0_5mi": 1,
+    "stops_1mi": 1,
+    "stops_2mi": 1,
+    "stops_5mi": 29,
+    "nearest_stop_mi": 0.324,
+    "total_agency_stops": 8928,
+    "agencies": [
+      "MBTA"
+    ],
+    "raw_score": 17,
+    "gtfs_transit_score": 5
+  },
+  "Dallas": {
+    "stops_0_5mi": 0,
+    "stops_1mi": 0,
+    "stops_2mi": 0,
+    "stops_5mi": 0,
+    "nearest_stop_mi": 5.303,
+    "total_agency_stops": 6974,
+    "agencies": [
+      "DART"
+    ],
+    "raw_score": 0,
+    "gtfs_transit_score": 5
+  },
+  "Houston": {
+    "stops_0_5mi": 12,
+    "stops_1mi": 89,
+    "stops_2mi": 342,
+    "stops_5mi": 2055,
+    "nearest_stop_mi": 0.177,
+    "total_agency_stops": 8793,
+    "agencies": [
+      "METRO Houston"
+    ],
+    "raw_score": 1249,
+    "gtfs_transit_score": 45
+  },
+  "Kansas City": {
+    "stops_0_5mi": 2,
+    "stops_1mi": 15,
+    "stops_2mi": 125,
+    "stops_5mi": 910,
+    "nearest_stop_mi": 0.451,
+    "total_agency_stops": 2297,
+    "agencies": [
+      "RideKC/KCATA"
+    ],
+    "raw_score": 345,
+    "gtfs_transit_score": 12
+  },
+  "Los Angeles": {
+    "stops_0_5mi": 11,
+    "stops_1mi": 78,
+    "stops_2mi": 329,
+    "stops_5mi": 1604,
+    "nearest_stop_mi": 0.285,
+    "total_agency_stops": 12244,
+    "agencies": [
+      "LA Metro Rail",
+      "LA Metro Bus"
+    ],
+    "raw_score": 1158,
+    "gtfs_transit_score": 42
+  },
+  "Miami": {
+    "stops_0_5mi": 4,
+    "stops_1mi": 31,
+    "stops_2mi": 202,
+    "stops_5mi": 897,
+    "nearest_stop_mi": 0.451,
+    "total_agency_stops": 6930,
+    "agencies": [
+      "MDT"
+    ],
+    "raw_score": 599,
+    "gtfs_transit_score": 22
+  },
+  "New York/NJ": {
+    "stops_0_5mi": 1,
+    "stops_1mi": 1,
+    "stops_2mi": 2,
+    "stops_5mi": 16,
+    "nearest_stop_mi": 0.129,
+    "total_agency_stops": 227,
+    "agencies": [
+      "NJ Transit"
+    ],
+    "raw_score": 19,
+    "gtfs_transit_score": 5
+  },
+  "Philadelphia": {
+    "stops_0_5mi": 0,
+    "stops_1mi": 0,
+    "stops_2mi": 0,
+    "stops_5mi": 0,
+    "nearest_stop_mi": 99.0,
+    "total_agency_stops": 0,
+    "agencies": [
+      "SEPTA Rail",
+      "SEPTA Bus"
+    ],
+    "raw_score": 0,
+    "gtfs_transit_score": 5
+  },
+  "San Francisco": {
+    "stops_0_5mi": 12,
+    "stops_1mi": 74,
+    "stops_2mi": 193,
+    "stops_5mi": 813,
+    "nearest_stop_mi": 0.223,
+    "total_agency_stops": 3329,
+    "agencies": [
+      "VTA"
+    ],
+    "raw_score": 876,
+    "gtfs_transit_score": 32
+  },
+  "Seattle": {
+    "stops_0_5mi": 60,
+    "stops_1mi": 200,
+    "stops_2mi": 580,
+    "stops_5mi": 1810,
+    "nearest_stop_mi": 0.116,
+    "total_agency_stops": 6714,
+    "agencies": [
+      "Sound Transit",
+      "King Co Metro"
+    ],
+    "raw_score": 2760,
+    "gtfs_transit_score": 100
+  }
+}
