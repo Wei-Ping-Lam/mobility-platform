@@ -27,6 +27,9 @@ evidence. Presenters must also check its status, source record, and release gate
 | Evidence quality | `InvestmentRecommendation.evidence_quality`, `InvestmentRecommendation.evidence_reason` | Written evidence gate and limitation for each option | Arrival management, park-and-ride, and bike hubs remain exploratory until their required local evidence is supplied |
 | Implementation lead time | `InvestmentRecommendation.lead_time_band` | Planning lead-time band, not an agency commitment | Integrated as planning band |
 | Responsible actor | `InvestmentRecommendation.responsible_actor`, `InvestmentRecommendation.dependencies` | Candidate owner and dependencies for coordination | Integrated as candidate actor, not an assignment |
+| Official operational benchmark | Operational snapshot `metrics[*]` and `event_records[*]` with source IDs, locators, granularity, and non-use limits | Source-attributed post-event aggregate or match record for exactly the stated scope and unit | 33 benchmarks across all 11 cities plus 13 match records; displayed separately and prohibited from silently calibrating match-hour scenarios |
+| Venue-proximate weather supplement | Environment snapshot `weather_daily[*]` | June-July heat context from NOAA Global Hourly after station-distance and daily-coverage gates | Miami and New York/New Jersey only; temperature/dew point derive daily relative humidity and do not measure venue microclimate |
+| Boston surface UHI supplement | Environment snapshot `uhi_city[*]` | Landsat surface-temperature anomaly near the venue | Five cloud-masked scenes from 2022-2024; not air temperature, shade, physiological exposure, or an accessibility audit |
 
 ## Current claims that remain valid
 
@@ -37,6 +40,10 @@ evidence. Presenters must also check its status, source record, and release gate
   not beat its seasonal-naive comparator in both validation years.
 - Strict transit comparison is available only for cities passing feed hash,
   required-file, and event-window gates; out-of-window matches remain unavailable.
+- Official post-event aggregates can benchmark scale and throughput only within
+  their documented granularity. They do not establish match-hour demand,
+  stadium attendance, causal impact, or mode share unless the source explicitly
+  reports that field.
 
 ## Claim rule
 

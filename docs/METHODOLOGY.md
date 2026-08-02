@@ -21,6 +21,7 @@ flowchart LR
   E --> A
   M --> A
   X[Pinned EPA/FTA/FHWA factors] --> I[Intervention accounting]
+  D[Pinned post-event operations] --> Q[Methods and QA]
   A --> I
   I --> P[Nondominated investment comparison]
   E --> Q[Methods and QA]
@@ -28,7 +29,7 @@ flowchart LR
   G --> Q
   O --> Q
   X --> Q
-  P --> U[Decision Brief, Compare Cities, and City & Match]
+  P --> U[Portfolio Overview, City Brief, Detailed Comparison, and City & Match]
 ```
 
 ## Evidence lifecycle
@@ -51,6 +52,47 @@ flowchart LR
    nondominated comparison, not an unsupported universal optimum.
 6. **Audit the claim.** A metric is presentation-ready only after its field,
    artifact status, source record, formula, and release test all pass.
+
+## Operational benchmark boundary
+
+The versioned operational snapshot contains 33 official post-event metrics for
+all 11 host cities and 13 match-level wide records. Each source
+hash covers locally pinned raw HTTP response bytes; each transcription includes
+a source locator, unit, granularity, permitted use, and prohibited uses.
+
+These records benchmark systemwide ridership, special-service throughput,
+post-match egress, fleet deployment, and implementation scale. They do not
+currently modify movement or access results because none supplies the complete
+15-minute arrivals, mode share, passenger loads, curb, parking, pedestrian, and
+roadway observations required for match-hour calibration. The no-calibration
+boundary is enforced by an integration test.
+
+## Environmental replacement rules
+
+Rice remains canonical. A public supplement replaces a Rice row only when the
+versioned replacement policy names that city and the Rice row fails a strict
+distance or venue-buffer gate. The original Rice frames remain available in the
+runtime bundle for audit.
+
+For Miami and New York/New Jersey, NOAA Global Hourly observations from a
+station within five miles of the venue replace distant Rice stations. Relative
+humidity is derived hourly from air temperature `T` and dew point `Td` using
+the Magnus relation:
+
+`RH = 100 × exp(17.625 Td / (243.04 + Td)) / exp(17.625 T / (243.04 + T))`
+
+Daily rows require at least 18 hourly observations. The existing NOAA
+Rothfusz heat-index equation and June-July p90 aggregation are then applied.
+
+For Boston, five cloud-masked Landsat 8/9 Collection 2 Level-2 surface-
+temperature scenes from 2022-2024 supply the missing venue-buffer UHI evidence:
+
+`scene UHI_p90 = p90(surface temperature within 2 miles) − median(surface temperature 3–8 miles away)`
+
+The reported city value is the median of valid scene results. This is a surface-
+temperature anomaly, not air temperature, shade, physiological exposure, or an
+ADA/safe-route audit. Public Landsat bytes were accessed through Microsoft
+Planetary Computer's public mirror; USGS remains the data publisher.
 
 ## City comparison and time horizons
 

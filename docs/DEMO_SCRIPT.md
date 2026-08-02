@@ -7,25 +7,27 @@ items are presenter prompts, not values to read aloud.
 
 1. “The six Rice datasets are our canonical supplied evidence. They describe
    commercial activity, weather, urban heat, POIs, origin context, and spending.”
-2. Open **Decision Brief**. Show that judging criteria and required track
-   deliverables are visible proof records, not self-awarded scores.
-3. Open **Compare Cities**. “Every host remains visible. Strict ranks use only
-   eligible evidence; the screening range exposes partial or missing components.”
-4. Open **City & Match**. “This event band is a planning scenario, not observed
+2. Start in **Portfolio Overview**. Show all 11 host cities, change the map lens,
+   and select two cities for the common access/cost/climate comparison.
+3. Open **City Brief** for one selection and show the evidence-qualified and
+   exploratory options without calling one an optimum.
+4. Open **Detailed Comparison**. “Physical access priority, strict MRS, and
+   evidence screening are separate decision lenses.”
+5. Open **City & Match**. “This event band is a planning scenario, not observed
    match attendance, because both annual holdout gates did not pass.”
-5. Show map-layer controls, GTFS status, the OSM route/isochrones, and missing
+6. Show map-layer controls, GTFS status, the OSM route/isochrones, and missing
    coverage. “Scheduled service is not ridership; OSM is not an accessibility audit.”
-6. Return to **Decision Brief** and change the time horizon. “Capital is counted
+7. Return to **City Brief** and change the time horizon. “Capital is counted
    once per city, operations recur per event, and nonqualified matches are omitted
    unless I explicitly opt into screening totals.”
-7. Open **Methods & QA** and trace one claim to its source hash and assumptions.
+8. Open **Methods & QA** and trace one claim to its source hash and assumptions.
 
 Use Kansas City or Philadelphia to show repaired event-period service evidence;
 use Boston, Dallas, or New York/NJ to demonstrate honest unavailable evidence.
 
 ## Release demonstration after all gates pass
 
-1. Select `[city]` in **Decision Brief**.
+1. Select `[city]` in **Portfolio Overview**, compare it with another host, and open its **City Brief**.
    - Read `[peak_demand_per_hour]`, `[residual_passengers]`, and evidence status.
    - State one material limitation.
 2. Compare the exact match-scoped nondominated set, separating qualified options from exploratory sensitivities.
@@ -35,8 +37,8 @@ use Boston, Dallas, or New York/NJ to demonstrate honest unavailable evidence.
    - State package inputs before scenario outcomes.
 4. Change the time horizon.
    - Explain one-time capital, recurring operations, included matches, and omissions.
-5. Open **Compare Cities**.
-   - Distinguish the 11-city physical access priority from strict MRS and read one exclusion reason.
+5. Open **Detailed Comparison**.
+   - Distinguish the 11-city physical access priority from strict MRS and evidence screening.
 6. Open **City & Match**.
    - Show hourly uncertainty, selected map layers, and the exact scenario download.
 7. Open **Methods & QA**.

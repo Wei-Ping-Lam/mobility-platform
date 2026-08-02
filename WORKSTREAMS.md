@@ -6,9 +6,11 @@ This repository uses isolated branches and Git worktrees so agents and people ca
 
 - `main` is the release branch.
 - `integration/rigor-upgrade` is the shared integration branch.
-- Work only on `work/<stream>` branches in `.worktrees/<stream>` directories.
+- Use owner-scoped `work/<owner>/<stream>` branches in matching
+  `.worktrees/<owner>-<stream>` directories.
 - Pull requests target `integration/rigor-upgrade`, never `main`.
 - Raw data in `Rice WC Hack/` is local, read-only, and must never be staged.
+- Raw public pages in `data/raw/operations/` are local hash inputs and must never be staged.
 - Generated artifacts are owned by their ETL, GTFS, OSM, or factor pipeline only; do not hand-edit them.
 - Shared contracts must change first and require integrator review.
 - Every change must include focused tests and `git diff --check` output.
@@ -18,12 +20,12 @@ This repository uses isolated branches and Git worktrees so agents and people ca
 | Stream | Branch | Worktree | Owned paths | Depends on |
 | --- | --- | --- | --- | --- |
 | W0 Foundation | integration-owned | repository root | `pyproject.toml`, `uv.lock`, `.python-version`, CI, `dashboard/app.py`, shared contracts/source registry, fixtures, `.gitignore`, `WORKSTREAMS.md` | None |
-| W1 Public evidence | `work/gtfs` | `.worktrees/gtfs` | `dashboard/pipeline/gtfs/`, `dashboard/pipeline/public/`, `dashboard/tests/gtfs/`, `dashboard/tests/public/`, `data/snapshots/` | W0 contracts |
-| W2 Rice enrichment | `work/etl` | `.worktrees/etl` | `dashboard/pipeline/etl/`, `dashboard/pipeline/schemas/`, `dashboard/tests/etl/`, Rice-derived cache artifacts | W0 contracts |
-| W3 Movement/access and comparison | `work/models` | `.worktrees/models` | `dashboard/models/movement.py`, `dashboard/models/access.py`, `dashboard/domain/comparison.py`, movement/access/comparison tests under `dashboard/tests/models/` | W0 fixtures |
-| W4 Interventions and portfolio | `work/interventions` | `.worktrees/interventions` | `dashboard/models/interventions.py`, `dashboard/domain/decision_support.py`, `dashboard/domain/portfolio.py`, `dashboard/tests/interventions/`, `dashboard/tests/models/test_portfolio.py` | W0 fixtures |
-| W5 UI | `work/ui` | `.worktrees/ui` | `dashboard/ui/`, `dashboard/viz/`, `dashboard/tests/ui/` | W0 fixtures |
-| W6 QA/docs | `work/qa-docs` | `.worktrees/qa-docs` | `dashboard/tests/integration/`, `docs/`, `DATA_DOCUMENTATION.md`, `SUBMISSION_NARRATIVE.md`, `dashboard/README.md` | W1-W5 interfaces |
+| W1 Public evidence | `work/<owner>/public` | `.worktrees/<owner>-public` | `dashboard/pipeline/gtfs/`, `dashboard/pipeline/public/`, `dashboard/tests/gtfs/`, `dashboard/tests/public/`, `data/snapshots/` including operational evidence | W0 contracts |
+| W2 Rice enrichment | `work/<owner>/etl` | `.worktrees/<owner>-etl` | `dashboard/pipeline/etl/`, `dashboard/pipeline/schemas/`, `dashboard/tests/etl/`, Rice-derived cache artifacts | W0 contracts |
+| W3 Movement/access and comparison | `work/<owner>/models` | `.worktrees/<owner>-models` | `dashboard/models/movement.py`, `dashboard/models/access.py`, `dashboard/domain/comparison.py`, movement/access/comparison tests under `dashboard/tests/models/` | W0 fixtures |
+| W4 Interventions and portfolio | `work/<owner>/interventions` | `.worktrees/<owner>-interventions` | `dashboard/models/interventions.py`, `dashboard/domain/decision_support.py`, `dashboard/domain/portfolio.py`, `dashboard/tests/interventions/`, `dashboard/tests/models/test_portfolio.py` | W0 fixtures |
+| W5 UI | `work/<owner>/ui` | `.worktrees/<owner>-ui` | `dashboard/ui/`, `dashboard/viz/`, `dashboard/tests/ui/` | W0 fixtures |
+| W6 QA/docs | `work/<owner>/qa-docs` | `.worktrees/<owner>-qa-docs` | `dashboard/tests/integration/`, `docs/`, `DATA_DOCUMENTATION.md`, `SUBMISSION_NARRATIVE.md`, `dashboard/README.md` | W1-W5 interfaces |
 
 `dashboard/app.py` becomes integration-owned after W0. Workstreams wire features through modules and do not edit the application shell.
 
@@ -63,17 +65,27 @@ Each workstream PR must state:
 
 ## Local worktree setup
 
-```powershell
-git worktree add .worktrees/etl -b work/etl integration/rigor-upgrade
-git worktree add .worktrees/gtfs -b work/gtfs integration/rigor-upgrade
-git worktree add .worktrees/models -b work/models integration/rigor-upgrade
-git worktree add .worktrees/interventions -b work/interventions integration/rigor-upgrade
-git worktree add .worktrees/ui -b work/ui integration/rigor-upgrade
-git worktree add .worktrees/qa-docs -b work/qa-docs integration/rigor-upgrade
-```
-
-Point every worktree at the shared local data without copying it:
+Start every new workstream from the latest integration commit. Choose a short,
+unique owner ID such as your initials or agent name:
 
 ```powershell
-$env:MOBILITY_DATA_ROOT = "C:\Users\cps8\mobility-platform\Rice WC Hack"
+git fetch origin
+$repoRoot = (Get-Location).Path
+$owner = "alice"
+git worktree add ".worktrees/$owner-public" -b "work/$owner/public" origin/integration/rigor-upgrade
+git worktree add ".worktrees/$owner-etl" -b "work/$owner/etl" origin/integration/rigor-upgrade
+git worktree add ".worktrees/$owner-models" -b "work/$owner/models" origin/integration/rigor-upgrade
+git worktree add ".worktrees/$owner-interventions" -b "work/$owner/interventions" origin/integration/rigor-upgrade
+git worktree add ".worktrees/$owner-ui" -b "work/$owner/ui" origin/integration/rigor-upgrade
+git worktree add ".worktrees/$owner-qa-docs" -b "work/$owner/qa-docs" origin/integration/rigor-upgrade
 ```
+
+Only ETL contributors need the local Rice collection. Point their worktree at
+the shared read-only directory without copying it:
+
+```powershell
+$env:MOBILITY_DATA_ROOT = Join-Path $repoRoot "Rice WC Hack"
+```
+
+Existing worktrees must be clean before rebasing or recreating them. Never
+discard another contributor's uncommitted work to update a worktree.

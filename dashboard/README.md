@@ -9,8 +9,15 @@ source quality, assumptions, uncertainty, cost, and implementation constraints.
 Contract `0.3.0` is frozen. The current branch implements Rice enrichment,
 the 78-match official schedule snapshot, match-specific movement scenarios,
 physical access contracts, six intervention types, match-scoped nondominated option sets,
-four decision workspaces, and exact Methods & QA downloads. Cited factor ranges are
+five decision workspaces, and exact Methods & QA downloads. Cited factor ranges are
 integrated as scenario/estimated evidence.
+
+An independently versioned operational snapshot adds 33 official post-event
+benchmarks across all 11 cities plus 13 match-level wide records for Houston,
+New York/New Jersey, and San Francisco. Raw
+official pages remain ignored locally; the tracked artifact retains their
+content hashes, publication metadata, metric locations, and semantic limits.
+These aggregates do not silently recalibrate match-hour scenarios.
 
 Recommendation policy is explicit: qualified screening options are separated
 from exploratory sensitivities, total cost remains visible, and reusable capital
@@ -25,27 +32,59 @@ provide isochrones for every venue and event-relevant stop routes for eight.
 All 78 transit gaps are capacity-qualified; 23 match results in Boston, Dallas,
 and Miami remain partial for stop-route and route-heat evidence.
 
+NOAA Global Hourly supplements replace only the distant Rice weather stations
+for Miami and New York/New Jersey. A five-scene USGS Landsat surface-temperature
+analysis replaces only Boston's missing venue-buffer UHI row. These additions
+make all 11 cities strictly MRS-rankable while retaining their non-Rice source
+labels and semantic limits.
+
 ## Run locally
 
-The dashboard reads compact artifacts and makes no startup network request.
+Prerequisites are Git and uv `0.11.16` or newer. A fresh clone runs from the
+tracked compact artifacts; the 6.8 GB Rice source collection is not required
+for dashboard preview and no startup network request is made.
+
+```powershell
+uv python install 3.11
+uv sync --all-groups --locked
+uv run python -m streamlit run dashboard/app.py
+```
+
+To rebuild the Rice-derived artifacts, point the offline ETL at the separately
+provided local source collection:
 
 ```powershell
 $env:MOBILITY_DATA_ROOT = "C:\path\to\Rice WC Hack"
-uv sync --all-groups --locked
 uv run python -m dashboard.pipeline.etl.build --data-root $env:MOBILITY_DATA_ROOT
-uv run python -m streamlit run dashboard/app.py
 ```
 
 Public-source refresh commands are owned by their pipelines and must run
 offline before dashboard launch. A URL or legacy GTFS score is not eligible
 evidence without the required version, coverage, license, timestamp, and hash.
 
+To refresh the official operational reports explicitly:
+
+```powershell
+uv run python -m dashboard.pipeline.public.operations --refresh --retrieved-at 2026-08-02T18:00:00Z
+uv run python -m dashboard.pipeline.public.environment --refresh --retrieved-at 2026-08-02T18:00:00Z
+uv run python -m dashboard.pipeline.public.validate
+```
+
+Review every manually transcribed operational metric against its `source_locator` before
+committing a refreshed artifact. The refresh never runs during Streamlit use.
+
+If Windows blocks a uv-generated console-script shim with `os error 5`, use the
+project interpreter directly: `.venv\Scripts\python.exe -m streamlit run dashboard/app.py`.
+
 ## Current product behavior
 
-- **Decision Brief:** a guided where/why/what/outcome/confidence story, explicit
-  judging-criteria evidence, required-deliverable ledger, and evidence-gated time horizons.
-- **Compare Cities:** strict ranking for eligible evidence plus a separate all-city
+- **Portfolio Overview:** the default evidence-qualified readiness order, national map,
+  and common outcome table for all 11 cities, with unlimited optional filtering,
+  switchable traffic/CO2/investment lenses, visible package outcomes, and city drill-down.
+- **Detailed Comparison:** strict ranking for eligible evidence plus a separate all-city
   screening order with conservative evidence ranges and exact exclusion reasons.
+- **City Brief:** a guided where/why/what/outcome/confidence story, explicit
+  judging evidence, and match/city/tournament time horizons.
 - **City & Match:** official match selection, hourly movement, selectable Rice/GTFS/OSM
   layers, three packages, before/after timelines, tradeoffs, and exact downloads.
 - **Methods & QA:** source hashes, factors, network status, formulas, assumptions,
@@ -59,10 +98,13 @@ Current pressure outputs do not measure roadway congestion.
 
 The implemented product behavior is:
 
-- **Decision Brief** leads with match, access evidence, peak passenger gap,
+- **Portfolio Overview** starts neutrally with all 11 cities, makes the strict readiness
+  order visible, and supports switchable access, traffic-pressure, CO2, and investment
+  lenses. Optional filtering has no city-count cap.
+- **City Brief** leads with match, access evidence, peak passenger gap,
   candidate investment, modeled outcome range, planning cost, lead time, and
   evidence quality. MRS is secondary.
-- **Compare Cities** keeps all 11 cities visible without presenting partial evidence
+- **Detailed Comparison** keeps all 11 cities visible without presenting partial evidence
   as a strict rank.
 - **City & Match** shows hourly movement, GTFS routes/stops, OSM isochrones, Rice
   heat/POI layers, and Baseline/Operational/Capital package comparisons.

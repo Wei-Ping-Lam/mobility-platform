@@ -41,6 +41,16 @@ completed analytical result.
 - Cache-only startup performs no network or raw-data calls.
 - Missing feeds, incomplete networks, and absent accessibility tags remain
   visible and cannot become estimates silently.
+- The operational snapshot covers all 11 cities, contains 33 source-located
+  metrics and 13 match-level records, and keeps every city explicitly
+  `match_hour_calibration_ready: false` until interval-level evidence exists.
+- Every operational metric has a physical unit, granularity, source locator,
+  permitted calibration use, and prohibited-use list. Tampering fails the
+  artifact-hash gate.
+- The environmental supplement contains 366 daily NOAA rows for Miami and New
+  York/New Jersey, each with at least 18 hourly observations and a station under
+  five miles from its venue. Boston contains five valid Landsat scenes and
+  169,940 venue-buffer pixels. Snapshot tampering fails closed.
 
 ## Release model gates
 
@@ -66,10 +76,11 @@ completed analytical result.
 
 ## Release UI and presentation gates
 
-- Decision Brief answers where, why, candidate investment, modeled outcome,
-  cost, lead time, and evidence quality without relying on MRS. It also exposes
-  criterion evidence, required deliverables, and evidence-gated time horizons.
-- Compare Cities separates strict eligible ranks from an all-city evidence screening.
+- Portfolio Overview starts with all 11 cities, supports two-to-four-city
+  selection, switchable outcome lenses, Track 1 proof cards, and exact tables.
+- City Brief answers where, why, candidate investment, modeled outcome, cost,
+  lead time, evidence quality, and evidence-gated time horizons.
+- Detailed Comparison separates physical access priority, strict MRS, and evidence screening.
 - City & Match supports match selection and Baseline, Operational Package, and
   Capital Package comparison with routes, stops, isochrones, UHI, POIs, and
   origin-context layers.
@@ -87,8 +98,9 @@ completed analytical result.
 
 - Environment: uv 0.11.16, CPython 3.11, committed lockfile, and project `.venv`;
   no machine-specific preview runtime is referenced.
-- Automated suite: `178 passed`; Ruff, `uv lock --check`, public snapshot
-  validation, and `git diff --check` pass.
+- Automated suite: `194 passed` in bounded ETL, public, model/GTFS,
+  integration, nonvisual UI, workspace, and all-city AppTest partitions; Ruff,
+  `uv lock --check`, public snapshot validation, and `git diff --check` pass.
 - Public cache validator: 78 schedule events, 26 planning factors, 11 GTFS city
   records, and 11 graph-derived walking records; validator passed.
 - GTFS content artifact SHA-256:
@@ -106,7 +118,18 @@ completed analytical result.
   `6115126eb452e44807a7718a7242b57593dbc1c6c4e20841d133a17b85f5d652`.
   Production composition fails on missing/incomplete factors and every outcome
   includes this hash in its assumptions.
-- Streamlit AppTest: Decision Brief, Compare Cities, City & Match, and Methods & QA
+- Operational evidence artifact SHA-256:
+  `412595aa8402eadee12940a32167238b4182c5aaa0008fee14b9913f2ff866b0`.
+- Operational source review terms were found in all 11 pinned responses; snapshot generation fails when a required review term is absent.
+  It contains 11 content-hashed official source records, 33 post-event
+  benchmarks across all cities, and 13 match-level records without filling
+  unreported fields.
+- Environment evidence artifact SHA-256:
+  `9b60e5e6b3f2acda78b10ef08478af485383ba3283f92d8ddc9ad75bc18029de`.
+  Its NOAA source hashes are `087e554002f51bff3fafe134bb9c494bdefcd5df031cf677b54251e1923d5772`
+  and `01e1f9d724dfe4857d16595eec9803194153fc5ec747efc7745d7552399eb955`;
+  its Landsat-derived source hash is `16470dd96ad77e4b271e0cbf17c80997a6eb70288d4d005254fac3681f0bb4bd`.
+- Streamlit AppTest: Portfolio Overview, City Brief, Detailed Comparison, City & Match, and Methods & QA
   render without an exception. All 78 movement timelines and before/after tables
   pass nonempty, reconciliation, and peak-reduction checks.
 - Recommendation identity: all 260 nondominated records retain an exact
@@ -123,21 +146,21 @@ completed analytical result.
 - Access evidence: all 78 gaps are capacity-qualified; 55 have scenario status
   with complete modeled route/heat components and 23 are partial for those
   components. Zero scheduled capacity remains a qualified observed result.
-- All-city comparison: eight cities are strictly rankable under the default
-  balanced MRS profile. All 11 receive a separate physical access-priority
-  order; Boston is excluded from strict MRS by venue UHI coverage, while Miami
-  and New York/New Jersey are excluded by distant supplied weather stations.
+- All-city comparison: all 11 cities are strictly rankable under every named
+  MRS profile. Boston's missing venue UHI is replaced by the pinned Landsat
+  supplement; Miami and New York/New Jersey's distant Rice weather stations are
+  replaced by pinned venue-proximate NOAA observations. MRS remains secondary
+  and does not make match-hour scenarios validated predictions.
 - Portfolio accounting: match, city-tournament, and U.S.-tournament tests verify
   one-time capital per city, recurring event operations, and default exclusion
   of partial/unavailable access results.
-- Local project-owned Streamlit preview: health check returned HTTP 200 at
-  `http://127.0.0.1:8504` after the Decision Brief and Compare Cities integration.
+- Local project-owned Streamlit preview: cache-only health check returned HTTP
+  200 at `http://127.0.0.1:8513` after the portfolio-first landing integration.
 - Screenshot record: failed because the in-app browser sandbox-policy handshake
   blocked localhost control. No desktop/narrow screenshot claim is made.
 - Known release limitations: published GTFS does not include confirmed FIFA
   special-event overlays; 29 match records show zero scheduled half-mile
-  capacity, 23 lack a stop-route/route-heat path, and three cities fail strict
-  MRS Rice venue-coverage gates. Team/contact metadata and final desktop/narrow
+  capacity and 23 lack a stop-route/route-heat path. Team/contact metadata and final desktop/narrow
   screenshot review remain outstanding.
 
 This is a competition MVP validation record, not certification for operational
