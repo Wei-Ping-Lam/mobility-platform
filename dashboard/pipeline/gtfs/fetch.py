@@ -18,7 +18,6 @@ import requests
 from dashboard.mobility_platform.contracts import CONTRACT_VERSION
 from dashboard.mobility_platform.mappings import HOST_CITIES
 
-
 GTFS_FEEDS = {
     "Atlanta": [("MARTA", "https://www.itsmarta.com/google_transit_feed/google_transit.zip")],
     "Boston": [("MBTA", "https://cdn.mbta.com/MBTA_GTFS.zip")],

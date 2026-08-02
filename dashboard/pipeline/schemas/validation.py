@@ -141,4 +141,7 @@ class QualityTracker:
             checks=tuple(checks),
             errors=tuple(self.errors),
             warnings=tuple(self.warnings),
+            rows_read=self.rows_read,
+            coverage_start=self.coverage_start,
+            coverage_end=self.coverage_end,
         )

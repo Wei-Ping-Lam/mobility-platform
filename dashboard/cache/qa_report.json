@@ -1,0 +1,255 @@
+{
+  "generated_at_utc": "2026-08-02T00:21:06.048715+00:00",
+  "source_collection": "Rice WC Hack",
+  "status": "partial",
+  "datasets": [
+    {
+      "dataset": "store-visits-rice",
+      "source_root": "Rice WC Hack/store-visits-rice",
+      "expected_partitions": 32,
+      "discovered_partitions": 32,
+      "rows_read": 223342163,
+      "rows_written": 20097,
+      "generated_at_utc": "2026-08-02T00:18:51.259568+00:00",
+      "source_version": "0.2.0",
+      "coverage_start": "2020-01-01",
+      "coverage_end": "2024-12-31",
+      "artifact_path": "dashboard/cache/visits_daily.parquet",
+      "artifact_sha256": "ade48bdc2302ffe54eb825a4702d00d94f6079a903714b37f44c3c79b934f125",
+      "status": "partial",
+      "warnings": [
+        "Combined source markets were equally allocated to Dallas/Houston and Los Angeles/San Francisco; those city series are partial."
+      ],
+      "quality": {
+        "generated_at_utc": "2026-08-02T00:09:49.699835+00:00",
+        "checks": [
+          {
+            "name": "chunks",
+            "count": 910,
+            "rows": 223342163
+          },
+          {
+            "name": "summary",
+            "rows_read": 223342163,
+            "rows_invalid": 0,
+            "duplicate_keys": 0
+          }
+        ],
+        "errors": [],
+        "warnings": [],
+        "rows_read": 223342163,
+        "coverage_start": "2020-01-01",
+        "coverage_end": "2024-12-31"
+      }
+    },
+    {
+      "dataset": "daily-weather-rice",
+      "source_root": "Rice WC Hack/daily-weather-rice",
+      "expected_partitions": 32,
+      "discovered_partitions": 31,
+      "rows_read": 732627,
+      "rows_written": 20097,
+      "generated_at_utc": "2026-08-02T00:18:52.758857+00:00",
+      "source_version": "0.2.0",
+      "coverage_start": "2020-01-01",
+      "coverage_end": "2024-12-31",
+      "artifact_path": "dashboard/cache/weather_city_daily.parquet",
+      "artifact_sha256": "fad3328fa7d2fada38127e14833bcbd91f3625c533a3298d3957e60fbada3a57",
+      "status": "partial",
+      "warnings": [
+        "Primary host stations are absent with missing partition 2_0_0; nearest supplied stations were used: Atlanta: KMGE (13.0 mi); Boston: KOWD (8.3 mi); Dallas: KRBD (13.9 mi); Houston: KDWH (27.9 mi); Kansas City: KIXD (26.9 mi); Los Angeles: KTOA (10.4 mi); Miami: KHST (34.0 mi); New York/NJ: KISP (50.9 mi); San Francisco: KNUQ (4.3 mi); Seattle: KPWT (21.7 mi)",
+        "daily-weather-rice: known sentinel values were detected in dew_point_f.",
+        "daily-weather-rice: known sentinel values were detected in pressure_mb.",
+        "daily-weather-rice: missing partitions: daily-weather-rice_2_0_0.csv.gz"
+      ],
+      "quality": {
+        "generated_at_utc": "2026-08-02T00:18:52.757358+00:00",
+        "checks": [
+          {
+            "name": "chunks",
+            "count": 31,
+            "rows": 732627
+          },
+          {
+            "name": "sentinel_values:dew_point_f",
+            "column": "dew_point_f",
+            "count": 1
+          },
+          {
+            "name": "sentinel_values:pressure_mb",
+            "column": "pressure_mb",
+            "count": 3
+          },
+          {
+            "name": "summary",
+            "rows_read": 732627,
+            "rows_invalid": 0,
+            "duplicate_keys": 0
+          }
+        ],
+        "errors": [],
+        "warnings": [
+          "daily-weather-rice: known sentinel values were detected in dew_point_f.",
+          "daily-weather-rice: known sentinel values were detected in pressure_mb."
+        ],
+        "rows_read": 732627,
+        "coverage_start": "2020-01-01",
+        "coverage_end": "2024-12-31"
+      }
+    },
+    {
+      "dataset": "urban-heat-index-rice",
+      "source_root": "Rice WC Hack/urban-heat-index-rice",
+      "expected_partitions": 32,
+      "discovered_partitions": 32,
+      "rows_read": 1229291,
+      "rows_written": 11,
+      "generated_at_utc": "2026-08-02T00:18:54.943460+00:00",
+      "source_version": "0.2.0",
+      "coverage_start": null,
+      "coverage_end": null,
+      "artifact_path": "dashboard/cache/uhi_city_summary.parquet",
+      "artifact_sha256": "8824c9ef1540aeb804f62c2e9fa8d71aec04626ce092d67a1bf51ee8bd5dc3a6",
+      "status": "observed",
+      "warnings": [],
+      "quality": {
+        "generated_at_utc": "2026-08-02T00:18:54.942457+00:00",
+        "checks": [
+          {
+            "name": "chunks",
+            "count": 32,
+            "rows": 1229291
+          },
+          {
+            "name": "summary",
+            "rows_read": 1229291,
+            "rows_invalid": 0,
+            "duplicate_keys": 0
+          }
+        ],
+        "errors": [],
+        "warnings": [],
+        "rows_read": 1229291,
+        "coverage_start": null,
+        "coverage_end": null
+      }
+    },
+    {
+      "dataset": "spend-patterns-rice",
+      "source_root": "Rice WC Hack/spend-patterns-rice",
+      "expected_partitions": 32,
+      "discovered_partitions": 32,
+      "rows_read": 1026618,
+      "rows_written": 580,
+      "generated_at_utc": "2026-08-02T00:19:51.299456+00:00",
+      "source_version": "0.2.0",
+      "coverage_start": "2019-12-01",
+      "coverage_end": "2024-12-01",
+      "artifact_path": "dashboard/cache/spend_origins.parquet",
+      "artifact_sha256": "ec959d7b07a0d66eb93bb8fbde60eb6bf0fa7478147895ddbd25edbd0f6eb427",
+      "status": "observed",
+      "warnings": [],
+      "quality": {
+        "generated_at_utc": "2026-08-02T00:19:51.298461+00:00",
+        "checks": [
+          {
+            "name": "chunks",
+            "count": 32,
+            "rows": 1026618
+          },
+          {
+            "name": "required_nulls",
+            "count": 875
+          },
+          {
+            "name": "summary",
+            "rows_read": 1026618,
+            "rows_invalid": 875,
+            "duplicate_keys": 0
+          }
+        ],
+        "errors": [],
+        "warnings": [],
+        "rows_read": 1026618,
+        "coverage_start": "2019-12-01",
+        "coverage_end": "2024-12-01"
+      }
+    },
+    {
+      "dataset": "core-poi-geometry-rice",
+      "source_root": "Rice WC Hack/core-poi-geometry-rice",
+      "expected_partitions": 32,
+      "discovered_partitions": 32,
+      "rows_read": 511934,
+      "rows_written": 522,
+      "generated_at_utc": "2026-08-02T00:20:00.025662+00:00",
+      "source_version": "0.2.0",
+      "coverage_start": null,
+      "coverage_end": null,
+      "artifact_path": "dashboard/cache/poi_venue_summary.parquet",
+      "artifact_sha256": "ded732c7f86ee835701ccc9624158e830e2a4fa696991599ed125f626e2d048e",
+      "status": "observed",
+      "warnings": [],
+      "quality": {
+        "generated_at_utc": "2026-08-02T00:20:00.024656+00:00",
+        "checks": [
+          {
+            "name": "chunks",
+            "count": 32,
+            "rows": 511934
+          },
+          {
+            "name": "summary",
+            "rows_read": 511934,
+            "rows_invalid": 0,
+            "duplicate_keys": 0
+          }
+        ],
+        "errors": [],
+        "warnings": [],
+        "rows_read": 511934,
+        "coverage_start": null,
+        "coverage_end": null
+      }
+    },
+    {
+      "dataset": "daily-spend-brand-and-state-rice",
+      "source_root": "Rice WC Hack/daily-spend-brand-and-state-rice",
+      "expected_partitions": 32,
+      "discovered_partitions": 32,
+      "rows_read": 17253860,
+      "rows_written": 23751,
+      "generated_at_utc": "2026-08-02T00:21:05.996783+00:00",
+      "source_version": "0.2.0",
+      "coverage_start": "2020-01-01",
+      "coverage_end": "2024-12-31",
+      "artifact_path": "dashboard/cache/brand_spend_city_daily.parquet",
+      "artifact_sha256": "57add1286a586ca3733f15b48f3c7173ad6a86f606f2cf154d6d30b39497d287",
+      "status": "partial",
+      "warnings": [
+        "Combined source markets were equally allocated; affected city economic summaries are partial."
+      ],
+      "quality": {
+        "generated_at_utc": "2026-08-02T00:21:05.995779+00:00",
+        "checks": [
+          {
+            "name": "chunks",
+            "count": 130,
+            "rows": 17253860
+          },
+          {
+            "name": "summary",
+            "rows_read": 17253860,
+            "rows_invalid": 0,
+            "duplicate_keys": 0
+          }
+        ],
+        "errors": [],
+        "warnings": [],
+        "rows_read": 17253860,
+        "coverage_start": "2020-01-01",
+        "coverage_end": "2024-12-31"
+      }
+    }
+  ]
+}

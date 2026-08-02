@@ -11,7 +11,6 @@ import os
 from dataclasses import dataclass
 from pathlib import Path
 
-
 DATASET_DIRS = (
     "store-visits-rice",
     "urban-heat-index-rice",

@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from dataclasses import asdict, dataclass, field
-from datetime import date, datetime
+from datetime import date
 from typing import Any
 
 try:
@@ -81,6 +81,9 @@ class DataQualityReport:
     checks: tuple[dict[str, Any], ...]
     errors: tuple[str, ...] = field(default_factory=tuple)
     warnings: tuple[str, ...] = field(default_factory=tuple)
+    rows_read: int = 0
+    coverage_start: str | None = None
+    coverage_end: str | None = None
 
     @property
     def passed(self) -> bool:
