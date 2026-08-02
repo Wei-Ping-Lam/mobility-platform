@@ -35,7 +35,10 @@ def build_deliverable_evidence(
     access = _records(artifacts.get("access_gaps"))
     outcomes = _records(artifacts.get("intervention_outcomes"))
     recommendations = _records(artifacts.get("investment_recommendations"))
-    qualified = sum(str(row.get("status")) in {"observed", "derived", "scenario"} for row in access)
+    qualified = sum(
+        bool(row.get("capacity_qualified", str(row.get("status")) in {"observed", "derived", "scenario"}))
+        for row in access
+    )
     route_cities = sum(
         bool(row.get("route_geometry"))
         for row in (artifacts.get("walking_networks") or {}).values()
@@ -43,6 +46,12 @@ def build_deliverable_evidence(
     )
     match_scoped = sum(bool(row.get("match_id")) for row in recommendations)
     strict_count = int(comparison["strict_rankable"].sum()) if not comparison.empty else 0
+    if not comparison.empty and "access_priority_order" in comparison:
+        access_ranked = int(comparison["access_priority_order"].notna().sum())
+    elif not comparison.empty and "capacity_qualified_gap_pph" in comparison:
+        access_ranked = int(comparison["capacity_qualified_gap_pph"].notna().sum())
+    else:
+        access_ranked = 0
     rows = [
         {
             "Deliverable": "Visitor movement",
@@ -55,14 +64,18 @@ def build_deliverable_evidence(
             "Deliverable": "First/last-mile gaps",
             "Status": "partial" if qualified < len(access) else "derived",
             "Visible proof": f"{qualified}/{len(access)} matches capacity-qualified; {route_cities}/11 cities have stop-route paths",
-            "Limitation": "Missing event-window service is withheld, never treated as zero service.",
+            "Limitation": (
+                "All scheduled-capacity gaps are qualified; cities without a serving stop-route path retain a separate walking-evidence warning."
+                if qualified == len(access)
+                else "Missing event-window service is withheld, never treated as zero service."
+            ),
             "Workspace": "City & Match / Access map",
         },
         {
             "Deliverable": "Compare resilience",
-            "Status": "partial" if strict_count < len(metrics) else "derived",
-            "Visible proof": f"All {len(comparison)} cities screened; {strict_count} strictly rankable",
-            "Limitation": "Screening order and strict rank are intentionally separate.",
+            "Status": "derived" if access_ranked == len(comparison) else "partial",
+            "Visible proof": f"All {access_ranked}/{len(comparison)} cities have a physical access-gap priority; {strict_count} have strict secondary MRS ranks",
+            "Limitation": "Access-gap priority, evidence screening, and strict MRS are intentionally separate.",
             "Workspace": "Compare Cities",
         },
         {
@@ -101,7 +114,10 @@ def build_criteria_evidence(
     recommendations = _records(artifacts.get("investment_recommendations"))
     validation = _records(artifacts.get("movement_validation"))
     sources = _records(artifacts.get("source_references"))
-    qualified = sum(str(row.get("status")) in {"observed", "derived", "scenario"} for row in access)
+    qualified = sum(
+        bool(row.get("capacity_qualified", str(row.get("status")) in {"observed", "derived", "scenario"}))
+        for row in access
+    )
     full_hashes = bool(sources) and all(str(row.get("sha256") or "") for row in sources)
     match_scoped = recommendations and all(row.get("match_id") for row in recommendations)
     visual_review = bool(artifacts.get("visual_review_passed", False))

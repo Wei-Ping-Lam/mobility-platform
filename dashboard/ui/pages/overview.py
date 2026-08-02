@@ -146,13 +146,21 @@ def render_decision_brief(
     _metric_row(
         [
             (_number(access.peak_demand_per_hour, " pph"), "Peak movement demand", "scenario", "Low/base/high attendance planning range", "blue"),
-            (_number(access.residual_passengers, " pph"), "Capacity-qualified access gap", access.status, "Not measured roadway congestion", "coral"),
+            (_number(access.residual_passengers if access.capacity_qualified else None, " pph"), "Capacity-qualified access gap", access.transit_status, "Not measured roadway congestion", "coral"),
             (best.intervention if best else "Evidence incomplete", "Pareto option", best.status if best else "unavailable", best.lead_time_band if best else "No match-specific option", "amber"),
             (_money(best.cost_base) if best else "Not available", "Planning cost", best.status if best else "unavailable", "Open the tradeoff set before selecting", "teal"),
         ]
     )
-    if access.status != "scenario":
+    if not access.capacity_qualified:
         callout("warning", "This case is not capacity-qualified", "Demand remains visible, but missing or partial event transit evidence prevents a strict residual-gap claim.")
+    elif float(access.transit_capacity_high or 0) == 0:
+        callout(
+            "warning",
+            "Pinned schedule shows zero nearby event-window departures",
+            "This is a qualified observed service gap within the half-mile catchment, not missing data. Any special-event shuttle absent from GTFS remains outside the evidence base.",
+        )
+    elif access.walking_status == "unavailable":
+        callout("warning", "Transit gap qualified; walking route unavailable", "Scheduled capacity can support a residual passenger gap, but the pedestrian connection remains a separate missing evidence component.")
 
     map_col, action_col = st.columns([1.25, 1], gap="large")
     with map_col:

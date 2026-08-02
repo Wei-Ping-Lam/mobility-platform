@@ -152,6 +152,11 @@ class AccessView:
     network_walk_distance_m: float | None = None
     service_span_after_match_min: float | None = None
     route_heat_exposure_c: float | None = None
+    transit_status: str = "unavailable"
+    walking_status: str = "unavailable"
+    service_span_status: str = "unavailable"
+    heat_status: str = "unavailable"
+    capacity_qualified: bool = False
     assumptions: tuple[str, ...] = field(default_factory=tuple)
 
 
@@ -442,6 +447,16 @@ def build_presentation(metrics: pd.DataFrame, artifacts: Mapping[str, Any]) -> P
                 network_walk_distance_m=_number(raw_access.get("network_walk_distance_m")),
                 service_span_after_match_min=_number(raw_access.get("service_span_after_match_min")),
                 route_heat_exposure_c=_number(raw_access.get("route_heat_exposure_c")),
+                transit_status=_status(raw_access.get("transit_status") or raw_access.get("status")),
+                walking_status=_status(raw_access.get("walking_status")),
+                service_span_status=_status(raw_access.get("service_span_status")),
+                heat_status=_status(raw_access.get("heat_status")),
+                capacity_qualified=bool(
+                    raw_access.get(
+                        "capacity_qualified",
+                        _status(raw_access.get("status")) != "unavailable",
+                    )
+                ),
                 assumptions=tuple(str(item) for item in raw_access.get("assumptions", ()) or ()),
             )
 

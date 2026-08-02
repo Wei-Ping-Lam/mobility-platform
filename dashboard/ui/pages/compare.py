@@ -50,11 +50,16 @@ def render_compare_cities(metrics: pd.DataFrame, artifacts: dict, weights: dict[
         weights=weights,
     )
     strict_count = int(comparison["strict_rankable"].sum())
+    access_ranked_count = int(comparison["access_priority_order"].notna().sum())
     page_header(
         "Compare cities",
         "One honest portfolio view for all 11 hosts",
         "Strict transportation ranks use only eligible evidence. The screening view keeps every city visible and bounds partial or missing components instead of silently converting them to zero.",
-        (f"{len(comparison)} cities screened", f"{strict_count} strictly rankable", "Partial is not zero"),
+        (
+            f"{len(comparison)} cities screened",
+            f"{access_ranked_count} access-gap priorities",
+            f"{strict_count} strict MRS ranks",
+        ),
     )
     strict_tab, screening_tab, access_tab = st.tabs(["Strict comparison", "All-city screening", "Match access portfolio"])
     with strict_tab:
@@ -88,8 +93,46 @@ def render_compare_cities(metrics: pd.DataFrame, artifacts: dict, weights: dict[
         figure.update_layout(barmode="group")
         figure.update_xaxes(title="Passengers per hour")
         st.plotly_chart(style_figure(figure, 470), width="stretch", config={"displayModeBar": False})
-        display = comparison[["city", "representative_match_id", "peak_demand_pph", "capacity_qualified_gap_pph", "qualified_matches", "partial_matches", "unavailable_matches", "top_intervention", "top_cost_per_passenger", "top_net_co2e_kg", "top_lead_time"]].copy()
-        display.columns = ["City", "Representative match", "Peak demand (pph)", "Qualified gap (pph)", "Qualified matches", "Partial matches", "Unavailable matches", "Pareto option", "Cost/passenger", "Net CO2e (kg)", "Lead time"]
+        display = comparison[["access_priority_order", "city", "representative_match_id", "peak_demand_pph", "capacity_qualified_gap_pph", "qualified_matches", "partial_matches", "unavailable_matches", "top_intervention", "top_cost_per_passenger", "top_net_co2e_kg", "top_lead_time"]].copy()
+        display.columns = ["Access priority", "City", "Representative match", "Peak demand (pph)", "Qualified gap (pph)", "Qualified matches", "Partial matches", "Unavailable matches", "Pareto option", "Cost/passenger", "Net CO2e (kg)", "Lead time"]
+        display = display.sort_values("Access priority", na_position="last")
         st.dataframe(display, hide_index=True, width="stretch")
+        callout(
+            "info",
+            "Access priority is physical, not an all-purpose readiness rank",
+            "It orders cities by the largest match-level scheduled-capacity gap. Strict MRS remains separate because heat or UHI evidence can still be partial.",
+        )
+        recommendation_rows = pd.DataFrame(artifacts.get("investment_recommendations", []))
+        if not recommendation_rows.empty and {"intervention", "city", "match_id"}.issubset(recommendation_rows):
+            section_header(
+                "Why some interventions repeat",
+                "Frequency reports how often an option survives the Pareto screen; it is not a forced winner count. City-specific costs and outcomes remain in the downloadable records.",
+                "Sensitivity",
+            )
+            prevalence = (
+                recommendation_rows.groupby("intervention", as_index=False)
+                .agg(
+                    cities=("city", "nunique"),
+                    match_options=("match_id", "count"),
+                    median_cost_per_passenger=("cost_per_passenger", "median"),
+                    median_gap_resolved=("gap_resolved_passengers", "median"),
+                    median_net_co2e_kg=("net_co2e_kg", "median"),
+                )
+                .sort_values(["cities", "match_options"], ascending=False)
+            )
+            prevalence.columns = [
+                "Intervention",
+                "Cities where Pareto-efficient",
+                "Match-level options",
+                "Median cost/passenger",
+                "Median gap resolved",
+                "Median net CO2e (kg)",
+            ]
+            st.dataframe(prevalence, hide_index=True, width="stretch")
+            callout(
+                "info",
+                "Repeated does not mean identical",
+                "Added frequency and shuttle service recur because they directly add passenger capacity. Their fleet miles, costs, emissions, and resolved gaps still vary with each city and match.",
+            )
 
     st.download_button("Download exact all-city comparison CSV", comparison.to_csv(index=False), file_name="all-city-mobility-comparison.csv", mime="text/csv", width="stretch")

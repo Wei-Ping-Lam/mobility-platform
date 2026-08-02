@@ -13,6 +13,7 @@ import streamlit as st
 
 from dashboard.mobility_platform.sources import GTFS_SOURCE, RICE_COLLECTION, rice_source
 from dashboard.models.demand import scenario_band, seasonal_baseline, validation_metrics
+from dashboard.models.economics import economic_impact_range
 from dashboard.ui.presentation import (
     AccessView,
     CityDecisionView,
@@ -78,7 +79,7 @@ def _fallback_recommendation(decision: CityDecisionView, access: AccessView) -> 
     metric = decision.metric
     if access.peak_demand_per_hour is None:
         missing.append("match-hour demand")
-    if access.transit_capacity_base is None:
+    if not access.capacity_qualified:
         missing.append("event transit capacity")
     if access.network_walk_distance_m is None:
         missing.append("walking-network access")
@@ -118,7 +119,7 @@ def _decision_rows(presentation: PlatformPresentation) -> pd.DataFrame:
         eligible_matches = [
             (match, decision.access(match.match_id))
             for match in decision.matches
-            if decision.access(match.match_id).status != "unavailable"
+            if decision.access(match.match_id).capacity_qualified
         ]
         if eligible_matches:
             match, access = max(
@@ -130,7 +131,7 @@ def _decision_rows(presentation: PlatformPresentation) -> pd.DataFrame:
             access = decision.access(match.match_id)
         recommendations = decision.recommendation_set(match.match_id)
         recommendation = recommendations[0] if recommendations else _fallback_recommendation(decision, access)
-        capacity_qualified = access.status != "unavailable"
+        capacity_qualified = access.capacity_qualified
         rows.append(
             {
                 "city": city,
@@ -295,6 +296,104 @@ def _movement_chart(movement: MovementView) -> tuple[go.Figure | None, pd.DataFr
     return style_figure(figure, 390), frame
 
 
+def _city_rows(value: Any, city: str) -> pd.DataFrame:
+    if not isinstance(value, pd.DataFrame) or value.empty or "city" not in value:
+        return pd.DataFrame()
+    return value[value["city"] == city].copy()
+
+
+def _rice_dataset_ledger(artifacts: Mapping[str, Any], city: str) -> pd.DataFrame:
+    specifications = (
+        ("store-visits-rice", "Commercial activity baseline and category mix", "visits"),
+        ("daily-weather-rice", "Heat-index context and route heat", "weather"),
+        ("urban-heat-index-rice", "Venue and walking-route heat context", "uhi"),
+        ("core-poi-geometry-rice", "Venue-support places and spatial bins", "poi"),
+        ("spend-patterns-rice", "Customer-home-state context", "origins"),
+        ("daily-spend-brand-and-state-rice", "Non-causal economic sensitivity baseline", "brand_spend"),
+    )
+    rows = []
+    for dataset, role, key in specifications:
+        city_frame = _city_rows(artifacts.get(key), city)
+        statuses = (
+            sorted(set(city_frame["evidence_status"].dropna().astype(str)))
+            if not city_frame.empty and "evidence_status" in city_frame
+            else []
+        )
+        rows.append(
+            {
+                "Supplied Rice dataset": dataset,
+                "Role in this city view": role,
+                "Rows available": len(city_frame),
+                "Evidence": ", ".join(statuses) if statuses else ("derived" if len(city_frame) else "unavailable"),
+            }
+        )
+    return pd.DataFrame(rows)
+
+
+def _render_rice_context(decision: CityDecisionView, artifacts: Mapping[str, Any]) -> None:
+    section_header(
+        "Supplied Rice data context",
+        "All six provided datasets are visible here. Commercial activity and spend support context and sensitivity analysis; neither is stadium attendance nor causal event impact.",
+        "Canonical data",
+    )
+    category = _city_rows(artifacts.get("visits_category"), decision.city)
+    spend = economic_impact_range(
+        artifacts.get("brand_spend", pd.DataFrame()),
+        decision.city,
+        event_days=max(len(decision.matches), 1),
+    )
+    left, right = st.columns([1.2, 1], gap="large")
+    with left:
+        if not category.empty and {"category", "daily_visits"}.issubset(category):
+            category["daily_visits"] = pd.to_numeric(category["daily_visits"], errors="coerce")
+            mix = (
+                category.groupby("category", as_index=False)["daily_visits"]
+                .mean()
+                .nlargest(10, "daily_visits")
+                .sort_values("daily_visits")
+            )
+            figure = px.bar(
+                mix,
+                x="daily_visits",
+                y="category",
+                orientation="h",
+                color_discrete_sequence=[COLORS["blue"]],
+            )
+            figure.update_xaxes(title="Average daily commercial visits proxy")
+            figure.update_yaxes(title=None)
+            st.plotly_chart(style_figure(figure, 360, legend=False), width="stretch", config={"displayModeBar": False})
+            with st.expander("Table alternative: commercial activity by category"):
+                st.dataframe(mix, hide_index=True, width="stretch")
+        else:
+            callout("warning", "Category activity unavailable", "Rebuild the Rice ETL to restore category-level commercial context.")
+    with right:
+        _metric_grid(
+            [
+                (
+                    _money(spend.get("baseline_daily_spend")),
+                    "Observed median daily spend",
+                    "derived" if spend.get("baseline_daily_spend") is not None else "unavailable",
+                    f"{spend.get('sample_size', 0)} daily observations",
+                    "teal",
+                ),
+                (
+                    _money_range(spend.get("low"), spend.get("high"), spend.get("base")),
+                    "Event-day spend sensitivity",
+                    str(spend.get("status", "unavailable")),
+                    f"{len(decision.matches)} match days; explicit uplift range",
+                    "amber",
+                ),
+            ]
+        )
+        callout(
+            "info",
+            "Economic context is not attributed impact",
+            "The range applies explicit 2%/5%/10% uplift assumptions to observed brand/state spend. It is not a causal estimate or ticket-holder spend.",
+        )
+    with st.expander("How all six supplied datasets are used", expanded=True):
+        st.dataframe(_rice_dataset_ledger(artifacts, decision.city), hide_index=True, width="stretch")
+
+
 def _coordinates(row: Mapping[str, Any]) -> tuple[float, float] | None:
     lat = row.get("lat", row.get("latitude", row.get("stop_lat")))
     lon = row.get("lon", row.get("longitude", row.get("stop_lon")))
@@ -378,6 +477,34 @@ def _scenario_table(scenarios: tuple[ScenarioView, ...]) -> pd.DataFrame:
     )
 
 
+def _implementation_readiness(
+    recommendations: tuple[RecommendationView, ...],
+    access: AccessView,
+) -> pd.DataFrame:
+    rows = []
+    for item in recommendations:
+        dependencies = list(item.dependencies)
+        local_gate = []
+        if not access.capacity_qualified:
+            local_gate.append("event-window capacity evidence")
+        if item.intervention in {"Bike and micromobility hubs", "Cooled walking corridors"} and access.walking_status != "derived":
+            local_gate.append("field-verified walking connection")
+        if "service" in item.intervention.lower() or "transit" in item.intervention.lower():
+            local_gate.append("fleet, operator, and timetable confirmation")
+        rows.append(
+            {
+                "Intervention": item.intervention,
+                "Candidate owner": item.responsible_actor,
+                "Lead-time band": item.lead_time_band,
+                "Planning cost": _money_range(item.cost_low, item.cost_high, item.cost_base),
+                "Dependencies": "; ".join(dependencies) or "Implementation plan",
+                "Local confirmation before commitment": "; ".join(dict.fromkeys(local_gate)) or "Agency budget and operating approval",
+                "Screening status": item.status,
+            }
+        )
+    return pd.DataFrame(rows)
+
+
 def _before_after(movement: MovementView, scenario: ScenarioView) -> pd.DataFrame:
     frame = pd.DataFrame(movement.hourly_rows)
     hour = _hour_column(frame)
@@ -422,12 +549,18 @@ def render_explorer(metrics: pd.DataFrame, artifacts: dict[str, Any], selected_c
 
     _metric_grid(
         [
-            (_safe(access.residual_passengers, " pph", 0), "Peak access gap", access.status, "Passengers per hour", "coral"),
+            (_safe(access.residual_passengers if access.capacity_qualified else None, " pph", 0), "Peak access gap", access.transit_status, "Passengers per hour", "coral"),
             (_safe(access.peak_demand_per_hour, " pph", 0), "Peak movement demand", movement.status, movement.uncertainty_type, "blue"),
-            (_number_range(access.transit_capacity_low, access.transit_capacity_high, access.transit_capacity_base, " pph"), "Scheduled transit capacity", access.status, "Planning capacity range", "teal"),
+            (_number_range(access.transit_capacity_low, access.transit_capacity_high, access.transit_capacity_base, " pph") if access.capacity_qualified else "Not qualified", "Scheduled transit capacity", access.transit_status, "Planning capacity range", "teal"),
             (recommendation.intervention, "Current priority", recommendation.status, recommendation.lead_time_band, "amber"),
         ]
     )
+    if access.capacity_qualified and float(access.transit_capacity_high or 0) == 0:
+        callout(
+            "warning",
+            "Observed scheduled-service zero near the venue",
+            "The pinned event-date GTFS feed contains no scheduled departures within the half-mile capacity catchment. This is treated as a severe first/last-mile gap, not missing data; special-event service not published in GTFS remains unmeasured.",
+        )
 
     movement_tab, map_tab, scenario_tab, evidence_tab = st.tabs(["Movement", "Map & layers", "Scenarios", "Evidence"])
     with movement_tab:
@@ -447,6 +580,7 @@ def render_explorer(metrics: pd.DataFrame, artifacts: dict[str, Any], selected_c
             else:
                 callout("info", "Commercial activity artifact unavailable", "Run the offline Rice ETL to restore historical city context.")
         st.caption("Rice store visits describe commercial activity. They are not stadium attendance or ticket-holder behavior.")
+        _render_rice_context(decision, artifacts)
 
     with map_tab:
         section_header("Venue access evidence", "Choose route, service, heat, venue-support, and origin-context layers. Unavailable layers remain listed rather than silently omitted.", "Place")
@@ -536,6 +670,22 @@ def render_explorer(metrics: pd.DataFrame, artifacts: dict[str, Any], selected_c
         else:
             st.dataframe(pareto_table, hide_index=True, width="stretch")
 
+        section_header(
+            "Implementation readiness",
+            "Translate each screening option into owner, lead time, dependencies, and the local confirmation required before a city commits funds.",
+            "Delivery",
+        )
+        readiness = _implementation_readiness(recommendations, access)
+        if readiness.empty:
+            callout("warning", "Implementation record unavailable", "A match-scoped Pareto option is required before delivery planning can begin.")
+        else:
+            st.dataframe(readiness, hide_index=True, width="stretch")
+            callout(
+                "warning",
+                "Planning readiness is not agency approval",
+                "Fleet, labor, right-of-way, procurement, operating plans, and local budgets must be confirmed by the named actors.",
+            )
+
         section_header("Before and after by hour", "Arrival spreading changes timing only and preserves total demand. Other intervention effects remain in the package outcomes above.", "Time")
         timeline = _before_after(movement, selected)
         if timeline.empty:
@@ -556,7 +706,9 @@ def render_explorer(metrics: pd.DataFrame, artifacts: dict[str, Any], selected_c
         evidence = [
             ("Official match", match.status, "Pinned FIFA schedule supplement"),
             ("Movement scenario", movement.status, movement.uncertainty_type),
-            ("Access gap", access.status, "Event transit capacity + network access"),
+            ("Transit capacity gap", access.transit_status, "Event-window scheduled service + planning vehicle capacity"),
+            ("Walking route", access.walking_status, "OSM network path to an event-relevant stop"),
+            ("Route heat", access.heat_status, "Rice weather/UHI along an eligible path"),
             ("Transit", str(decision.metric.get("transit_status", "unavailable")), GTFS_SOURCE),
             ("Heat", str(decision.metric.get("heat_status", "unavailable")), rice_source("daily-weather-rice", "event-window heat")),
             ("Urban heat", str(decision.metric.get("uhi_status", "unavailable")), rice_source("urban-heat-index-rice", "venue context")),
@@ -642,7 +794,24 @@ def render_methods(metrics: pd.DataFrame, artifacts: dict[str, Any]) -> None:
             st.dataframe(network_table, hide_index=True, width="stretch")
         gtfs_rows = []
         for city, value in sorted(artifacts.get("gtfs", {}).items() if isinstance(artifacts.get("gtfs", {}), Mapping) else []):
-            gtfs_rows.append({"City": city, "Feed status": value.get("feed_status", "unavailable"), "Score status": value.get("score_status", "unavailable"), "Hash": value.get("sha256") or value.get("content_hash"), "Calendar": value.get("calendar_validity"), "Event departures": value.get("event_window_departures"), "Nearest stop": value.get("nearest_stop_mi")})
+            feeds = value.get("feeds", []) if isinstance(value, Mapping) else []
+            if not feeds:
+                feeds = [{}]
+            for feed in feeds:
+                gtfs_rows.append(
+                    {
+                        "City": city,
+                        "Agency": feed.get("agency", "Agency unavailable"),
+                        "Feed status": feed.get("status", value.get("feed_status", "unavailable")),
+                        "Archive provider": feed.get("archive_provider") or "Publisher URL with enforced hash",
+                        "Valid from": feed.get("valid_from"),
+                        "Valid to": feed.get("valid_to"),
+                        "Assigned matches": len(feed.get("assigned_match_ids", [])),
+                        "Event-valid matches": len(feed.get("event_valid_match_ids", [])),
+                        "SHA-256": feed.get("sha256"),
+                        "Publisher URL": feed.get("publisher_url") or feed.get("url"),
+                    }
+                )
         if gtfs_rows:
             st.markdown("##### Pinned transit feeds")
             st.dataframe(pd.DataFrame(gtfs_rows), hide_index=True, width="stretch")
