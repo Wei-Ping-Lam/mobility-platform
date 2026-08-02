@@ -55,10 +55,14 @@ gaps and intervention outcomes—not rank—lead the decision.
 - Hourly movement, physical access, intervention accounting, city differentiation,
   Pareto screening, and all three UI workspaces are implemented and tested.
 - EPA/FTA/FHWA inputs are pinned as scenario/estimated planning ranges.
+- The GTFS refresh produced event-valid evidence for 38 matches across six cities;
+  three downloaded feeds are outside the event window and Kansas City/Philadelphia
+  remain unavailable.
 
 ### Required before the competition-ready claim
 
-- Pin event-valid GTFS feeds and five-mile OSM networks for all 11 cities.
+- Repair or replace failed/out-of-window GTFS feeds and pin five-mile OSM networks
+  so every city has capacity-qualified access evidence.
 - Replace the estimated walking fixture with validated network extracts and route geometry.
 - Run the final full-data, narrow-screen, and screenshot release record against the integrated branch.
 - Replace the team/contact placeholders above.

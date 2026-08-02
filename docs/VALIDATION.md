@@ -18,8 +18,9 @@ completed analytical result.
 - Current demand validation reports 22 holdouts: the candidate beats the
   seasonal-naive comparator in 2024 for 11 cities and in 2023 for zero. It is
   therefore a planning scenario, not a validated prediction.
-- Eligible GTFS evidence is currently unavailable for strict transportation
-  comparison. No legacy number becomes observed evidence.
+- The 2026-08-02 GTFS refresh produced four observed cities and two usable partial
+  multi-agency cities. Three cities are outside the event window and Kansas City
+  and Philadelphia failed; they remain unavailable. No legacy number became observed.
 
 ## Release data gates
 
@@ -80,21 +81,24 @@ completed analytical result.
 
 ## Release evidence record — 2026-08-01
 
-- Integration commit: `b008af7` (transportation bundle wiring; documentation
-  reconciliation follows in a separate commit).
-- Automated suite: `138 passed`.
+- Integration commits: `b008af7` (transportation bundle wiring) and `7ec3cad`
+  (refreshed, per-match GTFS capacity evidence).
+- Automated suite: `139 passed`.
 - Ruff: passed for `dashboard`.
 - Whitespace: `git diff --check` passed.
 - Public cache validator: 78 schedule events, 11 walking city fixtures, 11 GTFS
-  city records, five factor families; validator passed.
+  city records, five factor families; validator passed. The refreshed GTFS snapshot
+  SHA-256 is `7d27c0f19982e667ce936ad107f5f19d7aaab118cecd33672b6be1be95ff1ded`;
+  it is partial with 38 event-valid matches across four observed, two usable partial,
+  and five unavailable cities.
 - Streamlit AppTest: Executive, Explorer, and Methods & QA rendered without an
   exception; all 11 cities and named scenarios passed adapter checks.
 - Local cache-only preview: HTTP 200 at `http://127.0.0.1:8502`.
 - Screenshot record: not completed because the in-app browser policy blocked the
   visual connection. No screenshot claim is made.
-- Known release failures: GTFS feeds remain unavailable; walking layers are
-  estimated schema fixtures rather than pinned OSM extracts; team/contact metadata
-  is missing; final desktop/narrow screenshot review remains outstanding.
+- Known release failures: five cities lack event-valid GTFS evidence; walking
+  layers are estimated schema fixtures rather than pinned OSM extracts; team/contact
+  metadata is missing; final desktop/narrow screenshot review remains outstanding.
 - Narrative reconciliation: completed against the current evidence-to-claim and
   supplemental-source registers. Capacity-qualified access gaps are withheld while
   GTFS is unavailable.

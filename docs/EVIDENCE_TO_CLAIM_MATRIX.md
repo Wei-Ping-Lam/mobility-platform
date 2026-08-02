@@ -10,8 +10,8 @@ evidence. Presenters must also check its status, source record, and release gate
 | Attendance planning range | `MovementScenario.attendance_low`, `MovementScenario.attendance_base`, `MovementScenario.attendance_high` | Editable attendance scenario, not observed attendance | Integrated as scenario evidence for every match |
 | Hourly arrivals and departures | `MovementScenario.hourly_rows`, `MovementScenario.uncertainty_type` | Planning range by hour; “validated baseline” only after both holdouts pass | Integrated as planning scenario; both-year validation gate fails |
 | Peak passenger demand | `AccessGapResult.peak_demand_per_hour` | Scenario peak passengers per hour | Integrated and visible for all 11 cities |
-| Scheduled transit capacity | `AccessGapResult.transit_capacity_low`, `AccessGapResult.transit_capacity_base`, `AccessGapResult.transit_capacity_high` | Capacity range inferred from pinned schedules and explicit vehicle assumptions, not ridership | Parser integrated; all current city feeds unavailable |
-| Residual passenger gap | `AccessGapResult.residual_passengers` | Scenario passengers not covered by modeled scheduled capacity | Model integrated; UI withholds capacity-qualified gap while GTFS is unavailable |
+| Scheduled transit capacity | `AccessGapResult.transit_capacity_low`, `AccessGapResult.transit_capacity_base`, `AccessGapResult.transit_capacity_high` | Capacity range inferred from pinned schedules and explicit vehicle assumptions, not ridership | Event-valid evidence for 38 matches in six cities; five cities remain unavailable |
+| Residual passenger gap | `AccessGapResult.residual_passengers` | Scenario passengers not covered by modeled scheduled capacity | Visible only for event-valid matches; withheld elsewhere |
 | Network walk distance | `AccessGapResult.network_walk_distance_m` | OSM-derived network distance with stated coverage | Estimated fixture visible; actual network extract pending |
 | Post-match service span | `AccessGapResult.service_span_after_match_min` | Scheduled minutes of service after a match | Unavailable pending event-valid GTFS refresh |
 | Route heat exposure | `AccessGapResult.route_heat_exposure_c` | Heat-exposure proxy along modeled access routes | Rice heat proxy integrated; network route overlay pending |
@@ -32,8 +32,8 @@ evidence. Presenters must also check its status, source record, and release gate
 - Contract `0.3.0` defines the release interfaces above.
 - The current demand implementation remains a planning scenario because it did
   not beat its seasonal-naive comparator in both validation years.
-- Current strict transit comparison is unavailable until eligible, pinned GTFS
-  snapshots are integrated.
+- Strict transit comparison is available only for cities passing feed hash,
+  required-file, and event-window gates; failed/out-of-window cities remain unavailable.
 
 ## Claim rule
 

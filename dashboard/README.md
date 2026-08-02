@@ -12,11 +12,12 @@ physical access contracts, six intervention types, Pareto recommendations,
 three decision workspaces, and Methods & QA downloads. Cited factor ranges are
 integrated as scenario/estimated evidence.
 
-Two transportation evidence gaps remain release blockers: all GTFS city records
-are unavailable until the explicit feed refresh succeeds, and the displayed OSM
-geometry is an estimated contract fixture rather than a pinned five-mile extract.
-The UI suppresses capacity-qualified gaps and marks recommendations partial while
-those inputs remain unavailable.
+Transportation evidence remains incomplete after the explicit GTFS refresh:
+38 matches across four observed cities plus Los Angeles and Seattle have usable
+event-valid service; three cities are outside the event window, and Kansas City/
+Philadelphia failed. The displayed OSM geometry is an estimated contract fixture rather than
+a pinned five-mile extract. The UI suppresses capacity-qualified gaps and marks
+recommendations partial wherever event-valid service remains unavailable.
 
 ## Run locally
 
