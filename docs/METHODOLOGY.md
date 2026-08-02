@@ -5,8 +5,8 @@ scenarios. Raw data stay local; only compact artifacts enter the dashboard.
 
 ```mermaid
 flowchart LR
-  A[Six local datasets] --> B[Offline ETL]
-  G[Pinned GTFS snapshots] --> C[Venue access evidence]
+  A[Six Rice WC Hack datasets] --> B[Offline ETL]
+  G[Supplemental pinned GTFS snapshots] --> C[Venue access evidence]
   B --> D[Manifest and QA report]
   B --> E[City evidence artifacts]
   C --> E
@@ -38,8 +38,11 @@ flowchart LR
 
 ## Release decision rule
 
-The default Executive ranking uses only cities whose non-zero-weight core
-components have observed or derived evidence. A missing GTFS feed, incomplete
-weather/POI/UHI artifact, or estimated-only component stays visible with its
-status and lowers the rankable count; it does not become a silent fallback.
-
+The default Executive view uses the `rice_supplied_data` profile: 35% heat,
+25% UHI, 40% venue support, and 0% transit. This allows the supplied collection
+to support a transparent comparison while the interface explicitly says that
+transit is excluded. Transit-weighted profiles remain available and rank only
+cities whose non-zero-weight components have observed or derived evidence. A
+missing GTFS feed, incomplete weather/POI/UHI artifact, or estimated-only
+component stays visible with its status and lowers the rankable count; it does
+not become a silent fallback.

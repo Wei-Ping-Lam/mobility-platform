@@ -17,8 +17,11 @@ a certified safety model, traffic forecast, or fan-origin model.
 
 ## Score behavior
 
-The headline score is a weighted average of the four dimensions. The default
-profile is Balanced: Transit 35%, Heat 20%, UHI 15%, Venue Support 30%.
+The headline score is a weighted average of the four dimensions. The dashboard
+defaults to the supplied-data lens: Heat 35%, UHI 25%, Venue Support 40%, and
+Transit 0%. This supports a comparison from the Rice collection while the UI
+states that transit has been excluded. The Balanced profile remains available:
+Transit 35%, Heat 20%, UHI 15%, Venue Support 30%.
 
 Observed and derived metrics participate in strict mode. Estimated metrics are
 only included after the user opts in. Missing data is never silently converted
@@ -52,6 +55,8 @@ stadium attendance, or a local-GDP forecast.
 ## Known limitations
 
 - Combined source markets require partial allocation.
+- The supplied-data lens is not a complete transportation-readiness score
+  because it deliberately excludes transit service evidence.
 - `CUSTOMER_HOME_CITY` describes general consumer mobility, not ticketed fans.
 - GTFS availability and agency coverage vary by city.
 - POI density does not establish safe or accessible pedestrian routes.

@@ -46,7 +46,8 @@ but it will show compatibility warnings and strict rankings will be limited.
 
 ## Offline ETL outputs
 
-The ETL consumes all six supplied datasets:
+The canonical source root is the local, read-only `Rice WC Hack/` directory.
+The ETL consumes all six supplied datasets from that collection:
 
 | Artifact | Source |
 | --- | --- |
@@ -64,7 +65,10 @@ and are marked as partial evidence. No substring-based city matching is used.
 
 ## GTFS policy
 
-GTFS results are pinned snapshots. The snapshot records feed URLs, timestamps,
+GTFS is supplemental evidence, not part of the supplied `Rice WC Hack/`
+collection. The default Rice supplied-data lens excludes transit from its score
+while retaining an explicit unavailable/partial transit status. Transit-weighted
+profiles require pinned GTFS snapshots. Each snapshot records feed URLs, timestamps,
 SHA-256 hashes, required-file status, route counts, stops, scheduled departures,
 service hours, and venue distances.
 
@@ -77,6 +81,7 @@ has no score and is never silently replaced by an expert estimate.
 - Event demand bands are scenarios unless holdout validation supports predictive language.
 - Traffic outputs estimate vehicle pressure and capacity displacement; they do not measure roadway congestion.
 - Estimated values require explicit opt-in and are excluded from the default strict ranking.
+- The default Rice supplied-data lens ranks only on supplied weather, UHI, and POI support; it is not labeled as complete mobility readiness without transit evidence.
 - All source coverage, assumptions, and statuses are visible in the Methods & QA view.
 
 ## Tests and parallel work

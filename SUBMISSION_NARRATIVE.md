@@ -17,7 +17,8 @@ ridership, and a scenario is not a forecast.
 ### The solution
 
 The platform is an evidence-first Streamlit decision-support tool for the 11
-US host cities. It combines six supplied datasets with a separately pinned
+US host cities. It treats the six datasets in the local `Rice WC Hack/`
+collection as the canonical supplied evidence and can add a separately pinned
 GTFS snapshot and produces compact, reproducible artifacts through an offline
 ETL. Decision-makers can compare cities, inspect venue-centered evidence, test
 transport interventions, and download the exact metrics and assumptions shown
@@ -43,9 +44,12 @@ venue-centered components:
 - UHI safety from urban-heat points near the venue; and
 - venue-support density from POIs within one mile.
 
-The default Balanced profile is 35% transit, 20% heat, 15% UHI, and 30% venue
-support. Additional named profiles and custom weights are available. Weights
-are normalized and every component is clipped to the 0-100 scale.
+The default supplied-data profile is 35% heat, 25% UHI, and 40% venue support;
+transit has zero weight and the UI explicitly warns that this is not a complete
+transit-readiness comparison. The Balanced profile (35% transit, 20% heat, 15%
+UHI, and 30% venue support), other named profiles, and custom weights remain
+available once supplemental transit evidence is present. Weights are normalized
+and every component is clipped to the 0-100 scale.
 
 An incomplete city keeps a weighted-available partial MRS for auditability, but
 its explicit `rankable` flag is false until every non-zero-weight core
@@ -79,7 +83,7 @@ and downloadable scenarios make follow-up measurement possible after 2026.
 
 ### Data provenance
 
-The offline ETL processes:
+The offline ETL processes all six datasets under `Rice WC Hack/`:
 
 | Dataset | Derived output | Use |
 | --- | --- | --- |

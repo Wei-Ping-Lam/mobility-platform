@@ -17,6 +17,11 @@
 
 ## Current platform contract
 
+The canonical supplied-data root is the repository-local `Rice WC Hack/`
+directory. It contains all six datasets below, remains read-only and untracked,
+and is the source named in derived metric provenance. GTFS is a separate,
+supplemental source and must not be described as part of the Rice collection.
+
 The live dashboard does not scan these files at startup. The offline ETL reads
 them in bounded chunks, validates partitions, keys, dates, coordinates, ranges,
 nulls, and known sentinels, and writes compact Parquet artifacts plus
@@ -26,6 +31,12 @@ and quality checks. Combined source markets are allocated only through the
 explicit mappings in `dashboard/mobility_platform/mappings.py` and retain a
 partial-evidence warning.
 
+The current full-data audit found all expected partitions except the documented
+`daily-weather-rice_2_0_0.csv.gz`. It also found two valid
+`CUSTOMER_HOME_CITY` JSON representations; the ETL supports and tests both.
+The run-specific row counts and hashes in `dashboard/cache/manifest.json` are
+authoritative over the approximate inventory figures below.
+
 The source data are noisy educational data. Store visits and commercial spend
 are mobility/economic proxies, not stadium attendance or ticketed-fan behavior.
 
@@ -33,8 +44,8 @@ are mobility/economic proxies, not stadium attendance or ticketed-fan behavior.
 
 | Dataset | Files | Compressed Size | Records (est.) | Date Range | Granularity |
 |---|---|---|---|---|---|
-| `store-visits-rice` | 32 × .csv.gz | 6.8 GB | ~500 M rows | 2020–2024 daily | Store × Day |
-| `spend-patterns-rice` | 32 × .csv.gz | 719 MB | ~2 M rows | 2020–2024 monthly | Location × Month |
+| `store-visits-rice` | 32 × .csv.gz | 6.8 GB | 223,342,163 rows | 2020–2024 daily | Store × Day |
+| `spend-patterns-rice` | 32 × .csv.gz | 719 MB | 1,026,618 rows | 2019–2024 monthly | Location × Month |
 | `daily-spend-brand-and-state-rice` | 32 × .csv.gz | 341 MB | ~20 M rows | 2020–2024 daily | Brand × State × Day |
 | `core-poi-geometry-rice` | 32 × .csv.gz | 189 MB | ~520 K rows | — | Location (static) |
 | `daily-weather-rice` | 31 × .csv.gz | 22 MB | ~730 K rows | 2020–2024 daily | Station × Day |
