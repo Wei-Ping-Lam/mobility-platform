@@ -17,12 +17,13 @@ This repository uses isolated branches and Git worktrees so agents and people ca
 
 | Stream | Branch | Worktree | Owned paths | Depends on |
 | --- | --- | --- | --- | --- |
-| W0 Foundation | `work/foundation` | `.worktrees/foundation` | `dashboard/app.py`, `dashboard/mobility_platform/`, `dashboard/requirements.txt`, `.gitignore`, `WORKSTREAMS.md` | None |
-| W1 ETL | `work/etl` | `.worktrees/etl` | `dashboard/pipeline/etl/`, `dashboard/pipeline/schemas/`, `dashboard/tests/etl/`, `dashboard/cache/manifest.json` | W0 contracts |
-| W2 GTFS | `work/gtfs` | `.worktrees/gtfs` | `dashboard/pipeline/gtfs/`, `dashboard/tests/gtfs/`, `data/gtfs_transit_scores.*` | W0 contracts |
-| W3 Models | `work/models` | `.worktrees/models` | `dashboard/domain/`, `dashboard/models/`, `dashboard/tests/models/` | W0 contracts |
-| W4 UI | `work/ui` | `.worktrees/ui` | `dashboard/ui/`, `dashboard/viz/`, `dashboard/tests/ui/` | W0 contracts |
-| W5 QA/docs | `work/qa-docs` | `.worktrees/qa-docs` | `dashboard/tests/integration/`, `docs/`, `DATA_DOCUMENTATION.md`, `SUBMISSION_NARRATIVE.md`, `dashboard/README.md` | W1–W4 interfaces |
+| W0 Foundation | integration-owned | repository root | `dashboard/app.py`, shared contracts/source registry, fixtures, `.gitignore`, `WORKSTREAMS.md` | None |
+| W1 Public evidence | `work/gtfs` | `.worktrees/gtfs` | `dashboard/pipeline/gtfs/`, `dashboard/pipeline/public/`, `dashboard/tests/gtfs/`, `dashboard/tests/public/`, `data/snapshots/` | W0 contracts |
+| W2 Rice enrichment | `work/etl` | `.worktrees/etl` | `dashboard/pipeline/etl/`, `dashboard/pipeline/schemas/`, `dashboard/tests/etl/`, Rice-derived cache artifacts | W0 contracts |
+| W3 Movement/access | `work/models` | `.worktrees/models` | `dashboard/models/movement.py`, `dashboard/models/access.py`, `dashboard/tests/models/` | W0 fixtures |
+| W4 Interventions | `work/interventions` | `.worktrees/interventions` | `dashboard/models/interventions.py`, `dashboard/tests/interventions/` | W0 fixtures |
+| W5 UI | `work/ui` | `.worktrees/ui` | `dashboard/ui/`, `dashboard/viz/`, `dashboard/tests/ui/` | W0 fixtures |
+| W6 QA/docs | `work/qa-docs` | `.worktrees/qa-docs` | `dashboard/tests/integration/`, `docs/`, `DATA_DOCUMENTATION.md`, `SUBMISSION_NARRATIVE.md`, `dashboard/README.md` | W1-W5 interfaces |
 
 `dashboard/app.py` becomes integration-owned after W0. Workstreams wire features through modules and do not edit the application shell.
 
@@ -30,11 +31,18 @@ This repository uses isolated branches and Git worktrees so agents and people ca
 
 The `dashboard/mobility_platform/contracts.py` module owns the stable data contracts:
 
-- Contract version: `0.2.0` (`CONTRACT_VERSION`)
+- Contract version: `0.3.0` (`CONTRACT_VERSION`)
 
 - `DataManifest`
 - `DataQualityReport`
 - `EvidenceMetric`
+- `SourceReference`
+- `MatchEvent`
+- `MovementScenario`
+- `AccessGapResult`
+- `InterventionPackage`
+- `InterventionOutcome`
+- `InvestmentRecommendation`
 - `CityMetrics`
 - `ScenarioConfig`
 - `ScenarioResult`
@@ -55,10 +63,10 @@ Each workstream PR must state:
 ## Local worktree setup
 
 ```powershell
-git worktree add .worktrees/foundation -b work/foundation integration/rigor-upgrade
 git worktree add .worktrees/etl -b work/etl integration/rigor-upgrade
 git worktree add .worktrees/gtfs -b work/gtfs integration/rigor-upgrade
 git worktree add .worktrees/models -b work/models integration/rigor-upgrade
+git worktree add .worktrees/interventions -b work/interventions integration/rigor-upgrade
 git worktree add .worktrees/ui -b work/ui integration/rigor-upgrade
 git worktree add .worktrees/qa-docs -b work/qa-docs integration/rigor-upgrade
 ```

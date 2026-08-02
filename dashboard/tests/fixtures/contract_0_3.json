@@ -1,0 +1,45 @@
+{
+  "source": {
+    "source": "Official FIFA schedule",
+    "url": "https://www.fifa.com/",
+    "publisher": "FIFA",
+    "retrieved_at_utc": "2026-01-01T00:00:00Z",
+    "version": "fixture-1",
+    "sha256": "fixture",
+    "license": "reference-only",
+    "coverage_start": "2026-06-11",
+    "coverage_end": "2026-07-19",
+    "status": "observed"
+  },
+  "match": {
+    "match_id": "ATL-01",
+    "city": "Atlanta",
+    "venue": "Mercedes-Benz Stadium",
+    "kickoff_local": "2026-06-15T15:00:00-04:00",
+    "stage": "group",
+    "capacity": 71000
+  },
+  "movement": {
+    "city": "Atlanta",
+    "match_id": "ATL-01",
+    "status": "scenario",
+    "uncertainty_type": "planning range",
+    "attendance_low": 60350,
+    "attendance_base": 67450,
+    "attendance_high": 71000,
+    "hourly_rows": []
+  },
+  "access_gap": {
+    "city": "Atlanta",
+    "match_id": "ATL-01",
+    "status": "scenario",
+    "peak_demand_per_hour": 18000,
+    "transit_capacity_low": 6000,
+    "transit_capacity_base": 8000,
+    "transit_capacity_high": 10000,
+    "residual_passengers": 10000,
+    "network_walk_distance_m": 420,
+    "service_span_after_match_min": 180,
+    "route_heat_exposure_c": 33.2
+  }
+}

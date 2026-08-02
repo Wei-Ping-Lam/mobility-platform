@@ -16,7 +16,7 @@ except ImportError:  # Python 3.8-3.10 preview compatibility
             return self.value
 
 
-CONTRACT_VERSION = "0.2.0"
+CONTRACT_VERSION = "0.3.0"
 
 
 class EvidenceStatus(StrEnum):
@@ -26,6 +26,155 @@ class EvidenceStatus(StrEnum):
     ESTIMATED = "estimated"
     UNAVAILABLE = "unavailable"
     SCENARIO = "scenario"
+
+
+@dataclass(frozen=True)
+class SourceReference:
+    source: str
+    url: str
+    publisher: str
+    retrieved_at_utc: str
+    version: str
+    sha256: str
+    license: str
+    coverage_start: str | None = None
+    coverage_end: str | None = None
+    status: EvidenceStatus = EvidenceStatus.OBSERVED
+    notes: str = ""
+
+    def to_dict(self) -> dict[str, Any]:
+        data = asdict(self)
+        data["status"] = self.status.value
+        return data
+
+
+@dataclass(frozen=True)
+class MatchEvent:
+    match_id: str
+    city: str
+    venue: str
+    kickoff_local: str
+    stage: str
+    capacity: int
+    source: SourceReference
+
+    def to_dict(self) -> dict[str, Any]:
+        data = asdict(self)
+        data["source"] = self.source.to_dict()
+        return data
+
+
+@dataclass(frozen=True)
+class MovementScenario:
+    city: str
+    match_id: str
+    status: EvidenceStatus
+    uncertainty_type: str
+    attendance_low: int
+    attendance_base: int
+    attendance_high: int
+    hourly_rows: tuple[dict[str, Any], ...]
+    assumptions: tuple[str, ...] = field(default_factory=tuple)
+
+    def to_dict(self) -> dict[str, Any]:
+        data = asdict(self)
+        data["status"] = self.status.value
+        data["hourly_rows"] = list(self.hourly_rows)
+        data["assumptions"] = list(self.assumptions)
+        return data
+
+
+@dataclass(frozen=True)
+class AccessGapResult:
+    city: str
+    match_id: str
+    status: EvidenceStatus
+    peak_demand_per_hour: float
+    transit_capacity_low: float
+    transit_capacity_base: float
+    transit_capacity_high: float
+    residual_passengers: float
+    network_walk_distance_m: float | None
+    service_span_after_match_min: float | None
+    route_heat_exposure_c: float | None
+    assumptions: tuple[str, ...] = field(default_factory=tuple)
+
+    def to_dict(self) -> dict[str, Any]:
+        data = asdict(self)
+        data["status"] = self.status.value
+        data["assumptions"] = list(self.assumptions)
+        return data
+
+
+@dataclass(frozen=True)
+class InterventionPackage:
+    name: str
+    shuttle_buses_per_hour: int = 0
+    added_transit_departures_per_hour: int = 0
+    park_ride_spaces: int = 0
+    bike_hub_spaces: int = 0
+    cooled_walkway_km: float = 0.0
+    arrival_spreading_pct: float = 0.0
+
+    def __post_init__(self) -> None:
+        values = asdict(self)
+        invalid = [key for key, value in values.items() if key != "name" and float(value) < 0]
+        if invalid:
+            raise ValueError(f"Intervention values must be nonnegative: {', '.join(invalid)}")
+        if self.arrival_spreading_pct > 100:
+            raise ValueError("arrival_spreading_pct must be at most 100")
+
+
+@dataclass(frozen=True)
+class InterventionOutcome:
+    city: str
+    match_id: str
+    package: InterventionPackage
+    status: EvidenceStatus
+    gap_resolved_passengers: float
+    venue_vehicle_trips_low: float
+    venue_vehicle_trips_base: float
+    venue_vehicle_trips_high: float
+    net_vmt_low: float
+    net_vmt_base: float
+    net_vmt_high: float
+    net_co2e_kg_low: float
+    net_co2e_kg_base: float
+    net_co2e_kg_high: float
+    heat_exposure_person_hours_avoided: float
+    cost_low: float
+    cost_base: float
+    cost_high: float
+    assumptions: tuple[str, ...] = field(default_factory=tuple)
+
+    def to_dict(self) -> dict[str, Any]:
+        data = asdict(self)
+        data["status"] = self.status.value
+        data["assumptions"] = list(self.assumptions)
+        return data
+
+
+@dataclass(frozen=True)
+class InvestmentRecommendation:
+    city: str
+    intervention: str
+    rationale: str
+    status: EvidenceStatus
+    cost_low: float
+    cost_base: float
+    cost_high: float
+    gap_resolved_passengers: float
+    cost_per_passenger: float | None
+    net_co2e_kg: float
+    lead_time_band: str
+    responsible_actor: str
+    dependencies: tuple[str, ...] = field(default_factory=tuple)
+
+    def to_dict(self) -> dict[str, Any]:
+        data = asdict(self)
+        data["status"] = self.status.value
+        data["dependencies"] = list(self.dependencies)
+        return data
 
 
 @dataclass(frozen=True)

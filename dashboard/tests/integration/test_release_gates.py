@@ -11,7 +11,17 @@ from dashboard.domain.scoring import (
     normalize_weights,
     uhi_safety_score,
 )
-from dashboard.mobility_platform.contracts import EvidenceMetric, EvidenceStatus, ScenarioConfig
+from dashboard.mobility_platform.contracts import (
+    CONTRACT_VERSION,
+    AccessGapResult,
+    EvidenceMetric,
+    EvidenceStatus,
+    InterventionPackage,
+    MatchEvent,
+    MovementScenario,
+    ScenarioConfig,
+    SourceReference,
+)
 from dashboard.mobility_platform.mappings import HOST_CITIES
 
 
@@ -63,6 +73,36 @@ def test_evidence_metric_serializes_required_provenance_fields():
         assumptions=("fixture assumption",),
     ).to_dict()
     assert {"value", "unit", "status", "source", "coverage_start", "coverage_end", "sample_size", "uncertainty_low", "uncertainty_high", "assumptions"}.issubset(metric)
+
+
+def test_contract_0_3_fixture_round_trips():
+    fixture_path = Path(__file__).parents[1] / "fixtures" / "contract_0_3.json"
+    fixture = json.loads(fixture_path.read_text(encoding="utf-8"))
+    source = SourceReference(**{**fixture["source"], "status": EvidenceStatus(fixture["source"]["status"])})
+    match = MatchEvent(**fixture["match"], source=source)
+    movement = MovementScenario(
+        **{
+            **fixture["movement"],
+            "status": EvidenceStatus(fixture["movement"]["status"]),
+            "hourly_rows": tuple(fixture["movement"]["hourly_rows"]),
+        }
+    )
+    access = AccessGapResult(
+        **{**fixture["access_gap"], "status": EvidenceStatus(fixture["access_gap"]["status"])}
+    )
+    assert CONTRACT_VERSION == "0.3.0"
+    assert match.to_dict()["source"]["publisher"] == "FIFA"
+    assert movement.to_dict()["status"] == "scenario"
+    assert access.to_dict()["residual_passengers"] == 10000
+
+
+def test_intervention_package_rejects_invalid_values():
+    try:
+        InterventionPackage(name="invalid", arrival_spreading_pct=101)
+    except ValueError:
+        pass
+    else:
+        raise AssertionError("arrival spreading above 100% must be rejected")
 
 
 def test_application_shell_does_not_scan_raw_data():
