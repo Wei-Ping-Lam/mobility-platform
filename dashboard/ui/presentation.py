@@ -178,6 +178,15 @@ class ScenarioView:
     cost_low: float | None = None
     cost_base: float | None = None
     cost_high: float | None = None
+    capital_cost_low: float | None = None
+    capital_cost_base: float | None = None
+    capital_cost_high: float | None = None
+    operating_cost_low: float | None = None
+    operating_cost_base: float | None = None
+    operating_cost_high: float | None = None
+    arrival_shifted_pph_low: float | None = None
+    arrival_shifted_pph_base: float | None = None
+    arrival_shifted_pph_high: float | None = None
     lead_time_band: str = "Not available"
     basis: str = "contract 0.3"
     package: dict[str, Any] = field(default_factory=dict)
@@ -209,6 +218,16 @@ class RecommendationView:
     lead_time_band: str = "Not available"
     responsible_actor: str = "Not assigned"
     dependencies: tuple[str, ...] = field(default_factory=tuple)
+    comparison_cost_base: float | None = None
+    cost_basis: str = "Unspecified planning cost"
+    evidence_quality: str = "low"
+    evidence_qualified: bool = False
+    evidence_reason: str = "Evidence gate not evaluated."
+    heat_person_hours_avoided: float | None = None
+    equation_ids: tuple[str, ...] = field(default_factory=tuple)
+
+    def to_dict(self) -> dict[str, Any]:
+        return _json_value(asdict(self))
 
 
 @dataclass(frozen=True)
@@ -252,6 +271,9 @@ class PlatformPresentation:
     network_rows: tuple[dict[str, Any], ...]
     validation_rows: tuple[dict[str, Any], ...]
     sensitivity_rows: tuple[dict[str, Any], ...]
+    equation_rows: tuple[dict[str, Any], ...] = field(default_factory=tuple)
+    policy_rows: tuple[dict[str, Any], ...] = field(default_factory=tuple)
+    assumption_rows: tuple[dict[str, Any], ...] = field(default_factory=tuple)
 
     def city(self, name: str) -> CityDecisionView:
         return self.cities[name if name in self.cities else sorted(self.cities)[0]]
@@ -266,6 +288,12 @@ class PlatformPresentation:
             "movement": asdict(decision.movement(match.match_id)),
             "access_gap": asdict(decision.access(match.match_id)),
             "scenarios": [item.to_dict() for item in decision.scenario_set(match.match_id)],
+            "nondominated_options": [
+                item.to_dict() for item in decision.recommendation_set(match.match_id)
+            ],
+            "equations": list(self.equation_rows),
+            "recommendation_policy": list(self.policy_rows),
+            "assumption_registry": list(self.assumption_rows),
         }
         return json.dumps(_json_value(payload), indent=2, sort_keys=True)
 
@@ -326,6 +354,15 @@ def _adapt_scenario(raw: Mapping[str, Any], name: str) -> ScenarioView:
         cost_low=_number(raw.get("cost_low")),
         cost_base=_number(raw.get("cost_base")),
         cost_high=_number(raw.get("cost_high")),
+        capital_cost_low=_number(raw.get("capital_cost_low")),
+        capital_cost_base=_number(raw.get("capital_cost_base")),
+        capital_cost_high=_number(raw.get("capital_cost_high")),
+        operating_cost_low=_number(raw.get("operating_cost_low")),
+        operating_cost_base=_number(raw.get("operating_cost_base")),
+        operating_cost_high=_number(raw.get("operating_cost_high")),
+        arrival_shifted_pph_low=_number(raw.get("arrival_shifted_pph_low")),
+        arrival_shifted_pph_base=_number(raw.get("arrival_shifted_pph_base")),
+        arrival_shifted_pph_high=_number(raw.get("arrival_shifted_pph_high")),
         lead_time_band=str(raw.get("lead_time_band") or package.get("lead_time_band") or "Not available"),
         package=package,
         assumptions=tuple(str(item) for item in raw.get("assumptions", ()) or ()),
@@ -492,6 +529,13 @@ def build_presentation(metrics: pd.DataFrame, artifacts: Mapping[str, Any]) -> P
                     lead_time_band=str(item.get("lead_time_band") or "Not available"),
                     responsible_actor=str(item.get("responsible_actor") or "Not assigned"),
                     dependencies=tuple(str(value) for value in item.get("dependencies", ()) or ()),
+                    comparison_cost_base=_number(item.get("comparison_cost_base")),
+                    cost_basis=str(item.get("cost_basis") or "Unspecified planning cost"),
+                    evidence_quality=str(item.get("evidence_quality") or "low"),
+                    evidence_qualified=bool(item.get("evidence_qualified", False)),
+                    evidence_reason=str(item.get("evidence_reason") or "Evidence gate not evaluated."),
+                    heat_person_hours_avoided=_number(item.get("heat_person_hours_avoided")),
+                    equation_ids=tuple(str(value) for value in item.get("equation_ids", ()) or ()),
                 )
                 for item in city_recommendations
             )
@@ -516,6 +560,9 @@ def build_presentation(metrics: pd.DataFrame, artifacts: Mapping[str, Any]) -> P
     network_rows = _first_collection(artifacts, ("network_coverage", "networks"))
     validation_rows = _first_collection(artifacts, ("movement_validation", "validation"))
     sensitivity_rows = _first_collection(artifacts, ("mrs_sensitivity", "sensitivity")) or _sensitivity(metrics)
+    equation_rows = _first_collection(artifacts, ("equation_registry", "equations"))
+    policy_rows = _first_collection(artifacts, ("recommendation_policy",))
+    assumption_rows = _first_collection(artifacts, ("factor_registry", "factors"))
     return PlatformPresentation(
         cities=cities,
         source_rows=tuple(source_rows),
@@ -523,6 +570,9 @@ def build_presentation(metrics: pd.DataFrame, artifacts: Mapping[str, Any]) -> P
         network_rows=tuple(network_rows),
         validation_rows=tuple(validation_rows),
         sensitivity_rows=tuple(sensitivity_rows),
+        equation_rows=tuple(equation_rows),
+        policy_rows=tuple(policy_rows),
+        assumption_rows=tuple(assumption_rows),
     )
 
 

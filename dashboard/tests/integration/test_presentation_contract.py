@@ -89,8 +89,9 @@ def test_supplemental_source_register_is_complete_and_statuses_are_honest():
     }
     assert all(family in text for family in required_families)
     assert "78 US match events, observed" in text
-    assert "6 observed and 2 usable partial cities" in text
-    assert "3 cities remain outside-window" in text
+    assert "78 event-valid match records" in text
+    assert "15 feeds and 11 observed cities" in text
+    assert "29 records have zero scheduled half-mile capacity" in text
     assert "Integrated for all 11 venues" in text
     assert "OSMnx 2.1.0" in text
     assert "not a local MOVES inventory" in text

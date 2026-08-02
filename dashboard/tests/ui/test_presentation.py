@@ -124,6 +124,7 @@ def _contract_artifacts() -> dict:
                 cost_low=index * 100000,
                 cost_base=index * 150000,
                 cost_high=index * 200000,
+                arrival_shifted_pph_base=1000 if package.arrival_spreading_pct else 0,
             )
         )
     recommendation = InvestmentRecommendation(
@@ -140,6 +141,11 @@ def _contract_artifacts() -> dict:
         net_co2e_kg=300,
         lead_time_band="0-6 months",
         responsible_actor="MARTA and venue operations",
+        comparison_cost_base=125000,
+        cost_basis="Fixture lifecycle comparison",
+        evidence_quality="medium",
+        evidence_qualified=True,
+        evidence_reason="Fixture evidence gate passed.",
     )
     return {
         "match_events": [match],

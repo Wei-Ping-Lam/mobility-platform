@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import copy
+import json
 
 import pytest
 
@@ -47,6 +48,9 @@ def test_compact_evidence_composes_match_decisions_with_repaired_event_gtfs():
     assert len(bundle["access_gaps"]) == 78
     assert len(bundle["intervention_outcomes"]) == 78 * 3
     assert bundle["investment_recommendations"]
+    assert len(bundle["equation_registry"]) >= 9
+    assert len(bundle["recommendation_policy"]) == 6
+    assert all(row.get("equation_ids") for row in bundle["investment_recommendations"])
     valid_matches = {row["match_id"] for row in artifacts["match_events"]}
     assert all(row.get("match_id") in valid_matches for row in bundle["investment_recommendations"])
     access_by_city = {row["city"]: row for row in bundle["access_gaps"]}
@@ -62,9 +66,12 @@ def test_compact_evidence_composes_match_decisions_with_repaired_event_gtfs():
     assert access_by_city["Atlanta"]["status"] == "scenario"
     assert access_by_city["Miami"]["transit_capacity_base"] == 0
     assert access_by_city["Miami"]["status"] == "partial"
-    recommendation_statuses = {row["city"]: row["status"] for row in bundle["investment_recommendations"]}
-    assert recommendation_statuses["Kansas City"] == "scenario"
-    assert recommendation_statuses["Philadelphia"] == "scenario"
+    for city in ("Kansas City", "Philadelphia"):
+        city_options = [
+            row for row in bundle["investment_recommendations"] if row["city"] == city
+        ]
+        assert any(row["status"] == "scenario" and row["evidence_qualified"] for row in city_options)
+        assert any(row["status"] == "partial" and not row["evidence_qualified"] for row in city_options)
     assert all(row["peak_demand_per_hour"] > 0 for row in bundle["access_gaps"])
     assert all(row["residual_passengers"] >= 0 for row in bundle["access_gaps"])
     assert any(row["residual_passengers"] > 0 for row in bundle["access_gaps"])
@@ -89,6 +96,12 @@ def test_recommendations_are_scoped_to_exact_matches_without_citywide_bleed():
             assert len(actual) <= 6
             presented += len(actual)
     assert presented == len(bundle["investment_recommendations"])
+    first_city = sorted(presentation.cities)[0]
+    first_match = presentation.city(first_city).match()
+    download = json.loads(presentation.scenario_json(first_city, first_match.match_id))
+    assert download["equations"]
+    assert download["recommendation_policy"]
+    assert download["assumption_registry"]
 
 
 def test_same_package_responds_to_city_evidence():

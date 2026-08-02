@@ -133,7 +133,18 @@ def render_decision_brief(
     access = decision.access(match.match_id)
     scenarios = decision.scenario_set(match.match_id)
     recommendations = decision.recommendation_set(match.match_id)
-    best = recommendations[0] if recommendations else None
+    qualified_options = [item for item in recommendations if item.evidence_qualified]
+    exploratory_options = [item for item in recommendations if not item.evidence_qualified]
+    comparison_example = min(
+        qualified_options,
+        key=lambda item: (
+            item.cost_per_passenger
+            if item.cost_per_passenger is not None
+            else float("inf"),
+            item.intervention,
+        ),
+        default=None,
+    )
 
     page_header(
         "Decision brief",
@@ -147,8 +158,8 @@ def render_decision_brief(
         [
             (_number(access.peak_demand_per_hour, " pph"), "Peak movement demand", "scenario", "Low/base/high attendance planning range", "blue"),
             (_number(access.residual_passengers if access.capacity_qualified else None, " pph"), "Capacity-qualified access gap", access.transit_status, "Not measured roadway congestion", "coral"),
-            (best.intervention if best else "Evidence incomplete", "Pareto option", best.status if best else "unavailable", best.lead_time_band if best else "No match-specific option", "amber"),
-            (_money(best.cost_base) if best else "Not available", "Planning cost", best.status if best else "unavailable", "Open the tradeoff set before selecting", "teal"),
+            (f"{len(qualified_options)} + {len(exploratory_options)}", "Qualified + exploratory options", "scenario" if qualified_options else "partial", "No automatic winner", "amber"),
+            (_money(comparison_example.comparison_cost_base) if comparison_example else "Not available", "Lowest qualified comparison cost", comparison_example.status if comparison_example else "unavailable", "Lifecycle-equivalent; total cost remains separate", "teal"),
         ]
     )
     if not access.capacity_qualified:
@@ -167,15 +178,22 @@ def render_decision_brief(
         st.plotly_chart(_coverage_map(comparison), width="stretch", config={"displayModeBar": False})
         st.caption("Marker size uses the qualified gap when available, otherwise scenario demand. Color indicates screening confidence and is repeated in the table.")
     with action_col:
-        st.markdown("#### Match-specific Pareto set")
+        st.markdown("#### Match-specific nondominated set")
         if recommendations:
-            for item in recommendations[:3]:
+            if qualified_options:
+                st.caption("Evidence-qualified screening options")
+            for item in qualified_options:
                 body = (
                     f"Resolves {_number(item.gap_resolved_passengers, ' peak passengers')}; "
-                    f"{_money(item.cost_per_passenger)} per passenger; {_number(item.net_co2e_kg, ' kg')} net CO2e; "
-                    f"lead time {item.lead_time_band}. Candidate owner: {item.responsible_actor}."
+                    f"{_money(item.cost_per_passenger)} comparison cost per passenger; "
+                    f"total cost {_money(item.cost_base)}; {_number(item.net_co2e_kg, ' kg')} net CO2e; "
+                    f"lead time {item.lead_time_band}. Candidate owner: {item.responsible_actor}. No automatic winner."
                 )
                 st.markdown(priority_card(city, item.intervention, body, item.status), unsafe_allow_html=True)
+            if exploratory_options:
+                with st.expander("Exploratory sensitivities requiring additional evidence", expanded=True):
+                    for item in exploratory_options:
+                        st.markdown(f"**{item.intervention}:** {item.evidence_reason}")
         else:
             callout("warning", "No match-specific recommendation", "Complete movement, transit, factors, and recommendation identity before presenting an investment option.")
 

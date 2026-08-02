@@ -112,6 +112,24 @@ def _fallback_recommendation(decision: CityDecisionView, access: AccessView) -> 
     )
 
 
+def _comparison_option(
+    recommendations: tuple[RecommendationView, ...],
+) -> RecommendationView | None:
+    """Choose a clearly labeled comparison example, never a universal optimum."""
+
+    qualified = [item for item in recommendations if item.evidence_qualified]
+    return min(
+        qualified,
+        key=lambda item: (
+            item.cost_per_passenger
+            if item.cost_per_passenger is not None
+            else float("inf"),
+            item.intervention,
+        ),
+        default=None,
+    )
+
+
 def _decision_rows(presentation: PlatformPresentation) -> pd.DataFrame:
     rows: list[dict[str, Any]] = []
     for city in sorted(presentation.cities):
@@ -130,7 +148,8 @@ def _decision_rows(presentation: PlatformPresentation) -> pd.DataFrame:
             match = decision.match()
             access = decision.access(match.match_id)
         recommendations = decision.recommendation_set(match.match_id)
-        recommendation = recommendations[0] if recommendations else _fallback_recommendation(decision, access)
+        recommendation = _comparison_option(recommendations)
+        fallback = _fallback_recommendation(decision, access)
         capacity_qualified = access.capacity_qualified
         rows.append(
             {
@@ -141,14 +160,16 @@ def _decision_rows(presentation: PlatformPresentation) -> pd.DataFrame:
                 "match_id": match.match_id,
                 "peak_gap": access.residual_passengers if capacity_qualified else None,
                 "peak_demand": access.peak_demand_per_hour,
-                "investment": recommendation.intervention,
-                "cost_range": _money_range(recommendation.cost_low, recommendation.cost_high, recommendation.cost_base),
-                "cost_base": recommendation.cost_base,
-                "net_co2e": recommendation.net_co2e_kg,
-                "lead_time": recommendation.lead_time_band,
-                "evidence": recommendation.status,
-                "rationale": recommendation.rationale,
-                "responsible_actor": recommendation.responsible_actor,
+                "investment": recommendation.intervention if recommendation else f"{len(recommendations)} exploratory options",
+                "cost_range": _money_range(recommendation.cost_low, recommendation.cost_high, recommendation.cost_base) if recommendation else "Not qualified",
+                "cost_base": recommendation.cost_base if recommendation else None,
+                "net_co2e": recommendation.net_co2e_kg if recommendation else None,
+                "lead_time": recommendation.lead_time_band if recommendation else "Requires evidence",
+                "evidence": recommendation.status if recommendation else fallback.status,
+                "rationale": recommendation.rationale if recommendation else fallback.rationale,
+                "responsible_actor": recommendation.responsible_actor if recommendation else fallback.responsible_actor,
+                "qualified_options": sum(item.evidence_qualified for item in recommendations),
+                "exploratory_options": sum(not item.evidence_qualified for item in recommendations),
                 "mrs": decision.metric.get("score"),
                 "rankable": bool(decision.metric.get("rankable", False)),
             }
@@ -178,7 +199,7 @@ def _priority_map(rows: pd.DataFrame) -> go.Figure:
                 hovertemplate=(
                     "<b>%{customdata[0]}</b><br>Peak demand scenario: %{customdata[1]:,.0f} passengers/hour"
                     "<br>Capacity-qualified gap: %{customdata[2]:,.0f} passengers/hour"
-                    "<br>Priority: %{customdata[3]}<br>Cost: %{customdata[4]}<br>Lead time: %{customdata[5]}<extra></extra>"
+                    "<br>Lowest comparison-cost qualified option: %{customdata[3]}<br>Total cost: %{customdata[4]}<br>Lead time: %{customdata[5]}<extra></extra>"
                 ),
             )
         )
@@ -201,7 +222,7 @@ def render_executive(metrics: pd.DataFrame, artifacts: dict[str, Any], *, suppli
             (str(len(rows)), "Cities in scope", None, "Current selection", "teal"),
             (str(int(known_demands)), "Cities with match demand scenarios", "scenario" if known_demands else "unavailable", "Passengers per hour", "blue"),
             (_safe(rows["peak_gap"].max() if known_gaps else None, " pph", 0), "Peak access gap — largest", "scenario" if known_gaps else "unavailable", "Not a roadway measure", "coral"),
-            (str(rows["investment"].ne("Complete the access evidence").sum()), "Cities with investment guidance", "scenario", "Evidence-qualified actions", "amber"),
+            (str(int((rows["qualified_options"] > 0).sum())), "Cities with qualified screening options", "scenario", "No automatic winner", "amber"),
         ]
     )
     if supplied_data_lens:
@@ -227,10 +248,10 @@ def render_executive(metrics: pd.DataFrame, artifacts: dict[str, Any], *, suppli
         st.plotly_chart(_priority_map(rows), width="stretch", config={"displayModeBar": False})
         st.caption("Venue points are not corridor boundaries. Open Explorer for route-ready layers and missing-data warnings.")
     with table_column:
-        display = rows[["city", "peak_demand", "peak_gap", "investment", "cost_range", "lead_time", "evidence"]].copy()
+        display = rows[["city", "peak_demand", "peak_gap", "qualified_options", "exploratory_options", "investment", "cost_range", "lead_time", "evidence"]].copy()
         display["peak_demand"] = pd.to_numeric(display["peak_demand"], errors="coerce").round(0)
         display["peak_gap"] = pd.to_numeric(display["peak_gap"], errors="coerce").round(0)
-        display.columns = ["City", "Peak demand scenario (passengers/hour)", "Capacity-qualified gap (passengers/hour)", "Top investment", "Cost range", "Lead time", "Evidence"]
+        display.columns = ["City", "Peak demand scenario (passengers/hour)", "Capacity-qualified gap (passengers/hour)", "Qualified options", "Exploratory options", "Lowest comparison-cost qualified option", "Total cost range", "Lead time", "Evidence"]
         display = display.sort_values(
             ["Capacity-qualified gap (passengers/hour)", "Peak demand scenario (passengers/hour)"],
             ascending=False,
@@ -239,7 +260,7 @@ def render_executive(metrics: pd.DataFrame, artifacts: dict[str, Any], *, suppli
         st.dataframe(display, hide_index=True, width="stretch", height=415)
         callout("info", "Decision reading order", "Start with the physical gap, then compare cost, climate outcome, delivery time, and evidence status. No single opaque optimization selects the answer.")
 
-    section_header("Priority actions", "Each card names the current action, responsible actor, measurable gap, and evidence status.", "What")
+    section_header("Qualified comparison examples", "Cards use the lowest lifecycle-comparison cost only as a transparent display rule. Review the full nondominated set before selecting an action.", "What")
     top = rows.sort_values(["peak_gap", "cost_base"], ascending=[False, True], na_position="last").head(3)
     columns = st.columns(max(1, len(top)))
     for column, (_, row) in zip(columns, top.iterrows()):
@@ -468,6 +489,9 @@ def _scenario_table(scenarios: tuple[ScenarioView, ...]) -> pd.DataFrame:
                 "Cost low": item.cost_low,
                 "Cost base": item.cost_base,
                 "Cost high": item.cost_high,
+                "Capital cost base": item.capital_cost_base,
+                "Operating cost base": item.operating_cost_base,
+                "Effective arrival shift (pph)": item.arrival_shifted_pph_base,
                 "Cost per passenger": item.cost_per_passenger,
                 "Lead time": item.lead_time_band,
                 "Basis": item.basis,
@@ -497,9 +521,13 @@ def _implementation_readiness(
                 "Candidate owner": item.responsible_actor,
                 "Lead-time band": item.lead_time_band,
                 "Planning cost": _money_range(item.cost_low, item.cost_high, item.cost_base),
+                "Comparison cost basis": item.cost_basis,
                 "Dependencies": "; ".join(dependencies) or "Implementation plan",
                 "Local confirmation before commitment": "; ".join(dict.fromkeys(local_gate)) or "Agency budget and operating approval",
                 "Screening status": item.status,
+                "Evidence-qualified": item.evidence_qualified,
+                "Evidence quality": item.evidence_quality,
+                "Evidence reason": item.evidence_reason,
             }
         )
     return pd.DataFrame(rows)
@@ -513,10 +541,10 @@ def _before_after(movement: MovementView, scenario: ScenarioView) -> pd.DataFram
         return pd.DataFrame()
     values = pd.to_numeric(frame[arrivals], errors="coerce").fillna(0).to_numpy(dtype=float)
     after = values.copy()
-    spreading = float(scenario.package.get("arrival_spreading_pct", 0) or 0)
-    if len(after) >= 3 and spreading > 0 and after.sum() > 0:
+    shifted_pph = float(scenario.arrival_shifted_pph_base or 0)
+    if len(after) >= 3 and shifted_pph > 0 and after.sum() > 0:
         peak = int(np.argmax(after))
-        movable = after[peak] * min(spreading, 100) / 100
+        movable = min(after[peak], shifted_pph)
         neighbors = [index for index in (peak - 1, peak + 1) if 0 <= index < len(after)]
         after[peak] -= movable
         for index in neighbors:
@@ -534,7 +562,8 @@ def render_explorer(metrics: pd.DataFrame, artifacts: dict[str, Any], selected_c
     access = decision.access(match.match_id)
     scenarios = decision.scenario_set(match.match_id)
     recommendations = decision.recommendation_set(match.match_id)
-    recommendation = recommendations[0] if recommendations else _fallback_recommendation(decision, access)
+    qualified_count = sum(item.evidence_qualified for item in recommendations)
+    exploratory_count = len(recommendations) - qualified_count
 
     page_header(
         "City explorer",
@@ -552,7 +581,7 @@ def render_explorer(metrics: pd.DataFrame, artifacts: dict[str, Any], selected_c
             (_safe(access.residual_passengers if access.capacity_qualified else None, " pph", 0), "Peak access gap", access.transit_status, "Passengers per hour", "coral"),
             (_safe(access.peak_demand_per_hour, " pph", 0), "Peak movement demand", movement.status, movement.uncertainty_type, "blue"),
             (_number_range(access.transit_capacity_low, access.transit_capacity_high, access.transit_capacity_base, " pph") if access.capacity_qualified else "Not qualified", "Scheduled transit capacity", access.transit_status, "Planning capacity range", "teal"),
-            (recommendation.intervention, "Current priority", recommendation.status, recommendation.lead_time_band, "amber"),
+            (f"{qualified_count} + {exploratory_count}", "Qualified + exploratory options", "scenario" if qualified_count else "partial", "No automatic winner", "amber"),
         ]
     )
     if access.capacity_qualified and float(access.transit_capacity_high or 0) == 0:
@@ -632,7 +661,7 @@ def render_explorer(metrics: pd.DataFrame, artifacts: dict[str, Any], selected_c
                 (_safe(selected.gap_resolved_passengers, " passengers", 0), "Gap resolved", selected.status, selected.basis, "teal"),
                 (_money_range(selected.cost_low, selected.cost_high, selected.cost_base), "Planning cost", selected.status, selected.lead_time_band, "amber"),
                 (_number_range(selected.net_co2e_kg_low, selected.net_co2e_kg_high, selected.net_co2e_kg_base, " kg"), "Net CO2e avoided", selected.status, "Negative values indicate an increase", "blue"),
-                (_safe(selected.cost_per_passenger, " / passenger", 0), "Cost-effectiveness", selected.status, "Planning ratio", "violet"),
+                (_safe(selected.cost_per_passenger, " / passenger", 0), "Total cost / gap passenger", selected.status, "Named-package ratio; recommendation comparison uses reusable-event costs", "violet"),
             ]
         )
         comparison = _scenario_table(scenarios)
@@ -649,18 +678,24 @@ def render_explorer(metrics: pd.DataFrame, artifacts: dict[str, Any], selected_c
         with st.expander("Table alternative: exact scenario comparison", expanded=True):
             st.dataframe(comparison, hide_index=True, width="stretch")
 
-        section_header("Pareto-efficient investment set", "Options remain separate across passenger benefit, cost-effectiveness, climate outcome, lead time, and evidence quality.", "Investments")
+        section_header("Nondominated investment set", "Evidence-qualified options and exploratory sensitivities remain separate across passenger benefit, lifecycle-comparison cost, climate, heat, and lead time. No row is an automatic winner.", "Investments")
         pareto_table = pd.DataFrame(
             [
                 {
                     "Intervention": item.intervention,
+                    "Decision class": "Evidence-qualified screening" if item.evidence_qualified else "Exploratory sensitivity",
                     "Gap resolved": item.gap_resolved_passengers,
-                    "Cost per passenger": item.cost_per_passenger,
+                    "Comparison cost": item.comparison_cost_base,
+                    "Comparison cost per passenger": item.cost_per_passenger,
+                    "Total project/event cost": item.cost_base,
+                    "Cost basis": item.cost_basis,
                     "Net CO2e avoided (kg)": item.net_co2e_kg,
+                    "Heat person-hours avoided": item.heat_person_hours_avoided,
                     "Lead time": item.lead_time_band,
-                    "Evidence": item.status,
+                    "Evidence quality": item.evidence_quality,
+                    "Evidence-qualified": item.evidence_qualified,
                     "Responsible actor": item.responsible_actor,
-                    "Why retained": item.rationale,
+                    "Why retained / limitation": item.rationale,
                 }
                 for item in recommendations
             ]
@@ -782,6 +817,26 @@ def render_methods(metrics: pd.DataFrame, artifacts: dict[str, Any]) -> None:
             callout("warning", "Factor registry unavailable", "Do not interpret cost or climate outputs as implementation estimates until cited factor ranges are supplied.")
         else:
             st.dataframe(factor_table, hide_index=True, width="stretch")
+        section_header(
+            "Equation registry",
+            "Stable equation IDs connect model code, reviewer documentation, and exported scenario records.",
+            "Equations",
+        )
+        equation_table = pd.DataFrame(presentation.equation_rows)
+        if equation_table.empty:
+            callout("error", "Equation registry unavailable", "Do not present modeled outcomes until their equations and evidence limits are registered.")
+        else:
+            st.dataframe(equation_table, hide_index=True, width="stretch")
+        section_header(
+            "Recommendation policy registry",
+            "Evidence gates, cost treatment, owners, dependencies, and lead times are configuration—not hidden UI behavior.",
+            "Policy",
+        )
+        policy_table = pd.DataFrame(presentation.policy_rows)
+        if policy_table.empty:
+            callout("error", "Recommendation policy unavailable", "Options cannot be described as decision-ready without an explicit evidence and cost policy.")
+        else:
+            st.dataframe(policy_table, hide_index=True, width="stretch")
         heuristic_table = pd.DataFrame(artifacts.get("city_intervention_inputs", []))
         if not heuristic_table.empty:
             section_header("City and match scenario heuristics", "Private-mode share, occupancy, trip distance, and active-mode distance inputs remain editable planning assumptions—not observed fan behavior.", "Assumptions")
@@ -846,8 +901,15 @@ def render_methods(metrics: pd.DataFrame, artifacts: dict[str, Any]) -> None:
                 st.plotly_chart(style_figure(rank_figure, 410), width="stretch", config={"displayModeBar": False})
                 with st.expander("Table alternative: rank sensitivity"):
                     st.dataframe(rankable, hide_index=True, width="stretch")
-        city_download, manifest_download = st.columns(2)
+        city_download, manifest_download, methods_download = st.columns(3)
         with city_download:
             st.download_button("Download displayed city metrics", metrics.to_csv(index=False), file_name="city_metrics.csv", mime="text/csv", key="metrics_download", width="stretch")
         with manifest_download:
             st.download_button("Download source manifest", json.dumps(manifest, indent=2, default=str), file_name="manifest.json", mime="application/json", key="manifest_download", width="stretch")
+        with methods_download:
+            methods_payload = {
+                "equations": list(presentation.equation_rows),
+                "assumptions": list(presentation.assumption_rows),
+                "recommendation_policy": list(presentation.policy_rows),
+            }
+            st.download_button("Download equations & assumptions", json.dumps(methods_payload, indent=2, default=str), file_name="model-methods.json", mime="application/json", key="methods_download", width="stretch")

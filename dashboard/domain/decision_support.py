@@ -10,6 +10,7 @@ import pandas as pd
 from dashboard.mobility_platform.contracts import EvidenceStatus, MatchEvent, SourceReference
 from dashboard.models.access import build_access_gap_result
 from dashboard.models.demand import validation_metrics
+from dashboard.models.equations import equation_records
 from dashboard.models.interventions import (
     CityInterventionInputs,
     InterventionFactorRegistry,
@@ -19,6 +20,7 @@ from dashboard.models.interventions import (
     pareto_recommendations,
 )
 from dashboard.models.movement import build_movement_scenario, validation_label
+from dashboard.models.recommendation_policy import policy_records
 
 
 def _status(value: Any, default: EvidenceStatus = EvidenceStatus.UNAVAILABLE) -> EvidenceStatus:
@@ -211,4 +213,6 @@ def build_transportation_bundle(
         "investment_recommendations": recommendations,
         "city_intervention_inputs": intervention_inputs,
         "movement_validation": validation.to_dict("records"),
+        "equation_registry": equation_records(),
+        "recommendation_policy": policy_records(),
     }

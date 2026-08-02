@@ -45,6 +45,7 @@ def build_deliverable_evidence(
         if isinstance(row, Mapping)
     )
     match_scoped = sum(bool(row.get("match_id")) for row in recommendations)
+    evidence_qualified_options = sum(bool(row.get("evidence_qualified")) for row in recommendations)
     strict_count = int(comparison["strict_rankable"].sum()) if not comparison.empty else 0
     if not comparison.empty and "access_priority_order" in comparison:
         access_ranked = int(comparison["access_priority_order"].notna().sum())
@@ -81,8 +82,8 @@ def build_deliverable_evidence(
         {
             "Deliverable": "Recommend investments",
             "Status": "scenario" if recommendations and match_scoped == len(recommendations) else "unavailable",
-            "Visible proof": f"{match_scoped}/{len(recommendations)} Pareto options tied to exact matches",
-            "Limitation": "Options are planning screens, not agency commitments or one optimal answer.",
+            "Visible proof": f"{match_scoped}/{len(recommendations)} nondominated options tied to exact matches; {evidence_qualified_options} pass the current screening evidence gate",
+            "Limitation": "Exploratory sensitivities are separated from evidence-qualified screens; neither is an agency commitment or one optimal answer.",
             "Workspace": "Decision Brief / City & Match",
         },
         {
@@ -137,7 +138,7 @@ def build_criteria_evidence(
         ),
         "Innovation": (
             "derived" if match_scoped else "unavailable",
-            "Match-specific access gaps and Pareto tradeoffs preserve cost, emissions, lead time, and evidence quality.",
+            "Match-specific access gaps and nondominated tradeoffs preserve total and comparison cost, emissions, heat, lead time, and evidence quality.",
             "Novelty is a decision-support method, not a claim of predictive accuracy.",
             "Decision Brief / Tradeoffs",
         ),

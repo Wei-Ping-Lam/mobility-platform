@@ -96,11 +96,12 @@ def _event_summary(
         for row in recommendation_rows
         if str(row.get("city")) == city and str(row.get("match_id")) == match_id
     ]
+    eligible_candidates = [row for row in candidates if bool(row.get("evidence_qualified"))]
     recommendation = min(
-        candidates,
+        eligible_candidates or candidates,
         key=lambda row: (
-            -(_number(row.get("gap_resolved_passengers")) or 0.0),
             _number(row.get("cost_per_passenger")) or float("inf"),
+            str(row.get("intervention") or ""),
         ),
         default={},
     )
@@ -118,6 +119,8 @@ def _event_summary(
         "top_net_co2e_kg": _number(recommendation.get("net_co2e_kg")),
         "top_lead_time": recommendation.get("lead_time_band"),
         "top_evidence": recommendation.get("status"),
+        "qualified_option_count": len(eligible_candidates),
+        "exploratory_option_count": len(candidates) - len(eligible_candidates),
     }
 
 
