@@ -55,6 +55,11 @@ def _priority_city(comparison: pd.DataFrame, selected_city: str | None) -> str:
     return str(comparison.sort_values("peak_demand_pph", ascending=False, na_position="last").iloc[0]["city"])
 
 
+def _open_explorer(city: str) -> None:
+    st.session_state["workspace"] = "Explorer"
+    st.session_state["city_focus"] = city
+
+
 def _portfolio_chart(timeline: pd.DataFrame) -> go.Figure:
     figure = go.Figure()
     figure.add_trace(
@@ -152,6 +157,12 @@ def render_decision_brief(
         "A guided proof sequence for FIFA 2026 transportation access: where the pressure is, what evidence supports it, which options remain Pareto-efficient, and what outcomes are still only planning scenarios.",
         ("11 U.S. host cities", "78 official matches", "No opaque optimum"),
     )
+    st.button(
+        f"Open {city} maps and match details",
+        on_click=_open_explorer,
+        args=(city,),
+        key=f"brief_open_explorer_{city}",
+    )
 
     section_header(f"Priority case: {city}", f"Representative match {match.match_id} at {match.venue}. The city changes when a capacity-qualified gap is larger or the sidebar selection changes.", "Where and why")
     _metric_row(
@@ -172,6 +183,48 @@ def render_decision_brief(
         )
     elif access.walking_status == "unavailable":
         callout("warning", "Transit gap qualified; walking route unavailable", "Scheduled capacity can support a residual passenger gap, but the pedestrian connection remains a separate missing evidence component.")
+
+    section_header(
+        "What the official post-event record shows",
+        "Observed agency aggregates benchmark the scenario without being mistaken for match-hour arrivals, stadium attendance, or causal impact.",
+        "Observed outcome",
+    )
+    operational_rows = [row for row in presentation.operational_rows if row.get("city") == city]
+    operational_event_rows = [row for row in presentation.operational_event_rows if row.get("city") == city]
+    if operational_rows:
+        source_lookup = {
+            str(row.get("source_id")): row
+            for row in presentation.source_rows
+            if row.get("source_id")
+        }
+        observed_table = pd.DataFrame(operational_rows)
+        observed_table["Source"] = observed_table["source_id"].map(
+            lambda source_id: source_lookup.get(str(source_id), {}).get("source", source_id)
+        )
+        observed_table["Cannot establish"] = observed_table["not_suitable_for"].map(
+            lambda values: "; ".join(str(value) for value in values) if isinstance(values, list) else values
+        )
+        observed_table = observed_table.rename(
+            columns={
+                "metric": "Observed benchmark",
+                "value": "Value",
+                "unit": "Unit",
+                "status": "Evidence",
+                "granularity": "Coverage",
+                "calibration_use": "Permitted use",
+            }
+        )
+        st.dataframe(
+            observed_table[["Observed benchmark", "Value", "Unit", "Evidence", "Coverage", "Permitted use", "Cannot establish", "Source"]],
+            hide_index=True,
+            width="stretch",
+        )
+    else:
+        callout(
+            "warning",
+            "No published outcome benchmark located",
+            "The official operating-data source is registered, but match outcomes still require an agency, venue, or public-records request.",
+        )
 
     map_col, action_col = st.columns([1.25, 1], gap="large")
     with map_col:
@@ -282,7 +335,17 @@ def render_decision_brief(
     st.dataframe(deliverables, hide_index=True, width="stretch")
     st.download_button(
         "Download decision brief evidence JSON",
-        json.dumps({"city_comparison": comparison.to_dict("records"), "criteria": criteria.to_dict("records"), "deliverables": deliverables.to_dict("records")}, indent=2, default=str),
+        json.dumps(
+            {
+                "city_comparison": comparison.to_dict("records"),
+                "criteria": criteria.to_dict("records"),
+                "deliverables": deliverables.to_dict("records"),
+                "operational_benchmarks": operational_rows,
+                "operational_event_records": operational_event_rows,
+            },
+            indent=2,
+            default=str,
+        ),
         file_name="mobility-decision-brief-evidence.json",
         mime="application/json",
         width="stretch",

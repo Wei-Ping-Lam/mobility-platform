@@ -809,6 +809,68 @@ def render_methods(metrics: pd.DataFrame, artifacts: dict[str, Any]) -> None:
             hash_columns = [column for column in source_table if "sha" in column.lower() or "hash" in column.lower()]
             if not hash_columns:
                 callout("warning", "Public source hashes missing", "Release evidence must include a content hash for each pinned supplement.")
+        section_header(
+            "Observed operational benchmarks",
+            "Official post-event aggregates are displayed separately from match-hour scenarios. Every row states what it can and cannot calibrate.",
+            "Post-event evidence",
+        )
+        operational = pd.DataFrame(presentation.operational_rows)
+        coverage = pd.DataFrame(presentation.operational_coverage_rows)
+        if operational.empty:
+            callout(
+                "warning",
+                "Operational benchmarks unavailable",
+                "Published agency outcomes have not been loaded; scenario assumptions remain unvalidated by post-event operations.",
+            )
+        else:
+            source_lookup = {
+                str(row.get("source_id")): row
+                for row in presentation.source_rows
+                if row.get("source_id")
+            }
+            operational["source"] = operational["source_id"].map(
+                lambda source_id: source_lookup.get(str(source_id), {}).get("source", source_id)
+            )
+            operational["source_url"] = operational["source_id"].map(
+                lambda source_id: source_lookup.get(str(source_id), {}).get("url")
+            )
+            operational["not_suitable_for"] = operational["not_suitable_for"].map(
+                lambda values: "; ".join(str(value) for value in values) if isinstance(values, list) else values
+            )
+            columns = [
+                "city",
+                "metric",
+                "value",
+                "unit",
+                "status",
+                "granularity",
+                "sample_size",
+                "calibration_use",
+                "not_suitable_for",
+                "source",
+                "source_locator",
+                "source_url",
+            ]
+            st.dataframe(operational[columns], hide_index=True, width="stretch")
+            event_records = pd.json_normalize(list(presentation.operational_event_rows), sep=".")
+            if not event_records.empty:
+                st.markdown("##### Match-level operating records")
+                st.caption("Wide source transcriptions preserve reported match-level fields without filling unreported values or treating them as 15-minute calibration data.")
+                st.dataframe(event_records, hide_index=True, width="stretch")
+            callout(
+                "info",
+                "Aggregate evidence does not qualify match-hour calibration",
+                "No published row supplies complete 15-minute arrivals, mode share, transit loads, curb throughput, parking, and roadway observations for a match.",
+            )
+        if not coverage.empty:
+            coverage["open_request_fields"] = coverage["open_request_fields"].map(
+                lambda values: "; ".join(str(value) for value in values) if isinstance(values, list) else values
+            )
+            coverage["source_ids"] = coverage["source_ids"].map(
+                lambda values: "; ".join(str(value) for value in values) if isinstance(values, list) else values
+            )
+            st.markdown("##### Operational evidence coverage and open requests")
+            st.dataframe(coverage, hide_index=True, width="stretch")
 
     with factors_tab:
         section_header("Planning factor registry", "Low, base, and high cost, vehicle-capacity, VMT, and emissions factors retain their publisher and version.", "Factors")
@@ -911,5 +973,8 @@ def render_methods(metrics: pd.DataFrame, artifacts: dict[str, Any]) -> None:
                 "equations": list(presentation.equation_rows),
                 "assumptions": list(presentation.assumption_rows),
                 "recommendation_policy": list(presentation.policy_rows),
+                "operational_benchmarks": list(presentation.operational_rows),
+                "operational_event_records": list(presentation.operational_event_rows),
+                "operational_coverage": list(presentation.operational_coverage_rows),
             }
             st.download_button("Download equations & assumptions", json.dumps(methods_payload, indent=2, default=str), file_name="model-methods.json", mime="application/json", key="methods_download", width="stretch")

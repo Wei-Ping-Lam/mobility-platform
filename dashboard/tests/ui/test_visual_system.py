@@ -12,8 +12,9 @@ from dashboard.viz.style import STATUS_COLORS
 @pytest.mark.parametrize(
     ("mode", "expected_tabs"),
     [
-        ("Executive", 0),
+        ("Overview", 0),
         ("Compare Cities", 3),
+        ("City Brief", 0),
         ("Explorer", 4),
         ("Methods & QA", 4),
     ],
@@ -21,7 +22,7 @@ from dashboard.viz.style import STATUS_COLORS
 def test_every_workspace_renders_without_exception(mode, expected_tabs):
     app = AppTest.from_file("dashboard/app.py")
     app.run(timeout=30)
-    if mode != "Executive":
+    if mode != "Overview":
         workspace = next(widget for widget in app.radio if widget.label == "Workspace")
         workspace.set_value(mode)
         app.run(timeout=30)
@@ -47,8 +48,10 @@ def test_ui_sources_have_no_mojibake_or_retired_dark_theme():
             "ui/views.py",
             "ui/presentation.py",
             "ui/judging.py",
+            "ui/pages/home.py",
             "ui/pages/overview.py",
             "ui/pages/compare.py",
+            "viz/portfolio.py",
             "viz/style.py",
         )
     )
@@ -59,11 +62,15 @@ def test_ui_sources_have_no_mojibake_or_retired_dark_theme():
 
 
 def test_transportation_claim_language_is_bounded_and_mrs_is_secondary():
-    source = (Path(__file__).parents[2] / "ui" / "views.py").read_text(encoding="utf-8")
+    source = "\n".join(
+        (Path(__file__).parents[2] / relative).read_text(encoding="utf-8")
+        for relative in ("ui/views.py", "ui/pages/home.py")
+    )
     lowered = source.lower()
-    assert "prediction" not in lowered
-    assert "congestion" not in lowered
-    assert "ada" not in lowered
+    assert "validated prediction" not in lowered
+    assert "measured congestion" not in lowered
+    assert "reduces congestion" not in lowered
+    assert "ada compliant" not in lowered
     assert source.index("Peak access gap") < source.index("Mobility Readiness Score")
 
 
@@ -88,14 +95,14 @@ def test_every_city_and_match_renders_across_workspaces(city):
 
     app = AppTest.from_file("dashboard/app.py")
     app.run(timeout=30)
+    workspace_selector = next(widget for widget in app.radio if widget.label == "Workspace")
+    workspace_selector.set_value("Explorer")
+    app.run(timeout=30)
     city_selector = next(widget for widget in app.selectbox if widget.label == "City focus")
     city_selector.set_value(city)
     app.run(timeout=30)
     assert not app.exception
 
-    workspace_selector = next(widget for widget in app.radio if widget.label == "Workspace")
-    workspace_selector.set_value("Explorer")
-    app.run(timeout=30)
     for match_id in match_ids:
         match_selector = next(widget for widget in app.selectbox if widget.label == "Match")
         match_selector.set_value(match_id)

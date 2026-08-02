@@ -274,6 +274,9 @@ class PlatformPresentation:
     equation_rows: tuple[dict[str, Any], ...] = field(default_factory=tuple)
     policy_rows: tuple[dict[str, Any], ...] = field(default_factory=tuple)
     assumption_rows: tuple[dict[str, Any], ...] = field(default_factory=tuple)
+    operational_rows: tuple[dict[str, Any], ...] = field(default_factory=tuple)
+    operational_event_rows: tuple[dict[str, Any], ...] = field(default_factory=tuple)
+    operational_coverage_rows: tuple[dict[str, Any], ...] = field(default_factory=tuple)
 
     def city(self, name: str) -> CityDecisionView:
         return self.cities[name if name in self.cities else sorted(self.cities)[0]]
@@ -294,6 +297,12 @@ class PlatformPresentation:
             "equations": list(self.equation_rows),
             "recommendation_policy": list(self.policy_rows),
             "assumption_registry": list(self.assumption_rows),
+            "operational_benchmarks": [
+                row for row in self.operational_rows if row.get("city") == decision.city
+            ],
+            "operational_event_records": [
+                row for row in self.operational_event_rows if row.get("city") == decision.city
+            ],
         }
         return json.dumps(_json_value(payload), indent=2, sort_keys=True)
 
@@ -563,6 +572,9 @@ def build_presentation(metrics: pd.DataFrame, artifacts: Mapping[str, Any]) -> P
     equation_rows = _first_collection(artifacts, ("equation_registry", "equations"))
     policy_rows = _first_collection(artifacts, ("recommendation_policy",))
     assumption_rows = _first_collection(artifacts, ("factor_registry", "factors"))
+    operational_rows = _first_collection(artifacts, ("operational_metrics",))
+    operational_event_rows = _first_collection(artifacts, ("operational_event_records",))
+    operational_coverage_rows = records(artifacts.get("operational_coverage", {}))
     return PlatformPresentation(
         cities=cities,
         source_rows=tuple(source_rows),
@@ -573,6 +585,9 @@ def build_presentation(metrics: pd.DataFrame, artifacts: Mapping[str, Any]) -> P
         equation_rows=tuple(equation_rows),
         policy_rows=tuple(policy_rows),
         assumption_rows=tuple(assumption_rows),
+        operational_rows=tuple(operational_rows),
+        operational_event_rows=tuple(operational_event_rows),
+        operational_coverage_rows=tuple(operational_coverage_rows),
     )
 
 

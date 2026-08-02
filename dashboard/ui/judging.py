@@ -35,6 +35,7 @@ def build_deliverable_evidence(
     access = _records(artifacts.get("access_gaps"))
     outcomes = _records(artifacts.get("intervention_outcomes"))
     recommendations = _records(artifacts.get("investment_recommendations"))
+    operational = _records(artifacts.get("operational_metrics"))
     qualified = sum(
         bool(row.get("capacity_qualified", str(row.get("status")) in {"observed", "derived", "scenario"}))
         for row in access
@@ -57,8 +58,8 @@ def build_deliverable_evidence(
         {
             "Deliverable": "Visitor movement",
             "Status": "scenario" if movements else "unavailable",
-            "Visible proof": f"{len(movements)} match-specific hourly low/base/high scenarios",
-            "Limitation": "Planning scenario; both-year validation gate has not passed.",
+            "Visible proof": f"{len(movements)} match-specific hourly low/base/high scenarios plus {len(operational)} official post-event benchmarks",
+            "Limitation": "Planning scenario; published aggregates do not yet qualify match-hour calibration.",
             "Workspace": "City & Match / Movement",
         },
         {
@@ -77,28 +78,28 @@ def build_deliverable_evidence(
             "Status": "derived" if access_ranked == len(comparison) else "partial",
             "Visible proof": f"All {access_ranked}/{len(comparison)} cities have a physical access-gap priority; {strict_count} have strict secondary MRS ranks",
             "Limitation": "Access-gap priority, evidence screening, and strict MRS are intentionally separate.",
-            "Workspace": "Compare Cities",
+            "Workspace": "Detailed Comparison",
         },
         {
             "Deliverable": "Recommend investments",
             "Status": "scenario" if recommendations and match_scoped == len(recommendations) else "unavailable",
             "Visible proof": f"{match_scoped}/{len(recommendations)} nondominated options tied to exact matches; {evidence_qualified_options} pass the current screening evidence gate",
             "Limitation": "Exploratory sensitivities are separated from evidence-qualified screens; neither is an agency commitment or one optimal answer.",
-            "Workspace": "Decision Brief / City & Match",
+            "Workspace": "Overview / City & Match",
         },
         {
             "Deliverable": "Sustainability outcomes",
             "Status": "scenario" if outcomes else "unavailable",
             "Visible proof": f"{len(outcomes)} package outcomes include VMT, net CO2e, heat, and cost",
             "Limitation": "Planning factors; not observed mode shift or a local MOVES inventory.",
-            "Workspace": "Decision Brief / Scenarios",
+            "Workspace": "Overview / City & Match / Scenarios",
         },
         {
             "Deliverable": "Outcomes over time",
             "Status": "scenario" if outcomes else "unavailable",
             "Visible proof": "Match, city-tournament, and U.S.-tournament cumulative ledgers",
             "Limitation": "Capital is counted once per city; operations recur per event.",
-            "Workspace": "Decision Brief / Time horizon",
+            "Workspace": "City Brief / Time horizon",
         },
     ]
     return pd.DataFrame(rows)
@@ -115,6 +116,8 @@ def build_criteria_evidence(
     recommendations = _records(artifacts.get("investment_recommendations"))
     validation = _records(artifacts.get("movement_validation"))
     sources = _records(artifacts.get("source_references"))
+    operational = _records(artifacts.get("operational_metrics"))
+    operational_cities = len({row.get("city") for row in operational if row.get("city")})
     qualified = sum(
         bool(row.get("capacity_qualified", str(row.get("status")) in {"observed", "derived", "scenario"}))
         for row in access
@@ -128,31 +131,31 @@ def build_criteria_evidence(
             "partial",
             f"{len(outcomes)} modeled package outcomes across {qualified} capacity-qualified matches.",
             "Benefits are scenario estimates, not observed impacts.",
-            "Decision Brief",
+            "Overview / City Brief",
         ),
         "Data Analytics": (
             "derived" if validation and full_hashes else "partial",
-            f"{len(validation)} holdouts plus pinned Rice, FIFA, GTFS, OSM, and factor provenance.",
-            "Movement remains a planning scenario because both validation years did not beat seasonal-naive.",
+            f"{len(validation)} holdouts and {len(operational)} source-located operational benchmarks across {operational_cities} cities, plus pinned Rice, FIFA, GTFS, OSM, and factors.",
+            "Published operational aggregates do not supply complete match-hour arrival, mode, load, curb, parking, and roadway records.",
             "Methods & QA",
         ),
         "Innovation": (
             "derived" if match_scoped else "unavailable",
             "Match-specific access gaps and nondominated tradeoffs preserve total and comparison cost, emissions, heat, lead time, and evidence quality.",
             "Novelty is a decision-support method, not a claim of predictive accuracy.",
-            "Decision Brief / Tradeoffs",
+            "Overview / City & Match / Tradeoffs",
         ),
         "Feasibility": (
             "partial",
-            "Candidate actors, dependencies, lead-time bands, capital, and recurring operating costs are visible.",
+            f"Candidate actors, dependencies, lead times, costs, and {len(operational)} official implementation/throughput benchmarks are visible.",
             "Local fleet, labor, right-of-way, and agency budget constraints require confirmation.",
-            "Decision Brief / Implementation",
+            "Overview / City & Match / Implementation",
         ),
         "Legacy": (
             "partial",
-            "Reusable event inputs and city/tournament time horizons extend beyond a single match.",
-            "Post-event monitoring and observed outcome comparison are not yet implemented.",
-            "Decision Brief / Time horizon",
+            f"Reusable event inputs, city/tournament horizons, and post-event evidence for {operational_cities} cities extend beyond a single match.",
+            "All cities have at least one published outcome benchmark, but no city has a complete interval-level operational validation set.",
+            "City Brief / Time horizon",
         ),
         "Visualization": (
             "derived" if visual_review else "partial",
@@ -164,7 +167,7 @@ def build_criteria_evidence(
             "derived" if submission_metadata else "partial",
             "The guided proof sequence maps spoken claims to visible metrics and limitations.",
             "Team/contact metadata remains a submission blocker." if not submission_metadata else "Submission metadata complete.",
-            "Decision Brief",
+            "Overview",
         ),
     }
     return pd.DataFrame(
