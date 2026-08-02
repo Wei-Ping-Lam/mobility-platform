@@ -17,15 +17,63 @@ class GtfsFeedSource:
     valid_from: str | None = None
     valid_to: str | None = None
 
-
-def _live(agency: str, url: str) -> GtfsFeedSource:
-    return GtfsFeedSource(agency=agency, url=url, publisher_url=url)
-
 GTFS_FEEDS = {
-    "Atlanta": [_live("MARTA", "https://www.itsmarta.com/google_transit_feed/google_transit.zip")],
-    "Boston": [_live("MBTA", "https://cdn.mbta.com/MBTA_GTFS.zip")],
-    "Dallas": [_live("DART", "https://www.dart.org/transitdata/latest/google_transit.zip")],
-    "Houston": [_live("METRO Houston", "https://metro.resourcespace.com/pages/download.php?ref=4835&ext=zip")],
+    "Atlanta": [
+        GtfsFeedSource(
+            agency="MARTA",
+            url=(
+                "https://files.mobilitydatabase.org/mdb-368/"
+                "mdb-368-202604190110/mdb-368-202604190110.zip"
+            ),
+            publisher_url="https://www.itsmarta.com/google_transit_feed/google_transit.zip",
+            archive_provider="MobilityDatabase",
+            expected_sha256="2b08551202fdd39ac672d07839fcfc9b702f776a7e31c56b64881191f67c5625",
+            valid_from="2026-06-11",
+            valid_to="2026-07-19",
+        )
+    ],
+    "Boston": [
+        GtfsFeedSource(
+            agency="MBTA",
+            url=(
+                "https://files.mobilitydatabase.org/mdb-437/"
+                "mdb-437-202606050042/mdb-437-202606050042.zip"
+            ),
+            publisher_url="https://cdn.mbta.com/MBTA_GTFS.zip",
+            archive_provider="MobilityDatabase",
+            expected_sha256="cefab608c9d8361ade4ef3f17965cef73d1b4ad343fb9d23935c60b52410b0ce",
+            valid_from="2026-06-11",
+            valid_to="2026-07-19",
+        )
+    ],
+    "Dallas": [
+        GtfsFeedSource(
+            agency="DART",
+            url=(
+                "https://files.mobilitydatabase.org/mdb-152/"
+                "mdb-152-202606120106/mdb-152-202606120106.zip"
+            ),
+            publisher_url="https://www.dart.org/transitdata/latest/google_transit.zip",
+            archive_provider="MobilityDatabase",
+            expected_sha256="46763ba650f462957ff6dc3a4ef163a9bc0122d25891db128fb1aa5e25eb63ef",
+            valid_from="2026-06-11",
+            valid_to="2026-07-19",
+        )
+    ],
+    "Houston": [
+        GtfsFeedSource(
+            agency="METRO Houston",
+            url=(
+                "https://files.mobilitydatabase.org/mdb-2060/"
+                "mdb-2060-202606090018/mdb-2060-202606090018.zip"
+            ),
+            publisher_url="https://metro.resourcespace.com/pages/download.php?ref=4835&ext=zip",
+            archive_provider="MobilityDatabase",
+            expected_sha256="ecfff77875bb2c84b8843839020263c0629d1c541670b4841d1a5bce4bac6d10",
+            valid_from="2026-06-11",
+            valid_to="2026-07-19",
+        )
+    ],
     "Kansas City": [
         GtfsFeedSource(
             agency="RideKC/KCATA",
@@ -41,11 +89,68 @@ GTFS_FEEDS = {
         )
     ],
     "Los Angeles": [
-        _live("LA Metro Rail", "https://gitlab.com/LACMTA/gtfs_rail/raw/master/gtfs_rail.zip"),
-        _live("LA Metro Bus", "https://gitlab.com/LACMTA/gtfs_bus/-/raw/master/gtfs_bus.zip"),
+        GtfsFeedSource(
+            agency="LA Metro Rail",
+            url=(
+                "https://gitlab.com/LACMTA/gtfs_rail/-/raw/"
+                "fa5b72a4789bec68256e52bfce90fe9105db8111/gtfs_rail.zip"
+            ),
+            publisher_url="https://gitlab.com/LACMTA/gtfs_rail",
+            archive_provider="LA Metro GitLab history",
+            expected_sha256="e3584722c8b1f85f311eb7573e323c1baa81507b1bf3614f024bc23485add7e4",
+            valid_from="2026-06-12",
+            valid_to="2026-06-25",
+        ),
+        GtfsFeedSource(
+            agency="LA Metro Rail",
+            url=(
+                "https://gitlab.com/LACMTA/gtfs_rail/-/raw/"
+                "2940747aa442c9ff1c674a1b1035ad968ea7d6cf/gtfs_rail.zip"
+            ),
+            publisher_url="https://gitlab.com/LACMTA/gtfs_rail",
+            archive_provider="LA Metro GitLab history",
+            expected_sha256="13b6bd09aa4dfc88ce6b6f99fe64a2ff97c0b8b615df2ccd6c3e3560b8208567",
+            valid_from="2026-06-28",
+            valid_to="2026-07-10",
+        ),
+        GtfsFeedSource(
+            agency="LA Metro Bus",
+            url="https://gitlab.com/LACMTA/gtfs_bus/-/raw/043113f1/gtfs_bus.zip",
+            publisher_url="https://gitlab.com/LACMTA/gtfs_bus",
+            archive_provider="LA Metro GitLab history",
+            expected_sha256="93275d4b50eb22afcfe64f3fe8fd918dfb5fa43600be2e267658e5f2719eda33",
+            valid_from="2026-06-11",
+            valid_to="2026-07-19",
+        ),
     ],
-    "Miami": [_live("Miami-Dade Transit", "https://www.miamidade.gov/transit/googletransit/current/google_transit.zip")],
-    "New York/NJ": [_live("NJ Transit Rail", "https://www.njtransit.com/rail_data.zip")],
+    "Miami": [
+        GtfsFeedSource(
+            agency="Miami-Dade Transit",
+            url=(
+                "https://files.mobilitydatabase.org/mdb-331/"
+                "mdb-331-202603260114/mdb-331-202603260114.zip"
+            ),
+            publisher_url="https://www.miamidade.gov/transit/googletransit/current/google_transit.zip",
+            archive_provider="MobilityDatabase",
+            expected_sha256="bc195ae0ecfca9a8946d23f2e1deb8928a0730f8828ddb5ca41361042cfd9704",
+            valid_from="2026-06-11",
+            valid_to="2026-07-19",
+        )
+    ],
+    "New York/NJ": [
+        GtfsFeedSource(
+            agency="NJ Transit Rail",
+            url=(
+                "https://files.mobilitydatabase.org/mdb-509/"
+                "mdb-509-202606130055/mdb-509-202606130055.zip"
+            ),
+            publisher_url="https://www.njtransit.com/rail_data.zip",
+            archive_provider="MobilityDatabase",
+            expected_sha256="0c32bc47fd62e7cc8932973b26336bad25b5f7a933f137a846e790a62279e5c8",
+            valid_from="2026-06-11",
+            valid_to="2026-07-19",
+        )
+    ],
     "Philadelphia": [
         GtfsFeedSource(
             agency="SEPTA",
@@ -66,10 +171,45 @@ GTFS_FEEDS = {
             valid_to="2026-07-19",
         ),
     ],
-    "San Francisco": [_live("VTA", "https://gtfs.vta.org/gtfs_vta.zip")],
+    "San Francisco": [
+        GtfsFeedSource(
+            agency="VTA",
+            url=(
+                "https://files.mobilitydatabase.org/mdb-57/"
+                "mdb-57-202606030001/mdb-57-202606030001.zip"
+            ),
+            publisher_url="https://gtfs.vta.org/gtfs_vta.zip",
+            archive_provider="MobilityDatabase",
+            expected_sha256="e90abd9ef0936b0795075304b72da252d72df0e1200533372136c35d54e53380",
+            valid_from="2026-06-11",
+            valid_to="2026-07-19",
+        )
+    ],
     "Seattle": [
-        _live("Sound Transit", "https://gtfs.sound.obaweb.org/prod/40_gtfs.zip"),
-        _live("King County Metro", "https://metro.kingcounty.gov/GTFS/google_transit.zip"),
+        GtfsFeedSource(
+            agency="Sound Transit",
+            url=(
+                "https://files.mobilitydatabase.org/mdb-268/"
+                "mdb-268-202606060017/mdb-268-202606060017.zip"
+            ),
+            publisher_url="https://gtfs.sound.obaweb.org/prod/40_gtfs.zip",
+            archive_provider="MobilityDatabase",
+            expected_sha256="af2b2f6570fe9c8aa207843bcf11b3772f94b21df40fea54e1177af2672d504f",
+            valid_from="2026-06-11",
+            valid_to="2026-07-19",
+        ),
+        GtfsFeedSource(
+            agency="King County Metro",
+            url=(
+                "https://files.mobilitydatabase.org/mdb-267/"
+                "mdb-267-202606090115/mdb-267-202606090115.zip"
+            ),
+            publisher_url="https://metro.kingcounty.gov/GTFS/google_transit.zip",
+            archive_provider="MobilityDatabase",
+            expected_sha256="73bb8e90d82adbbfdaebde6e77ff730fc38bf51be099a15b642108fdbb7d12e5",
+            valid_from="2026-06-11",
+            valid_to="2026-07-19",
+        ),
     ],
 }
 

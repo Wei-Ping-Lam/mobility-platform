@@ -32,6 +32,35 @@ SERVICE_RADIUS_MILES = 0.5
 WINDOW_BEFORE_MIN = 240
 WINDOW_AFTER_MIN = 240
 ASSUMED_MATCH_MIN = 120
+RAW_FEED_CACHE = Path("data/raw/gtfs")
+
+
+def _feed_payload(source: GtfsFeedSource) -> bytes:
+    """Return a pinned feed from the ignored local cache or its configured URL."""
+
+    cache_path = RAW_FEED_CACHE / f"{source.expected_sha256}.zip" if source.expected_sha256 else None
+    if cache_path and cache_path.exists():
+        payload = cache_path.read_bytes()
+        digest = hashlib.sha256(payload).hexdigest()
+        if digest != source.expected_sha256:
+            raise ValueError(
+                f"Cached GTFS hash mismatch for {source.agency}: "
+                f"expected {source.expected_sha256}, found {digest}"
+            )
+        return payload
+    response = requests.get(source.url, headers=HEADERS, timeout=120)
+    response.raise_for_status()
+    payload = response.content
+    digest = hashlib.sha256(payload).hexdigest()
+    if source.expected_sha256 and digest != source.expected_sha256:
+        raise ValueError(
+            f"Pinned GTFS hash mismatch for {source.agency}: "
+            f"expected {source.expected_sha256}, found {digest}"
+        )
+    if cache_path:
+        cache_path.parent.mkdir(parents=True, exist_ok=True)
+        cache_path.write_bytes(payload)
+    return payload
 
 
 def haversine_miles(lat: float, lon: float, lats: np.ndarray, lons: np.ndarray) -> np.ndarray:
@@ -209,7 +238,10 @@ def _event_route_shapes(
             route_labels[route_id] = str(
                 row.get("route_short_name") or row.get("route_long_name") or route_id
             )
-    trip_routes = eligible.set_index("trip_id")["route_id"].astype(str).to_dict() if not eligible.empty else {}
+    if not eligible.empty:
+        eligible["trip_id"] = eligible["trip_id"].astype(str)
+        eligible["route_id"] = eligible["route_id"].astype(str)
+    trip_routes = eligible.set_index("trip_id")["route_id"].to_dict() if not eligible.empty else {}
     stop_routes: dict[str, tuple[str, ...]] = {}
     for stop_id, group in catchment_times.groupby(catchment_times["stop_id"].astype(str)):
         labels = sorted(
@@ -380,7 +412,8 @@ def extract_feed(
                 calendar_starts.append(details["calendar_start"])
             if details["calendar_end"]:
                 calendar_ends.append(details["calendar_end"])
-            venue_ids, _ = _venue_stop_ids(stops, venue, SERVICE_RADIUS_MILES)
+            capacity_stop_ids, _ = _venue_stop_ids(stops, venue, SERVICE_RADIUS_MILES)
+            walking_stop_ids, _ = _venue_stop_ids(stops, venue, VENUE_RADIUS_MILES)
             shape_rows, stop_route_rows = _event_route_shapes(
                 stops,
                 stop_times,
@@ -388,19 +421,25 @@ def extract_feed(
                 routes,
                 optional["shapes.txt"],
                 services,
-                venue_ids,
+                walking_stop_ids,
                 events,
             )
             route_shapes.extend(shape_rows)
             for stop_id, labels in stop_route_rows.items():
                 stop_routes[stop_id].update(labels)
             rows, counts = _event_departures(
-                stop_times, trips, routes, optional["frequencies.txt"], services, venue_ids, events
+                stop_times,
+                trips,
+                routes,
+                optional["frequencies.txt"],
+                services,
+                capacity_stop_ids,
+                events,
             )
             event_rows.extend(rows)
             mode_counts.update(counts)
     stops = pd.concat(aggregate_stops, ignore_index=True).drop_duplicates("stop_id") if aggregate_stops else pd.DataFrame()
-    venue_ids, nearby = _venue_stop_ids(stops, venue)
+    venue_ids, nearby = _venue_stop_ids(stops, venue, SERVICE_RADIUS_MILES)
     capacity = {
         band: sum(count * MODE_CAPACITY_RANGES.get(mode, MODE_CAPACITY_RANGES[3])[band] for mode, count in mode_counts.items())
         for band in ("low", "base", "high")
@@ -463,6 +502,7 @@ def count_near_venue(stops: pd.DataFrame, venue: dict[str, Any]) -> dict[str, An
                 "distance_mi": round(float(row.distance_mi), 3),
                 "agency": str(getattr(row, "agency", "") or "Agency unavailable"),
                 "route": ", ".join(getattr(row, "routes", ()) or ()) or "Route unavailable",
+                "event_relevant": bool(getattr(row, "routes", ()) or ()),
                 "status": "observed",
             }
             for row in nearby.itertuples(index=False)
@@ -514,14 +554,8 @@ def fetch_city(city: str, feeds: list[GtfsFeedSource], events: list[dict[str, An
             "sha256": None,
         }
         try:
-            response = requests.get(url, headers=HEADERS, timeout=120)
-            response.raise_for_status()
-            payload = response.content
+            payload = _feed_payload(source)
             digest = hashlib.sha256(payload).hexdigest()
-            if source.expected_sha256 and digest != source.expected_sha256:
-                raise ValueError(
-                    f"Pinned GTFS hash mismatch for {agency}: expected {source.expected_sha256}, found {digest}"
-                )
             extracted = extract_feed(payload, venue, assigned_events)
             complete = all(extracted["required_files"].values())
             assigned_match_ids = {str(event["match_id"]) for event in assigned_events}
@@ -592,7 +626,11 @@ def fetch_city(city: str, feeds: list[GtfsFeedSource], events: list[dict[str, An
                 optional_presence[name] |= present
         except (requests.RequestException, zipfile.BadZipFile, OSError, ValueError) as exc:
             feed_results.append({**base, "error": str(exc)[:500]})
-    stops = pd.concat(all_stops, ignore_index=True).drop_duplicates("stop_id") if all_stops else pd.DataFrame()
+    stops = (
+        pd.concat(all_stops, ignore_index=True).drop_duplicates(["agency", "stop_id"])
+        if all_stops
+        else pd.DataFrame()
+    )
     status = (
         "observed" if feed_results and all(feed["status"] == "observed" for feed in feed_results)
         else "partial" if any(feed["status"] in {"observed", "partial"} for feed in feed_results)

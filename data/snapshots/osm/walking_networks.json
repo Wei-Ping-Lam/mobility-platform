@@ -1,5 +1,5 @@
 {
-  "artifact_sha256": "8a5ed024ecc9826778bf136aeedf6309820924768befab44c0266ce9e446b1f9",
+  "artifact_sha256": "ec8aa95baa28a93b10d919dba408131d0cd27c36a256f8b10057b4f71a46992e",
   "cities": {
     "Atlanta": {
       "accessibility_status": "not_measured",
@@ -795,7 +795,7 @@
         "license": "Open Database License (ODbL)",
         "notes": "Network planning evidence; sidewalk/crossing tags are incomplete and do not certify accessibility.",
         "publisher": "OpenStreetMap contributors",
-        "retrieved_at_utc": "2026-08-02T03:53:11.835754Z",
+        "retrieved_at_utc": "2026-08-02T05:28:58.521810Z",
         "sha256": "68ede57510666c6c736fd3450ff0861ac250d62cd603e2861a65fffe45175f3e",
         "source": "OpenStreetMap five-mile walking-network extract",
         "status": "derived",
@@ -1492,7 +1492,7 @@
         "license": "Open Database License (ODbL)",
         "notes": "Network planning evidence; sidewalk/crossing tags are incomplete and do not certify accessibility.",
         "publisher": "OpenStreetMap contributors",
-        "retrieved_at_utc": "2026-08-02T03:53:11.835754Z",
+        "retrieved_at_utc": "2026-08-02T05:28:58.521810Z",
         "sha256": "e676cd30a5cf42afd3ad5d4b4457242f6f29a82c94210a0fda9de8469c96be5b",
         "source": "OpenStreetMap five-mile walking-network extract",
         "status": "derived",
@@ -2233,7 +2233,7 @@
         "license": "Open Database License (ODbL)",
         "notes": "Network planning evidence; sidewalk/crossing tags are incomplete and do not certify accessibility.",
         "publisher": "OpenStreetMap contributors",
-        "retrieved_at_utc": "2026-08-02T03:53:11.835754Z",
+        "retrieved_at_utc": "2026-08-02T05:28:58.521810Z",
         "sha256": "389d98bc9682834a6c9de87746118a6f941fc5d978a191060cd16438b863aeb6",
         "source": "OpenStreetMap five-mile walking-network extract",
         "status": "derived",
@@ -2998,7 +2998,7 @@
         "license": "Open Database License (ODbL)",
         "notes": "Network planning evidence; sidewalk/crossing tags are incomplete and do not certify accessibility.",
         "publisher": "OpenStreetMap contributors",
-        "retrieved_at_utc": "2026-08-02T03:53:11.835754Z",
+        "retrieved_at_utc": "2026-08-02T05:41:06.142500Z",
         "sha256": "26877b02e23d7db18618a73e0ad257cb7e728dcca03f4336ca514795a1c89db1",
         "source": "OpenStreetMap five-mile walking-network extract",
         "status": "derived",
@@ -3815,7 +3815,7 @@
         "license": "Open Database License (ODbL)",
         "notes": "Network planning evidence; sidewalk/crossing tags are incomplete and do not certify accessibility.",
         "publisher": "OpenStreetMap contributors",
-        "retrieved_at_utc": "2026-08-02T03:53:11.835754Z",
+        "retrieved_at_utc": "2026-08-02T05:28:58.521810Z",
         "sha256": "53246e13128e2478f75d55c287d8c27e8ae652905c57692bc075852d57149ace",
         "source": "OpenStreetMap five-mile walking-network extract",
         "status": "derived",
@@ -4648,7 +4648,7 @@
         "license": "Open Database License (ODbL)",
         "notes": "Network planning evidence; sidewalk/crossing tags are incomplete and do not certify accessibility.",
         "publisher": "OpenStreetMap contributors",
-        "retrieved_at_utc": "2026-08-02T03:53:11.835754Z",
+        "retrieved_at_utc": "2026-08-02T05:28:58.521810Z",
         "sha256": "1f3be144b9ce826277f0ba0297b1563341cd49eb6781469d00e200669fcfe3c7",
         "source": "OpenStreetMap five-mile walking-network extract",
         "status": "derived",
@@ -5377,7 +5377,7 @@
         "license": "Open Database License (ODbL)",
         "notes": "Network planning evidence; sidewalk/crossing tags are incomplete and do not certify accessibility.",
         "publisher": "OpenStreetMap contributors",
-        "retrieved_at_utc": "2026-08-02T03:53:11.835754Z",
+        "retrieved_at_utc": "2026-08-02T05:41:06.142500Z",
         "sha256": "ffff4382149765a4cf792c8e363e0f4d602511bc40cc7a1cf01066118aae22e5",
         "source": "OpenStreetMap five-mile walking-network extract",
         "status": "derived",
@@ -5397,7 +5397,7 @@
       "city": "New York/NJ",
       "connected_component_nodes": 63582,
       "crossing_tag_coverage_pct": 12.17,
-      "detour_ratio": null,
+      "detour_ratio": 3.552,
       "graph_edges": 184002,
       "graph_nodes": 63582,
       "isochrones": [
@@ -6024,7 +6024,7 @@
           "walking_speed_mps": 1.34
         }
       ],
-      "network_distance_m": null,
+      "network_distance_m": 734.9,
       "query": {
         "center": [
           40.8135,
@@ -6033,9 +6033,57 @@
         "distance_m": 8046.72,
         "network_type": "walk"
       },
-      "route_geometry": null,
-      "route_heat_exposure_c": null,
-      "route_uhi_c_above_rural": null,
+      "route_geometry": {
+        "coordinates": [
+          [
+            -74.075673,
+            40.813291
+          ],
+          [
+            -74.076375,
+            40.813171
+          ],
+          [
+            -74.076308,
+            40.812296
+          ],
+          [
+            -74.075002,
+            40.811958
+          ],
+          [
+            -74.074008,
+            40.811908
+          ],
+          [
+            -74.073511,
+            40.812004
+          ],
+          [
+            -74.073254,
+            40.81178
+          ],
+          [
+            -74.073131,
+            40.811699
+          ],
+          [
+            -74.071798,
+            40.813214
+          ],
+          [
+            -74.071607,
+            40.813408
+          ],
+          [
+            -74.071993,
+            40.813275
+          ]
+        ],
+        "type": "LineString"
+      },
+      "route_heat_exposure_c": 34.61,
+      "route_uhi_c_above_rural": 3.0,
       "schema_version": "1.0.0",
       "sidewalk_tag_coverage_pct": 0.0,
       "snapshot_kind": "osm_walking_network",
@@ -6046,17 +6094,25 @@
         "license": "Open Database License (ODbL)",
         "notes": "Network planning evidence; sidewalk/crossing tags are incomplete and do not certify accessibility.",
         "publisher": "OpenStreetMap contributors",
-        "retrieved_at_utc": "2026-08-02T03:53:11.835754Z",
+        "retrieved_at_utc": "2026-08-02T05:33:44.895626Z",
         "sha256": "b19e12e0737c5dba19369876d2c3ea78889e888091a2d87359020582e3435868",
         "source": "OpenStreetMap five-mile walking-network extract",
         "status": "derived",
         "url": "https://www.openstreetmap.org/copyright",
         "version": "OSMnx 2.1.0"
       },
-      "status": "partial",
-      "straight_distance_m": null,
-      "target_kind": "unavailable without event-relevant GTFS stop",
-      "target_stop": null,
+      "status": "derived",
+      "straight_distance_m": 206.9,
+      "target_kind": "nearest event-relevant GTFS stop",
+      "target_stop": {
+        "agency": "NJ Transit Rail",
+        "lat": 40.813053,
+        "lon": -74.072114,
+        "name": "NYNJ STADIUM",
+        "route": "MRL",
+        "status": "observed",
+        "stop_id": "40570"
+      },
       "venue": "MetLife Stadium",
       "venue_lat": 40.8135,
       "venue_lon": -74.0745
@@ -6863,7 +6919,7 @@
         "license": "Open Database License (ODbL)",
         "notes": "Network planning evidence; sidewalk/crossing tags are incomplete and do not certify accessibility.",
         "publisher": "OpenStreetMap contributors",
-        "retrieved_at_utc": "2026-08-02T03:53:11.835754Z",
+        "retrieved_at_utc": "2026-08-02T05:28:58.521810Z",
         "sha256": "fe2cc07a4b6283c475e40dc537ed30a456a556c81863df6da559adeb15d145c4",
         "source": "OpenStreetMap five-mile walking-network extract",
         "status": "derived",
@@ -7700,7 +7756,7 @@
         "license": "Open Database License (ODbL)",
         "notes": "Network planning evidence; sidewalk/crossing tags are incomplete and do not certify accessibility.",
         "publisher": "OpenStreetMap contributors",
-        "retrieved_at_utc": "2026-08-02T03:53:11.835754Z",
+        "retrieved_at_utc": "2026-08-02T05:41:06.142500Z",
         "sha256": "bb5f5895d7420a1093c485ec47860ab40f884fc2eb44e5e5a1448175d7004da5",
         "source": "OpenStreetMap five-mile walking-network extract",
         "status": "derived",
@@ -7715,7 +7771,7 @@
         "lat": 37.403555,
         "lon": -121.974058,
         "name": "Great America Station",
-        "route": "BlueS, Ornge",
+        "route": "BlueS, Orange Line, OrangeW",
         "status": "observed",
         "stop_id": "4798"
       },
@@ -7728,7 +7784,7 @@
       "city": "Seattle",
       "connected_component_nodes": 75344,
       "crossing_tag_coverage_pct": 14.45,
-      "detour_ratio": 1.56,
+      "detour_ratio": 1.0,
       "graph_edges": 210876,
       "graph_nodes": 75344,
       "isochrones": [
@@ -8451,7 +8507,7 @@
           "walking_speed_mps": 1.34
         }
       ],
-      "network_distance_m": 501.3,
+      "network_distance_m": 186.9,
       "query": {
         "center": [
           47.5952,
@@ -8467,74 +8523,22 @@
             47.595367
           ],
           [
-            -122.333178,
-            47.595484
+            -122.333371,
+            47.595375
           ],
           [
-            -122.332965,
-            47.596049
+            -122.333812,
+            47.595376
           ],
           [
-            -122.33233,
-            47.596566
-          ],
-          [
-            -122.332241,
-            47.596742
-          ],
-          [
-            -122.331672,
-            47.596742
-          ],
-          [
-            -122.33152,
-            47.596742
-          ],
-          [
-            -122.330569,
-            47.596741
-          ],
-          [
-            -122.330501,
-            47.596798
-          ],
-          [
-            -122.330406,
-            47.59732
-          ],
-          [
-            -122.330406,
-            47.597413
-          ],
-          [
-            -122.330389,
-            47.597517
-          ],
-          [
-            -122.330316,
-            47.597517
-          ],
-          [
-            -122.330315,
-            47.597555
-          ],
-          [
-            -122.330057,
-            47.597615
-          ],
-          [
-            -122.329463,
-            47.59761
-          ],
-          [
-            -122.329421,
-            47.597752
+            -122.334034,
+            47.59536
           ]
         ],
         "type": "LineString"
       },
-      "route_heat_exposure_c": 41.78,
-      "route_uhi_c_above_rural": 10.16,
+      "route_heat_exposure_c": 42.07,
+      "route_uhi_c_above_rural": 10.45,
       "schema_version": "1.0.0",
       "sidewalk_tag_coverage_pct": 0.0,
       "snapshot_kind": "osm_walking_network",
@@ -8545,7 +8549,7 @@
         "license": "Open Database License (ODbL)",
         "notes": "Network planning evidence; sidewalk/crossing tags are incomplete and do not certify accessibility.",
         "publisher": "OpenStreetMap contributors",
-        "retrieved_at_utc": "2026-08-02T03:53:11.835754Z",
+        "retrieved_at_utc": "2026-08-02T05:28:58.521810Z",
         "sha256": "e1ef1e263e3da07816526b17f173163a7df090c112d3a3d934ca9f35b6ea286f",
         "source": "OpenStreetMap five-mile walking-network extract",
         "status": "derived",
@@ -8553,16 +8557,16 @@
         "version": "OSMnx 2.1.0"
       },
       "status": "derived",
-      "straight_distance_m": 321.3,
+      "straight_distance_m": 186.9,
       "target_kind": "nearest event-relevant GTFS stop",
       "target_stop": {
-        "agency": "Sound Transit",
-        "lat": 47.597702,
-        "lon": -122.329456,
-        "name": "King Street Station",
-        "route": "S Line",
+        "agency": "King County Metro",
+        "lat": 47.595249,
+        "lon": -122.334091,
+        "name": "1st Ave S & S Charles St",
+        "route": "Metro Match Day Shuttle",
         "status": "observed",
-        "stop_id": "S_KS"
+        "stop_id": "1512"
       },
       "venue": "Lumen Field",
       "venue_lat": 47.5952,
@@ -8570,7 +8574,7 @@
     }
   },
   "contract_version": "0.3.0",
-  "generated_at_utc": "2026-08-02T03:53:11.835754Z",
+  "generated_at_utc": "2026-08-02T05:41:06.142500Z",
   "policy": {
     "ada": "Missing OSM tags remain unknown and never imply ADA compliance",
     "distance": "Network paths are planning evidence and include a straight-line lower-bound guard",
@@ -8583,7 +8587,7 @@
     "license": "Open Database License (ODbL)",
     "notes": "Hashes identify local GraphML extracts; compact derived geometry is tracked.",
     "publisher": "OpenStreetMap contributors",
-    "retrieved_at_utc": "2026-08-02T03:53:11.835754Z",
+    "retrieved_at_utc": "2026-08-02T05:41:06.142500Z",
     "sha256": "5274c8f9c2f818e09b88410ae276e47f2e7349c28e65bbbe803cd0e7bc8a784b",
     "source": "OpenStreetMap five-mile walking-network extracts",
     "status": "derived",

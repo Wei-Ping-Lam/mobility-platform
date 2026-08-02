@@ -70,6 +70,42 @@ def test_nested_archive_uses_exact_stops_member_and_not_route_stops():
     assert result["event_departures_by_match"][0]["departures"] == 1
 
 
+def test_numeric_trip_ids_retain_event_route_labels_for_walking_targets():
+    payload = _feed(
+        {
+            "stops.txt": "stop_id,stop_name,stop_lat,stop_lon\n130,Venue stop,25.943,-80.213\n",
+            "routes.txt": "route_id,route_short_name,route_type\n7,Route 7,3\n",
+            "trips.txt": "route_id,service_id,trip_id\n7,1,1001\n",
+            "stop_times.txt": "trip_id,arrival_time,departure_time,stop_id,stop_sequence\n1001,18:00:00,18:00:00,130,1\n",
+            "calendar.txt": "service_id,monday,tuesday,wednesday,thursday,friday,saturday,sunday,start_date,end_date\n1,1,1,1,1,1,1,1,20260101,20261231\n",
+        }
+    )
+    event = {"match_id": "M013", "kickoff_local": "2026-06-15T18:00:00-04:00"}
+
+    result = extract_feed(payload, {"lat": 25.943, "lon": -80.213}, [event])
+
+    assert result["stop_routes"]["130"] == ["Route 7"]
+
+
+def test_walking_route_uses_two_mile_stops_while_capacity_uses_half_mile():
+    payload = _feed(
+        {
+            "stops.txt": "stop_id,stop_name,stop_lat,stop_lon\nS1,One mile stop,33.7699,-84.4009\n",
+            "routes.txt": "route_id,route_short_name,route_type\nR1,Route 1,3\n",
+            "trips.txt": "route_id,service_id,trip_id\nR1,WK,T1\n",
+            "stop_times.txt": "trip_id,arrival_time,departure_time,stop_id,stop_sequence\nT1,18:00:00,18:00:00,S1,1\n",
+            "calendar.txt": "service_id,monday,tuesday,wednesday,thursday,friday,saturday,sunday,start_date,end_date\nWK,1,1,1,1,1,1,1,20260101,20261231\n",
+        }
+    )
+    event = {"match_id": "M004", "kickoff_local": "2026-06-12T18:00:00-04:00"}
+
+    result = extract_feed(payload, {"lat": 33.7554, "lon": -84.4009}, [event])
+
+    assert result["venue_stop_count"] == 0
+    assert result["event_departures_by_match"][0]["departures"] == 0
+    assert result["stop_routes"]["S1"] == ["Route 1"]
+
+
 def test_pinned_sources_assign_non_overlapping_event_windows(monkeypatch):
     payload = _feed(
         {

@@ -12,6 +12,6 @@ def test_all_checked_public_snapshots_validate():
         "walking_cities": 11,
         "walking_status": "derived",
         "gtfs_cities": 11,
-        "gtfs_status": "partial",
+        "gtfs_status": "observed",
         "passed": True,
     }

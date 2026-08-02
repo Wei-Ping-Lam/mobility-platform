@@ -79,7 +79,12 @@ def _nearest_event_stop(gtfs_city: dict[str, Any]) -> dict[str, Any] | None:
         for row in gtfs_city.get("stop_points_2mi", [])
         if row.get("lat") is not None
         and row.get("lon") is not None
-        and str(row.get("route") or "") != "Route unavailable"
+        and bool(
+            row.get(
+                "event_relevant",
+                str(row.get("route") or "") != "Route unavailable",
+            )
+        )
     ]
     return min(eligible, key=lambda row: float(row.get("distance_mi", math.inf)), default=None)
 
@@ -172,7 +177,7 @@ def _city_snapshot(
         graph = graph.subgraph(component_nodes).copy()
         stop = _nearest_event_stop(gtfs_city)
         route_coordinates: list[list[float]] = []
-        straight = network = detour = None
+        straight = network = None
         target = None
         if stop:
             stop_node = _nearest_node(graph, float(stop["lat"]), float(stop["lon"]))
@@ -181,7 +186,6 @@ def _city_snapshot(
             raw_network = sum(float(graph.edges[left, right, min(graph[left][right], key=lambda key: float(graph[left][right][key].get("length") or math.inf))].get("length") or 0) for left, right in zip(route, route[1:]))
             straight = _haversine_m(float(venue["lat"]), float(venue["lon"]), float(stop["lat"]), float(stop["lon"]))
             network = max(raw_network, straight)
-            detour = network / straight if straight else 1.0
             target = {key: stop.get(key) for key in ("stop_id", "name", "lat", "lon", "agency", "route", "status")}
         sidewalk, crossing = _tag_coverage(graph)
         route_uhi, route_heat = _route_heat(city, route_coordinates, uhi, weather)
@@ -200,6 +204,13 @@ def _city_snapshot(
             "hash_scope": "Local GraphML extract bytes",
             "notes": "Network planning evidence; sidewalk/crossing tags are incomplete and do not certify accessibility.",
         }
+        straight_rounded = round(straight, 1) if straight is not None else None
+        network_rounded = round(network, 1) if network is not None else None
+        detour_rounded = (
+            round(network_rounded / straight_rounded, 3)
+            if straight_rounded not in (None, 0) and network_rounded is not None
+            else (1.0 if straight_rounded == 0 and network_rounded is not None else None)
+        )
         row = {
             "city": city,
             "venue": venue["venue"],
@@ -214,9 +225,9 @@ def _city_snapshot(
             "connected_component_nodes": len(component_nodes),
             "target_kind": "nearest event-relevant GTFS stop" if stop else "unavailable without event-relevant GTFS stop",
             "target_stop": target,
-            "straight_distance_m": round(straight, 1) if straight is not None else None,
-            "network_distance_m": round(network, 1) if network is not None else None,
-            "detour_ratio": round(detour, 3) if detour is not None else None,
+            "straight_distance_m": straight_rounded,
+            "network_distance_m": network_rounded,
+            "detour_ratio": detour_rounded,
             "route_geometry": {"type": "LineString", "coordinates": route_coordinates} if route_coordinates else None,
             "isochrones": [_isochrone(graph, venue_node, 15), _isochrone(graph, venue_node, 30)],
             "sidewalk_tag_coverage_pct": sidewalk,
@@ -270,6 +281,8 @@ def build_snapshot(
     cache_root: Path,
     uhi_path: Path,
     weather_path: Path,
+    selected_cities: tuple[str, ...] | None = None,
+    existing_snapshot: dict[str, Any] | None = None,
 ) -> dict[str, Any]:
     retrieved_at = datetime.now(timezone.utc).isoformat().replace("+00:00", "Z")
     ox.settings.use_cache = True
@@ -278,8 +291,10 @@ def build_snapshot(
     gtfs = load_gtfs_snapshot(gtfs_path)
     uhi = pd.read_parquet(uhi_path) if uhi_path.exists() else pd.DataFrame()
     weather = pd.read_parquet(weather_path) if weather_path.exists() else pd.DataFrame()
-    cities = {}
-    for city, venue in HOST_CITIES.items():
+    cities = dict((existing_snapshot or {}).get("cities", {}))
+    selected = selected_cities or tuple(HOST_CITIES)
+    for city in selected:
+        venue = HOST_CITIES[city]
         print(json.dumps({"city": city, "phase": "walking_network_refresh"}), flush=True)
         cities[city] = _city_snapshot(city, venue, gtfs.get("cities", {}).get(city, {}), raw_root, retrieved_at, uhi, weather)
         print(json.dumps({"city": city, "status": cities[city]["status"]}), flush=True)
@@ -338,9 +353,26 @@ def main() -> None:
     parser.add_argument("--uhi", type=Path, default=Path("dashboard/cache/rice_spatial_uhi_grid.parquet"))
     parser.add_argument("--weather", type=Path, default=Path("dashboard/cache/weather_city_daily.parquet"))
     parser.add_argument("--output", type=Path, default=Path("data/snapshots/osm/walking_networks.json"))
+    parser.add_argument(
+        "--city",
+        action="append",
+        choices=tuple(HOST_CITIES),
+        help="Refresh only selected cities and preserve the other validated city snapshots",
+    )
     args = parser.parse_args()
+    existing = None
+    if args.refresh and args.city and args.output.exists():
+        existing = json.loads(args.output.read_text(encoding="utf-8"))
     snapshot = (
-        build_snapshot(args.gtfs, args.raw_root, args.cache_root, args.uhi, args.weather)
+        build_snapshot(
+            args.gtfs,
+            args.raw_root,
+            args.cache_root,
+            args.uhi,
+            args.weather,
+            tuple(dict.fromkeys(args.city)) if args.city else None,
+            existing,
+        )
         if args.refresh
         else json.loads(args.validate.read_text(encoding="utf-8"))
     )
