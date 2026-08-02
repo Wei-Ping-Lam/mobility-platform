@@ -607,6 +607,7 @@ def pareto_recommendations(
         recommendations.append(
             InvestmentRecommendation(
                 city=outcome.city,
+                match_id=outcome.match_id,
                 intervention=name,
                 rationale=(
                     f"Pareto-efficient planning option resolving {gap:,.0f} peak passengers "

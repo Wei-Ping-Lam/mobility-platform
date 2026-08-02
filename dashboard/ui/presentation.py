@@ -461,7 +461,7 @@ def build_presentation(metrics: pd.DataFrame, artifacts: Mapping[str, Any]) -> P
 
             city_recommendations = [
                 item for item in recommendation_rows
-                if str(item.get("city")) == city and str(item.get("match_id", match_id)) == match_id
+                if str(item.get("city")) == city and str(item.get("match_id")) == match_id
             ]
             recommendation_views[match_id] = tuple(
                 RecommendationView(

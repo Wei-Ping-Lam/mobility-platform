@@ -128,6 +128,7 @@ def _contract_artifacts() -> dict:
         )
     recommendation = InvestmentRecommendation(
         city="Atlanta",
+        match_id="ATL-01",
         intervention="Operational Package",
         rationale="Closes part of the documented match-hour gap.",
         status=EvidenceStatus.SCENARIO,

@@ -47,6 +47,8 @@ def test_compact_evidence_composes_match_decisions_with_repaired_event_gtfs():
     assert len(bundle["access_gaps"]) == 78
     assert len(bundle["intervention_outcomes"]) == 78 * 3
     assert bundle["investment_recommendations"]
+    valid_matches = {row["match_id"] for row in artifacts["match_events"]}
+    assert all(row.get("match_id") in valid_matches for row in bundle["investment_recommendations"])
     access_by_city = {row["city"]: row for row in bundle["access_gaps"]}
     for city in ("Kansas City", "Philadelphia"):
         city_access = [row for row in bundle["access_gaps"] if row["city"] == city]
@@ -66,6 +68,27 @@ def test_compact_evidence_composes_match_decisions_with_repaired_event_gtfs():
     assert all(row["peak_demand_per_hour"] > 0 for row in bundle["access_gaps"])
     assert all(row["residual_passengers"] >= 0 for row in bundle["access_gaps"])
     assert any(row["residual_passengers"] > 0 for row in bundle["access_gaps"])
+
+
+def test_recommendations_are_scoped_to_exact_matches_without_citywide_bleed():
+    artifacts, metrics = _loaded()
+    bundle = build_transportation_bundle(metrics, artifacts)
+    artifacts.update(bundle)
+    presentation = build_presentation(metrics, artifacts)
+
+    presented = 0
+    for decision in presentation.cities.values():
+        for match in decision.matches:
+            expected = [
+                row
+                for row in bundle["investment_recommendations"]
+                if row["city"] == decision.city and row["match_id"] == match.match_id
+            ]
+            actual = decision.recommendation_set(match.match_id)
+            assert len(actual) == len(expected)
+            assert len(actual) <= 6
+            presented += len(actual)
+    assert presented == len(bundle["investment_recommendations"])
 
 
 def test_same_package_responds_to_city_evidence():

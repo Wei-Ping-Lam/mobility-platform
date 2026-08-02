@@ -148,6 +148,7 @@ class InterventionOutcome:
 @dataclass(frozen=True)
 class InvestmentRecommendation:
     city: str
+    match_id: str
     intervention: str
     rationale: str
     status: EvidenceStatus

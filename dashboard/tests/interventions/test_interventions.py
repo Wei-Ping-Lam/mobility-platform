@@ -272,6 +272,7 @@ def test_pareto_recommendations_are_contract_complete(event_inputs):
     assert recommendations
     for recommendation in recommendations:
         assert recommendation.city == "Atlanta"
+        assert recommendation.match_id == "ATL-01"
         assert recommendation.status is EvidenceStatus.SCENARIO
         assert recommendation.cost_low <= recommendation.cost_base <= recommendation.cost_high
         assert recommendation.gap_resolved_passengers >= 0
