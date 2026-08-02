@@ -10,6 +10,7 @@ Rice WC Hack/
 # Parallel development worktrees
 .worktrees/
 .tmp/
+.pytest-tmp/
 
 # Project-owned Python and public-data build caches
 .venv/

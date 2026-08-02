@@ -151,6 +151,8 @@ def _load_public_supplements(paths: ProjectPaths) -> dict[str, Any]:
     factors = _load_json(snapshot_root / "factors" / "planning_factors.json")
     walking = _load_json(snapshot_root / "osm" / "walking_networks.json")
     gtfs = _load_json(snapshot_root / "gtfs" / "gtfs_venue_access.json")
+    operations = _load_json(snapshot_root / "operations" / "world_cup_2026_operations.json")
+    environment = _load_json(snapshot_root / "environment" / "venue_environment.json")
     if isinstance(schedule, dict):
         bundle.setdefault("match_events", schedule.get("events", []))
         bundle.setdefault("source_references", [schedule.get("source", {})])
@@ -173,7 +175,50 @@ def _load_public_supplements(paths: ProjectPaths) -> dict[str, Any]:
             layers = bundle.setdefault("map_layers", {}).setdefault(city, {})
             layers["gtfs"] = city_gtfs.get("stop_points_2mi", [])
             layers["gtfs_routes"] = city_gtfs.get("route_shapes", [])
+    if isinstance(operations, dict):
+        bundle["operational_snapshot"] = operations
+        bundle["operational_metrics"] = operations.get("metrics", [])
+        bundle["operational_event_records"] = operations.get("event_records", [])
+        bundle["operational_coverage"] = operations.get("city_coverage", {})
+        bundle.setdefault("source_references", []).extend(
+            {"source_id": source_id, **source}
+            for source_id, source in operations.get("sources", {}).items()
+            if isinstance(source, dict)
+        )
+    if isinstance(environment, dict):
+        bundle["environment_snapshot"] = environment
+        bundle.setdefault("source_references", []).extend(
+            {"source_id": source_id, **source}
+            for source_id, source in environment.get("sources", {}).items()
+            if isinstance(source, dict)
+        )
     return bundle
+
+
+def _apply_environment_supplements(
+    weather: pd.DataFrame,
+    uhi: pd.DataFrame,
+    environment: object,
+) -> tuple[pd.DataFrame, pd.DataFrame]:
+    """Replace only evidence rows named by a validated offline supplement."""
+
+    if not isinstance(environment, dict):
+        return weather, uhi
+    policy = environment.get("replacement_policy", {})
+    weather_rows = environment.get("weather_daily", [])
+    weather_cities = set(policy.get("weather", []))
+    if isinstance(weather_rows, list) and weather_rows and weather_cities:
+        supplement = pd.DataFrame(weather_rows)
+        supplement["date"] = pd.to_datetime(supplement["date"], errors="coerce")
+        retained = weather[~weather["city"].isin(weather_cities)].copy() if "city" in weather else weather.copy()
+        weather = pd.concat([retained, supplement], ignore_index=True, sort=False)
+    uhi_rows = environment.get("uhi_city", [])
+    uhi_cities = set(policy.get("uhi", []))
+    if isinstance(uhi_rows, list) and uhi_rows and uhi_cities:
+        supplement = pd.DataFrame(uhi_rows)
+        retained = uhi[~uhi["city"].isin(uhi_cities)].copy() if "city" in uhi else uhi.copy()
+        uhi = pd.concat([retained, supplement], ignore_index=True, sort=False)
+    return weather, uhi
 
 
 def _load_rice_spatial(paths: ProjectPaths) -> dict[str, Any]:
@@ -261,6 +306,9 @@ def load_artifacts(paths: ProjectPaths) -> dict[str, Any]:
         origins = _legacy_origins(paths)
     brand_spend = read_parquet(paths, "brand_spend_city_daily.parquet")
     supplements = _load_public_supplements(paths)
+    rice_weather = weather.copy()
+    rice_uhi = uhi.copy()
+    weather, uhi = _apply_environment_supplements(weather, uhi, supplements.get("environment_snapshot"))
     pinned_gtfs = supplements.get("gtfs_snapshot")
     artifacts = {
         "manifest": read_manifest(paths),
@@ -268,6 +316,8 @@ def load_artifacts(paths: ProjectPaths) -> dict[str, Any]:
         "visits_category": visits_category,
         "weather": weather,
         "uhi": uhi,
+        "rice_weather": rice_weather,
+        "rice_uhi": rice_uhi,
         "poi": poi,
         "origins": origins,
         "brand_spend": brand_spend,

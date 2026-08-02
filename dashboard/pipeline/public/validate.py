@@ -8,8 +8,10 @@ from pathlib import Path
 
 from dashboard.mobility_platform.mappings import HOST_CITIES
 from dashboard.pipeline.public.loaders import (
+    load_environment_snapshot,
     load_factor_registry,
     load_gtfs_snapshot,
+    load_operational_snapshot,
     load_schedule_snapshot,
     load_walking_snapshot,
 )
@@ -22,8 +24,15 @@ def validate_all(root: Path) -> dict[str, object]:
     walking = load_walking_snapshot(root / "osm" / "walking_networks.json")
     validate_walking(walking)
     gtfs = load_gtfs_snapshot(root / "gtfs" / "gtfs_venue_access.json")
+    operations = load_operational_snapshot(root / "operations" / "world_cup_2026_operations.json")
+    environment = load_environment_snapshot(root / "environment" / "venue_environment.json")
     expected = set(HOST_CITIES)
-    if set(schedule["city_counts"]) != expected or set(walking["cities"]) != expected or set(gtfs["cities"]) != expected:
+    if (
+        set(schedule["city_counts"]) != expected
+        or set(walking["cities"]) != expected
+        or set(gtfs["cities"]) != expected
+        or set(operations["city_coverage"]) != expected
+    ):
         raise ValueError("A public snapshot is missing one or more U.S. host cities")
     return {
         "contract_version": schedule["contract_version"],
@@ -33,6 +42,12 @@ def validate_all(root: Path) -> dict[str, object]:
         "walking_status": walking["status"],
         "gtfs_cities": len(gtfs["cities"]),
         "gtfs_status": gtfs["status"],
+        "operational_sources": len(operations["sources"]),
+        "operational_metrics": len(operations["metrics"]),
+        "operational_event_records": len(operations["event_records"]),
+        "operational_cities": sum(row["metric_count"] > 0 for row in operations["city_coverage"].values()),
+        "environment_weather_rows": len(environment["weather_daily"]),
+        "environment_uhi_cities": len(environment["uhi_city"]),
         "passed": True,
     }
 

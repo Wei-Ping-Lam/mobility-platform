@@ -13,5 +13,11 @@ def test_all_checked_public_snapshots_validate():
         "walking_status": "derived",
         "gtfs_cities": 11,
         "gtfs_status": "observed",
+        "operational_sources": 11,
+        "operational_metrics": 33,
+        "operational_event_records": 13,
+        "operational_cities": 11,
+        "environment_weather_rows": 366,
+        "environment_uhi_cities": 1,
         "passed": True,
     }

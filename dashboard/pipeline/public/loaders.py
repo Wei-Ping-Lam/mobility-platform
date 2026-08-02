@@ -57,3 +57,23 @@ def load_gtfs_snapshot(path: str | Path = "data/snapshots/gtfs/gtfs_venue_access
             city["gtfs_transit_score"] = None
             city["score_status"] = "unavailable"
     return snapshot
+
+
+def load_operational_snapshot(
+    path: str | Path = "data/snapshots/operations/world_cup_2026_operations.json",
+) -> dict[str, Any]:
+    snapshot = _load(path, "world_cup_operational_evidence")
+    from dashboard.pipeline.public.operations import validate_snapshot
+
+    validate_snapshot(snapshot)
+    return snapshot
+
+
+def load_environment_snapshot(
+    path: str | Path = "data/snapshots/environment/venue_environment.json",
+) -> dict[str, Any]:
+    snapshot = _load(path, "venue_environment_supplements")
+    from dashboard.pipeline.public.environment import validate_snapshot
+
+    validate_snapshot(snapshot)
+    return snapshot

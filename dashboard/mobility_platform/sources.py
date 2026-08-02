@@ -48,6 +48,36 @@ PUBLIC_SOURCE_CATALOG = {
         "url": "https://www.pedbikeinfo.org/topics/more.php?topic=funding&type=resource",
         "license": "reference data; retain source attribution",
     },
+    "gtfs_realtime": {
+        "publisher": "MobilityData / GTFS",
+        "url": "https://gtfs.org/documentation/realtime/reference/",
+        "license": "Apache-2.0 specification",
+    },
+    "fta_monthly_ridership": {
+        "publisher": "Federal Transit Administration",
+        "url": "https://www.transit.dot.gov/ntd/monthly-ridership",
+        "license": "U.S. government data",
+    },
+    "fhwa_npmrds": {
+        "publisher": "Federal Highway Administration",
+        "url": "https://ops.fhwa.dot.gov/publications/fhwahop20028/",
+        "license": "Access through eligible agency/MPO partner; license required",
+    },
+    "fhwa_tmas": {
+        "publisher": "Federal Highway Administration",
+        "url": "https://www.fhwa.dot.gov/policyinformation/tables/tmasdata/",
+        "license": "U.S. government data",
+    },
+    "caltrans_pems": {
+        "publisher": "California Department of Transportation",
+        "url": "https://dot.ca.gov/programs/traffic-operations/mpr/pems-source",
+        "license": "Account and source terms apply",
+    },
+    "txdot_traffic_monitoring": {
+        "publisher": "Texas Department of Transportation",
+        "url": "https://www.txdot.gov/data-maps/traffic-count-maps.html",
+        "license": "Official public data; retain source attribution",
+    },
 }
 
 

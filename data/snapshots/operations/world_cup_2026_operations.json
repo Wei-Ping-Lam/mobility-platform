@@ -1,0 +1,1816 @@
+{
+  "acquisition_note": "Published aggregates improve benchmark context but do not replace interval-level APC/AFC, shuttle, curb, parking, pedestrian, or roadway records. No metric in this snapshot currently qualifies a match-hour model.",
+  "artifact_sha256": "412595aa8402eadee12940a32167238b4182c5aaa0008fee14b9913f2ff866b0",
+  "city_coverage": {
+    "Atlanta": {
+      "event_record_count": 0,
+      "match_hour_calibration_ready": false,
+      "metric_count": 2,
+      "open_request_fields": [
+        "15-minute APC or faregate entries/exits by venue-relevant station and direction",
+        "match-specific arrivals and departures by mode",
+        "actual trips operated, cancellations, vehicle assignments, and passenger loads",
+        "shuttle boardings by hub and departure time",
+        "parking occupancy, rideshare/curb throughput, and pedestrian counts by interval",
+        "venue-corridor traffic volumes, speeds, incidents, and signal-operation logs",
+        "actual staffing, fleet, contract, fuel, and overtime costs"
+      ],
+      "outcome_status": "observed",
+      "source_ids": [
+        "marta_world_cup_situation_2026"
+      ]
+    },
+    "Boston": {
+      "event_record_count": 0,
+      "match_hour_calibration_ready": false,
+      "metric_count": 2,
+      "open_request_fields": [
+        "15-minute APC or faregate entries/exits by venue-relevant station and direction",
+        "match-specific arrivals and departures by mode",
+        "actual trips operated, cancellations, vehicle assignments, and passenger loads",
+        "shuttle boardings by hub and departure time",
+        "parking occupancy, rideshare/curb throughput, and pedestrian counts by interval",
+        "venue-corridor traffic volumes, speeds, incidents, and signal-operation logs",
+        "actual staffing, fleet, contract, fuel, and overtime costs"
+      ],
+      "outcome_status": "observed",
+      "source_ids": [
+        "mass_world_cup_outcomes_2026"
+      ]
+    },
+    "Dallas": {
+      "event_record_count": 0,
+      "match_hour_calibration_ready": false,
+      "metric_count": 1,
+      "open_request_fields": [
+        "15-minute APC or faregate entries/exits by venue-relevant station and direction",
+        "match-specific arrivals and departures by mode",
+        "actual trips operated, cancellations, vehicle assignments, and passenger loads",
+        "shuttle boardings by hub and departure time",
+        "parking occupancy, rideshare/curb throughput, and pedestrian counts by interval",
+        "venue-corridor traffic volumes, speeds, incidents, and signal-operation logs",
+        "actual staffing, fleet, contract, fuel, and overtime costs"
+      ],
+      "outcome_status": "observed",
+      "source_ids": [
+        "dart_world_cup_service_2026"
+      ]
+    },
+    "Houston": {
+      "event_record_count": 4,
+      "match_hour_calibration_ready": false,
+      "metric_count": 3,
+      "open_request_fields": [
+        "15-minute APC or faregate entries/exits by venue-relevant station and direction",
+        "match-specific arrivals and departures by mode",
+        "actual trips operated, cancellations, vehicle assignments, and passenger loads",
+        "shuttle boardings by hub and departure time",
+        "parking occupancy, rideshare/curb throughput, and pedestrian counts by interval",
+        "venue-corridor traffic volumes, speeds, incidents, and signal-operation logs",
+        "actual staffing, fleet, contract, fuel, and overtime costs"
+      ],
+      "outcome_status": "observed",
+      "source_ids": [
+        "houston_host_committee_world_cup_metrics_2026"
+      ]
+    },
+    "Kansas City": {
+      "event_record_count": 0,
+      "match_hour_calibration_ready": false,
+      "metric_count": 5,
+      "open_request_fields": [
+        "15-minute APC or faregate entries/exits by venue-relevant station and direction",
+        "match-specific arrivals and departures by mode",
+        "actual trips operated, cancellations, vehicle assignments, and passenger loads",
+        "shuttle boardings by hub and departure time",
+        "parking occupancy, rideshare/curb throughput, and pedestrian counts by interval",
+        "venue-corridor traffic volumes, speeds, incidents, and signal-operation logs",
+        "actual staffing, fleet, contract, fuel, and overtime costs"
+      ],
+      "outcome_status": "observed",
+      "source_ids": [
+        "kc_streetcar_world_cup_recap_2026"
+      ]
+    },
+    "Los Angeles": {
+      "event_record_count": 0,
+      "match_hour_calibration_ready": false,
+      "metric_count": 2,
+      "open_request_fields": [
+        "15-minute APC or faregate entries/exits by venue-relevant station and direction",
+        "match-specific arrivals and departures by mode",
+        "actual trips operated, cancellations, vehicle assignments, and passenger loads",
+        "shuttle boardings by hub and departure time",
+        "parking occupancy, rideshare/curb throughput, and pedestrian counts by interval",
+        "venue-corridor traffic volumes, speeds, incidents, and signal-operation logs",
+        "actual staffing, fleet, contract, fuel, and overtime costs"
+      ],
+      "outcome_status": "observed",
+      "source_ids": [
+        "la_metro_world_cup_outcomes_2026"
+      ]
+    },
+    "Miami": {
+      "event_record_count": 0,
+      "match_hour_calibration_ready": false,
+      "metric_count": 3,
+      "open_request_fields": [
+        "15-minute APC or faregate entries/exits by venue-relevant station and direction",
+        "match-specific arrivals and departures by mode",
+        "actual trips operated, cancellations, vehicle assignments, and passenger loads",
+        "shuttle boardings by hub and departure time",
+        "parking occupancy, rideshare/curb throughput, and pedestrian counts by interval",
+        "venue-corridor traffic volumes, speeds, incidents, and signal-operation logs",
+        "actual staffing, fleet, contract, fuel, and overtime costs"
+      ],
+      "outcome_status": "observed",
+      "source_ids": [
+        "miami_dade_world_cup_outcomes_2026"
+      ]
+    },
+    "New York/NJ": {
+      "event_record_count": 8,
+      "match_hour_calibration_ready": false,
+      "metric_count": 4,
+      "open_request_fields": [
+        "15-minute APC or faregate entries/exits by venue-relevant station and direction",
+        "match-specific arrivals and departures by mode",
+        "actual trips operated, cancellations, vehicle assignments, and passenger loads",
+        "shuttle boardings by hub and departure time",
+        "parking occupancy, rideshare/curb throughput, and pedestrian counts by interval",
+        "venue-corridor traffic volumes, speeds, incidents, and signal-operation logs",
+        "actual staffing, fleet, contract, fuel, and overtime costs"
+      ],
+      "outcome_status": "observed",
+      "source_ids": [
+        "nj_transit_world_cup_aar_2026"
+      ]
+    },
+    "Philadelphia": {
+      "event_record_count": 0,
+      "match_hour_calibration_ready": false,
+      "metric_count": 3,
+      "open_request_fields": [
+        "15-minute APC or faregate entries/exits by venue-relevant station and direction",
+        "match-specific arrivals and departures by mode",
+        "actual trips operated, cancellations, vehicle assignments, and passenger loads",
+        "shuttle boardings by hub and departure time",
+        "parking occupancy, rideshare/curb throughput, and pedestrian counts by interval",
+        "venue-corridor traffic volumes, speeds, incidents, and signal-operation logs",
+        "actual staffing, fleet, contract, fuel, and overtime costs"
+      ],
+      "outcome_status": "observed",
+      "source_ids": [
+        "septa_june_2026_ridership"
+      ]
+    },
+    "San Francisco": {
+      "event_record_count": 1,
+      "match_hour_calibration_ready": false,
+      "metric_count": 6,
+      "open_request_fields": [
+        "15-minute APC or faregate entries/exits by venue-relevant station and direction",
+        "match-specific arrivals and departures by mode",
+        "actual trips operated, cancellations, vehicle assignments, and passenger loads",
+        "shuttle boardings by hub and departure time",
+        "parking occupancy, rideshare/curb throughput, and pedestrian counts by interval",
+        "venue-corridor traffic volumes, speeds, incidents, and signal-operation logs",
+        "actual staffing, fleet, contract, fuel, and overtime costs"
+      ],
+      "outcome_status": "observed",
+      "source_ids": [
+        "bart_vta_world_cup_opening_2026"
+      ]
+    },
+    "Seattle": {
+      "event_record_count": 0,
+      "match_hour_calibration_ready": false,
+      "metric_count": 2,
+      "open_request_fields": [
+        "15-minute APC or faregate entries/exits by venue-relevant station and direction",
+        "match-specific arrivals and departures by mode",
+        "actual trips operated, cancellations, vehicle assignments, and passenger loads",
+        "shuttle boardings by hub and departure time",
+        "parking occupancy, rideshare/curb throughput, and pedestrian counts by interval",
+        "venue-corridor traffic volumes, speeds, incidents, and signal-operation logs",
+        "actual staffing, fleet, contract, fuel, and overtime costs"
+      ],
+      "outcome_status": "observed",
+      "source_ids": [
+        "sound_transit_world_cup_2026"
+      ]
+    }
+  },
+  "contract_version": "0.3.0",
+  "event_records": [
+    {
+      "city": "New York/NJ",
+      "event_date": "2026-06-13",
+      "event_id": "M007",
+      "measurements": {
+        "american_dream_parking": {
+          "interpretation": "Published parking count; underlying sales/occupancy method is not fully specified",
+          "status": "partial",
+          "unit": "spaces used",
+          "value": 10035
+        },
+        "american_dream_pedestrians": {
+          "interpretation": "Report footnote identifies likely pedestrian equivalent to vehicle sales",
+          "status": "estimated",
+          "unit": "pedestrians",
+          "value": 53000
+        },
+        "fifa_ticket_holders": {
+          "interpretation": "Reported stadium ticket-holder count",
+          "status": "observed",
+          "unit": "ticket holders",
+          "value": 80000
+        },
+        "host_committee_shuttle_egress_minutes": {
+          "interpretation": "Published egress duration",
+          "status": "observed",
+          "unit": "minutes",
+          "value": 150
+        },
+        "host_committee_shuttle_passengers": {
+          "interpretation": "Published shuttle passenger count",
+          "status": "observed",
+          "unit": "passengers",
+          "value": 16013
+        },
+        "nj_transit_egress": {
+          "interpretation": "Published NJ TRANSIT egress count",
+          "status": "observed",
+          "unit": "passengers",
+          "value": 21695
+        },
+        "nj_transit_egress_minutes": {
+          "interpretation": "Published egress duration",
+          "status": "observed",
+          "unit": "minutes",
+          "value": 60
+        },
+        "nj_transit_ingress": {
+          "interpretation": "Published NJ TRANSIT ingress count",
+          "status": "observed",
+          "unit": "passengers",
+          "value": 21271
+        },
+        "uber_egress_minutes": {
+          "interpretation": "Published egress duration",
+          "status": "observed",
+          "unit": "minutes",
+          "value": 240
+        },
+        "uber_passengers": {
+          "interpretation": "Published modal count; collection method not stated",
+          "status": "partial",
+          "unit": "passengers",
+          "value": 6006
+        }
+      },
+      "not_suitable_for": [
+        "15-minute flow profile",
+        "causal mode choice",
+        "roadway speed or delay"
+      ],
+      "notes": "Wide match record preserves the agency table without converting estimates or lower-confidence modes into observed counts.",
+      "source_id": "nj_transit_world_cup_aar_2026",
+      "source_locator": "Ridership & Service Data table"
+    },
+    {
+      "city": "New York/NJ",
+      "event_date": "2026-06-16",
+      "event_id": "M017",
+      "measurements": {
+        "american_dream_parking": {
+          "interpretation": "Published parking count; underlying sales/occupancy method is not fully specified",
+          "status": "partial",
+          "unit": "spaces used",
+          "value": 10085
+        },
+        "american_dream_pedestrians": {
+          "interpretation": "Report footnote identifies likely pedestrian equivalent to vehicle sales",
+          "status": "estimated",
+          "unit": "pedestrians",
+          "value": 42000
+        },
+        "fifa_ticket_holders": {
+          "interpretation": "Reported stadium ticket-holder count",
+          "status": "observed",
+          "unit": "ticket holders",
+          "value": 78401
+        },
+        "host_committee_shuttle_egress_minutes": {
+          "interpretation": "Published egress duration",
+          "status": "observed",
+          "unit": "minutes",
+          "value": 150
+        },
+        "host_committee_shuttle_passengers": {
+          "interpretation": "Published shuttle passenger count",
+          "status": "observed",
+          "unit": "passengers",
+          "value": 12000
+        },
+        "nj_transit_egress": {
+          "interpretation": "Published NJ TRANSIT egress count",
+          "status": "observed",
+          "unit": "passengers",
+          "value": 26221
+        },
+        "nj_transit_egress_minutes": {
+          "interpretation": "Published egress duration",
+          "status": "observed",
+          "unit": "minutes",
+          "value": 70
+        },
+        "nj_transit_ingress": {
+          "interpretation": "Published NJ TRANSIT ingress count",
+          "status": "observed",
+          "unit": "passengers",
+          "value": 25797
+        },
+        "uber_egress_minutes": {
+          "interpretation": "Published egress duration",
+          "status": "observed",
+          "unit": "minutes",
+          "value": 240
+        },
+        "uber_passengers": {
+          "interpretation": "Published modal count; collection method not stated",
+          "status": "partial",
+          "unit": "passengers",
+          "value": 8300
+        }
+      },
+      "not_suitable_for": [
+        "15-minute flow profile",
+        "causal mode choice",
+        "roadway speed or delay"
+      ],
+      "notes": "Wide match record preserves the agency table without converting estimates or lower-confidence modes into observed counts.",
+      "source_id": "nj_transit_world_cup_aar_2026",
+      "source_locator": "Ridership & Service Data table"
+    },
+    {
+      "city": "New York/NJ",
+      "event_date": "2026-06-22",
+      "event_id": "M041",
+      "measurements": {
+        "american_dream_parking": {
+          "interpretation": "Published parking count; underlying sales/occupancy method is not fully specified",
+          "status": "partial",
+          "unit": "spaces used",
+          "value": 9125
+        },
+        "american_dream_pedestrians": {
+          "interpretation": "Report footnote identifies likely pedestrian equivalent to vehicle sales",
+          "status": "estimated",
+          "unit": "pedestrians",
+          "value": 42000
+        },
+        "fifa_ticket_holders": {
+          "interpretation": "Reported stadium ticket-holder count",
+          "status": "observed",
+          "unit": "ticket holders",
+          "value": 72777
+        },
+        "host_committee_shuttle_egress_minutes": {
+          "interpretation": "Published egress duration",
+          "status": "observed",
+          "unit": "minutes",
+          "value": 120
+        },
+        "host_committee_shuttle_passengers": {
+          "interpretation": "Published shuttle passenger count",
+          "status": "observed",
+          "unit": "passengers",
+          "value": 12000
+        },
+        "nj_transit_egress": {
+          "interpretation": "Published NJ TRANSIT egress count",
+          "status": "observed",
+          "unit": "passengers",
+          "value": 25946
+        },
+        "nj_transit_egress_minutes": {
+          "interpretation": "Published egress duration",
+          "status": "observed",
+          "unit": "minutes",
+          "value": 60
+        },
+        "nj_transit_ingress": {
+          "interpretation": "Published NJ TRANSIT ingress count",
+          "status": "observed",
+          "unit": "passengers",
+          "value": 25568
+        },
+        "uber_egress_minutes": {
+          "interpretation": "Published egress duration",
+          "status": "observed",
+          "unit": "minutes",
+          "value": 180
+        },
+        "uber_passengers": {
+          "interpretation": "Published modal count; collection method not stated",
+          "status": "partial",
+          "unit": "passengers",
+          "value": 10800
+        }
+      },
+      "not_suitable_for": [
+        "15-minute flow profile",
+        "causal mode choice",
+        "roadway speed or delay"
+      ],
+      "notes": "Wide match record preserves the agency table without converting estimates or lower-confidence modes into observed counts.",
+      "source_id": "nj_transit_world_cup_aar_2026",
+      "source_locator": "Ridership & Service Data table"
+    },
+    {
+      "city": "New York/NJ",
+      "event_date": "2026-06-25",
+      "event_id": "M056",
+      "measurements": {
+        "american_dream_parking": {
+          "interpretation": "Published parking count; underlying sales/occupancy method is not fully specified",
+          "status": "partial",
+          "unit": "spaces used",
+          "value": 8615
+        },
+        "american_dream_pedestrians": {
+          "interpretation": "Report footnote identifies likely pedestrian equivalent to vehicle sales",
+          "status": "estimated",
+          "unit": "pedestrians",
+          "value": 56000
+        },
+        "fifa_ticket_holders": {
+          "interpretation": "Reported stadium ticket-holder count",
+          "status": "observed",
+          "unit": "ticket holders",
+          "value": 80663
+        },
+        "host_committee_shuttle_egress_minutes": {
+          "interpretation": "Published egress duration",
+          "status": "observed",
+          "unit": "minutes",
+          "value": 150
+        },
+        "host_committee_shuttle_passengers": {
+          "interpretation": "Published shuttle passenger count",
+          "status": "observed",
+          "unit": "passengers",
+          "value": 12000
+        },
+        "nj_transit_egress": {
+          "interpretation": "Published NJ TRANSIT egress count",
+          "status": "observed",
+          "unit": "passengers",
+          "value": 20857
+        },
+        "nj_transit_egress_minutes": {
+          "interpretation": "Published egress duration",
+          "status": "observed",
+          "unit": "minutes",
+          "value": 60
+        },
+        "nj_transit_ingress": {
+          "interpretation": "Published NJ TRANSIT ingress count",
+          "status": "observed",
+          "unit": "passengers",
+          "value": 20593
+        },
+        "uber_egress_minutes": {
+          "interpretation": "Published egress duration",
+          "status": "observed",
+          "unit": "minutes",
+          "value": 180
+        },
+        "uber_passengers": {
+          "interpretation": "Published modal count; collection method not stated",
+          "status": "partial",
+          "unit": "passengers",
+          "value": 12950
+        }
+      },
+      "not_suitable_for": [
+        "15-minute flow profile",
+        "causal mode choice",
+        "roadway speed or delay"
+      ],
+      "notes": "Wide match record preserves the agency table without converting estimates or lower-confidence modes into observed counts.",
+      "source_id": "nj_transit_world_cup_aar_2026",
+      "source_locator": "Ridership & Service Data table"
+    },
+    {
+      "city": "New York/NJ",
+      "event_date": "2026-06-27",
+      "event_id": "M067",
+      "measurements": {
+        "american_dream_parking": {
+          "interpretation": "Published parking count; underlying sales/occupancy method is not fully specified",
+          "status": "partial",
+          "unit": "spaces used",
+          "value": 9000
+        },
+        "american_dream_pedestrians": {
+          "interpretation": "Report footnote identifies likely pedestrian equivalent to vehicle sales",
+          "status": "estimated",
+          "unit": "pedestrians",
+          "value": 50000
+        },
+        "fifa_ticket_holders": {
+          "interpretation": "Reported stadium ticket-holder count",
+          "status": "observed",
+          "unit": "ticket holders",
+          "value": 80663
+        },
+        "host_committee_shuttle_egress_minutes": {
+          "interpretation": "Published egress duration",
+          "status": "observed",
+          "unit": "minutes",
+          "value": 120
+        },
+        "host_committee_shuttle_passengers": {
+          "interpretation": "Published shuttle passenger count",
+          "status": "observed",
+          "unit": "passengers",
+          "value": 17166
+        },
+        "nj_transit_egress": {
+          "interpretation": "Published NJ TRANSIT egress count",
+          "status": "observed",
+          "unit": "passengers",
+          "value": 26009
+        },
+        "nj_transit_egress_minutes": {
+          "interpretation": "Published egress duration",
+          "status": "observed",
+          "unit": "minutes",
+          "value": 60
+        },
+        "nj_transit_ingress": {
+          "interpretation": "Published NJ TRANSIT ingress count",
+          "status": "observed",
+          "unit": "passengers",
+          "value": 25702
+        },
+        "uber_egress_minutes": {
+          "interpretation": "Published egress duration",
+          "status": "observed",
+          "unit": "minutes",
+          "value": 150
+        },
+        "uber_passengers": {
+          "interpretation": "Published modal count; collection method not stated",
+          "status": "partial",
+          "unit": "passengers",
+          "value": 8500
+        }
+      },
+      "not_suitable_for": [
+        "15-minute flow profile",
+        "causal mode choice",
+        "roadway speed or delay"
+      ],
+      "notes": "Wide match record preserves the agency table without converting estimates or lower-confidence modes into observed counts.",
+      "source_id": "nj_transit_world_cup_aar_2026",
+      "source_locator": "Ridership & Service Data table"
+    },
+    {
+      "city": "New York/NJ",
+      "event_date": "2026-06-30",
+      "event_id": "M077",
+      "measurements": {
+        "american_dream_parking": {
+          "interpretation": "Published parking count; underlying sales/occupancy method is not fully specified",
+          "status": "partial",
+          "unit": "spaces used",
+          "value": 10480
+        },
+        "american_dream_pedestrians": {
+          "interpretation": "Report footnote identifies likely pedestrian equivalent to vehicle sales",
+          "status": "estimated",
+          "unit": "pedestrians",
+          "value": 45000
+        },
+        "fifa_ticket_holders": {
+          "interpretation": "Reported stadium ticket-holder count",
+          "status": "observed",
+          "unit": "ticket holders",
+          "value": 73115
+        },
+        "host_committee_shuttle_egress_minutes": {
+          "interpretation": "Published egress duration",
+          "status": "observed",
+          "unit": "minutes",
+          "value": 135
+        },
+        "host_committee_shuttle_passengers": {
+          "interpretation": "Published shuttle passenger count",
+          "status": "observed",
+          "unit": "passengers",
+          "value": 17877
+        },
+        "nj_transit_egress": {
+          "interpretation": "Published NJ TRANSIT egress count",
+          "status": "observed",
+          "unit": "passengers",
+          "value": 22816
+        },
+        "nj_transit_egress_minutes": {
+          "interpretation": "Published egress duration",
+          "status": "observed",
+          "unit": "minutes",
+          "value": 60
+        },
+        "nj_transit_ingress": {
+          "interpretation": "Published NJ TRANSIT ingress count",
+          "status": "observed",
+          "unit": "passengers",
+          "value": 22631
+        },
+        "uber_egress_minutes": {
+          "interpretation": "Published egress duration",
+          "status": "observed",
+          "unit": "minutes",
+          "value": 150
+        },
+        "uber_passengers": {
+          "interpretation": "Published modal count; collection method not stated",
+          "status": "partial",
+          "unit": "passengers",
+          "value": 8500
+        }
+      },
+      "not_suitable_for": [
+        "15-minute flow profile",
+        "causal mode choice",
+        "roadway speed or delay"
+      ],
+      "notes": "Wide match record preserves the agency table without converting estimates or lower-confidence modes into observed counts.",
+      "source_id": "nj_transit_world_cup_aar_2026",
+      "source_locator": "Ridership & Service Data table"
+    },
+    {
+      "city": "New York/NJ",
+      "event_date": "2026-07-05",
+      "event_id": "M091",
+      "measurements": {
+        "american_dream_parking": {
+          "interpretation": "Published parking count; underlying sales/occupancy method is not fully specified",
+          "status": "partial",
+          "unit": "spaces used",
+          "value": 7195
+        },
+        "american_dream_pedestrians": {
+          "interpretation": "Report footnote identifies likely pedestrian equivalent to vehicle sales",
+          "status": "estimated",
+          "unit": "pedestrians",
+          "value": 46000
+        },
+        "fifa_ticket_holders": {
+          "interpretation": "Reported stadium ticket-holder count",
+          "status": "observed",
+          "unit": "ticket holders",
+          "value": 74273
+        },
+        "host_committee_shuttle_egress_minutes": {
+          "interpretation": "Published egress duration",
+          "status": "observed",
+          "unit": "minutes",
+          "value": 150
+        },
+        "host_committee_shuttle_passengers": {
+          "interpretation": "Published shuttle passenger count",
+          "status": "observed",
+          "unit": "passengers",
+          "value": 18000
+        },
+        "nj_transit_egress": {
+          "interpretation": "Published NJ TRANSIT egress count",
+          "status": "observed",
+          "unit": "passengers",
+          "value": 22258
+        },
+        "nj_transit_egress_minutes": {
+          "interpretation": "Published egress duration",
+          "status": "observed",
+          "unit": "minutes",
+          "value": 60
+        },
+        "nj_transit_ingress": {
+          "interpretation": "Published NJ TRANSIT ingress count",
+          "status": "observed",
+          "unit": "passengers",
+          "value": 21856
+        },
+        "uber_egress_minutes": {
+          "interpretation": "Published egress duration",
+          "status": "observed",
+          "unit": "minutes",
+          "value": 150
+        },
+        "uber_passengers": {
+          "interpretation": "Published modal count; collection method not stated",
+          "status": "partial",
+          "unit": "passengers",
+          "value": 11100
+        }
+      },
+      "not_suitable_for": [
+        "15-minute flow profile",
+        "causal mode choice",
+        "roadway speed or delay"
+      ],
+      "notes": "Wide match record preserves the agency table without converting estimates or lower-confidence modes into observed counts.",
+      "source_id": "nj_transit_world_cup_aar_2026",
+      "source_locator": "Ridership & Service Data table"
+    },
+    {
+      "city": "New York/NJ",
+      "event_date": "2026-07-19",
+      "event_id": "M104",
+      "measurements": {
+        "american_dream_parking": {
+          "interpretation": "Published parking count; underlying sales/occupancy method is not fully specified",
+          "status": "partial",
+          "unit": "spaces used",
+          "value": 9310
+        },
+        "american_dream_pedestrians": {
+          "interpretation": "Report footnote identifies likely pedestrian equivalent to vehicle sales",
+          "status": "estimated",
+          "unit": "pedestrians",
+          "value": 65000
+        },
+        "fifa_ticket_holders": {
+          "interpretation": "Reported stadium ticket-holder count",
+          "status": "observed",
+          "unit": "ticket holders",
+          "value": 80663
+        },
+        "host_committee_shuttle_egress_minutes": {
+          "interpretation": "Published egress duration",
+          "status": "observed",
+          "unit": "minutes",
+          "value": 120
+        },
+        "host_committee_shuttle_passengers": {
+          "interpretation": "Published shuttle passenger count",
+          "status": "observed",
+          "unit": "passengers",
+          "value": 11168
+        },
+        "nj_transit_egress": {
+          "interpretation": "Published NJ TRANSIT egress count",
+          "status": "observed",
+          "unit": "passengers",
+          "value": 21024
+        },
+        "nj_transit_egress_minutes": {
+          "interpretation": "Published egress duration",
+          "status": "observed",
+          "unit": "minutes",
+          "value": 60
+        },
+        "nj_transit_ingress": {
+          "interpretation": "Published NJ TRANSIT ingress count",
+          "status": "observed",
+          "unit": "passengers",
+          "value": 20114
+        },
+        "uber_egress_minutes": {
+          "interpretation": "Published egress duration",
+          "status": "observed",
+          "unit": "minutes",
+          "value": 180
+        },
+        "uber_passengers": {
+          "interpretation": "Published modal count; collection method not stated",
+          "status": "partial",
+          "unit": "passengers",
+          "value": 16200
+        }
+      },
+      "not_suitable_for": [
+        "15-minute flow profile",
+        "causal mode choice",
+        "roadway speed or delay"
+      ],
+      "notes": "Wide match record preserves the agency table without converting estimates or lower-confidence modes into observed counts.",
+      "source_id": "nj_transit_world_cup_aar_2026",
+      "source_locator": "Ridership & Service Data table"
+    },
+    {
+      "city": "Houston",
+      "event_date": "2026-06-14",
+      "event_id": "M010",
+      "measurements": {
+        "systemwide_metrorail_riders": {
+          "interpretation": "Full matchday systemwide rail ridership",
+          "status": "observed",
+          "unit": "unlinked passenger trips/day",
+          "value": 48183
+        }
+      },
+      "not_suitable_for": [
+        "stadium attendance",
+        "station load",
+        "peak passengers/hour"
+      ],
+      "notes": "Germany vs. Curacao matchday; ordinary and other event travel are included.",
+      "source_id": "houston_host_committee_world_cup_metrics_2026",
+      "source_locator": "Transportation Operations matchday list"
+    },
+    {
+      "city": "Houston",
+      "event_date": "2026-06-17",
+      "event_id": "M023",
+      "measurements": {
+        "systemwide_metrorail_riders": {
+          "interpretation": "Full matchday systemwide rail ridership",
+          "status": "observed",
+          "unit": "unlinked passenger trips/day",
+          "value": 59937
+        }
+      },
+      "not_suitable_for": [
+        "stadium attendance",
+        "station load",
+        "peak passengers/hour"
+      ],
+      "notes": "Portugal vs. Democratic Republic of Congo matchday; ordinary and other event travel are included.",
+      "source_id": "houston_host_committee_world_cup_metrics_2026",
+      "source_locator": "Transportation Operations matchday list"
+    },
+    {
+      "city": "Houston",
+      "event_date": "2026-06-20",
+      "event_id": "M035",
+      "measurements": {
+        "systemwide_metrorail_riders": {
+          "interpretation": "Full matchday systemwide rail ridership",
+          "status": "observed",
+          "unit": "unlinked passenger trips/day",
+          "value": 69765
+        }
+      },
+      "not_suitable_for": [
+        "stadium attendance",
+        "station load",
+        "peak passengers/hour"
+      ],
+      "notes": "Netherlands vs. Sweden matchday; ordinary and other event travel are included.",
+      "source_id": "houston_host_committee_world_cup_metrics_2026",
+      "source_locator": "Transportation Operations matchday list"
+    },
+    {
+      "city": "Houston",
+      "event_date": "2026-06-23",
+      "event_id": "M047",
+      "measurements": {
+        "post_match_egress_high": {
+          "interpretation": "Published upper estimate",
+          "status": "estimated",
+          "unit": "riders",
+          "value": 30000
+        },
+        "post_match_egress_low": {
+          "interpretation": "Published lower estimate",
+          "status": "estimated",
+          "unit": "riders",
+          "value": 25000
+        },
+        "systemwide_metrorail_riders": {
+          "interpretation": "Full matchday systemwide rail ridership",
+          "status": "observed",
+          "unit": "unlinked passenger trips/day",
+          "value": 68284
+        }
+      },
+      "not_suitable_for": [
+        "exact egress count",
+        "15-minute egress profile",
+        "all-mode departures"
+      ],
+      "notes": "Portugal vs. Uzbekistan matchday; the post-match egress count is explicitly estimated by the source.",
+      "source_id": "houston_host_committee_world_cup_metrics_2026",
+      "source_locator": "Transportation Operations matchday list"
+    },
+    {
+      "city": "San Francisco",
+      "event_date": "2026-06-13",
+      "event_id": "M008",
+      "measurements": {
+        "ace_trips": {
+          "interpretation": "Source states almost 1,600",
+          "status": "partial",
+          "unit": "passenger trips",
+          "value": 1600
+        },
+        "bart_milpitas_uplift": {
+          "interpretation": "Source states more than 160 percent versus prior weekend",
+          "status": "partial",
+          "unit": "percent increase lower bound",
+          "value": 160
+        },
+        "caltrain_passengers": {
+          "interpretation": "Source states nearly 7,000",
+          "status": "partial",
+          "unit": "passengers",
+          "value": 7000
+        },
+        "capitol_corridor_trips": {
+          "interpretation": "Source states nearly 2,400",
+          "status": "partial",
+          "unit": "passenger trips",
+          "value": 2400
+        },
+        "platform_clearance_upper_bound": {
+          "interpretation": "Source states less than 90 minutes",
+          "status": "partial",
+          "unit": "minutes",
+          "value": 90
+        },
+        "vta_passengers": {
+          "interpretation": "Combined match ingress and egress",
+          "status": "observed",
+          "unit": "passengers",
+          "value": 37642
+        }
+      },
+      "not_suitable_for": [
+        "all-six-match average",
+        "unique passengers",
+        "15-minute transfer profile"
+      ],
+      "notes": "Opening match only; later San Francisco matches remain outside this source's coverage.",
+      "source_id": "bart_vta_world_cup_opening_2026",
+      "source_locator": "Opening-match partner results"
+    }
+  ],
+  "extraction_method": "Manual transcription of explicitly located facts; independently review before model calibration",
+  "generated_at_utc": "2026-08-02T18:00:00Z",
+  "metrics": [
+    {
+      "calibration_use": "Systemwide event-period ridership context and daily-baseline comparison",
+      "city": "Atlanta",
+      "granularity": "35-day systemwide total",
+      "metric": "Rail passenger trips during World Cup operating period",
+      "metric_id": "atl_rail_trips_world_cup_period",
+      "not_suitable_for": [
+        "stadium attendance",
+        "match-hour arrivals",
+        "venue mode share"
+      ],
+      "notes": "Includes matches, Fan Fest activations, other events, and non-FIFA days.",
+      "sample_size": 35,
+      "source_id": "marta_world_cup_situation_2026",
+      "source_locator": "Rail Ridership table, Total row",
+      "status": "observed",
+      "unit": "unlinked passenger trips",
+      "value": 4655000
+    },
+    {
+      "calibration_use": "Upper-bound daily transit demand benchmark",
+      "city": "Atlanta",
+      "granularity": "systemwide day",
+      "metric": "Peak daily rail passenger trips during reported period",
+      "metric_id": "atl_peak_daily_rail_trips",
+      "not_suitable_for": [
+        "station load",
+        "match-hour arrivals",
+        "venue mode share"
+      ],
+      "notes": "Reported as 2.6 times typical daily rail ridership and includes Fan Fest activity.",
+      "sample_size": 1,
+      "source_id": "marta_world_cup_situation_2026",
+      "source_locator": "Rail Ridership table, 2026-06-24 row",
+      "status": "observed",
+      "unit": "unlinked passenger trips/day",
+      "value": 240000
+    },
+    {
+      "calibration_use": "Observed special-rail demand benchmark",
+      "city": "Boston",
+      "granularity": "seven-match tournament total",
+      "metric": "World Cup special-train round-trip tickets sold",
+      "metric_id": "bos_special_train_tickets",
+      "not_suitable_for": [
+        "unlinked trips",
+        "hourly platform load",
+        "all-mode attendance"
+      ],
+      "notes": "Ticket sales are not interchangeable with completed passenger trips.",
+      "sample_size": 7,
+      "source_id": "mass_world_cup_outcomes_2026",
+      "source_locator": "Transportation operations bullet list",
+      "status": "observed",
+      "unit": "round-trip tickets",
+      "value": 108940
+    },
+    {
+      "calibration_use": "Observed post-match rail-egress benchmark",
+      "city": "Boston",
+      "granularity": "seven-match service reliability summary",
+      "metric": "Passengers departed Foxboro by train within two hours after matches",
+      "metric_id": "bos_two_hour_egress_share",
+      "not_suitable_for": [
+        "hourly egress profile",
+        "individual train load",
+        "all-mode departure time"
+      ],
+      "notes": "The publication reports an aggregate threshold share, not passenger-level timestamps.",
+      "sample_size": 7,
+      "source_id": "mass_world_cup_outcomes_2026",
+      "source_locator": "World Cup train service by the numbers",
+      "status": "observed",
+      "unit": "percent of passengers",
+      "value": 88
+    },
+    {
+      "calibration_use": "Agencywide tournament uplift benchmark",
+      "city": "Dallas",
+      "granularity": "agencywide enhanced-service period",
+      "metric": "Ridership change during enhanced-service period",
+      "metric_id": "dal_enhanced_period_ridership_change",
+      "not_suitable_for": [
+        "match ridership",
+        "Arlington shuttle throughput",
+        "mode share"
+      ],
+      "notes": "The public release does not define the comparison denominator in sufficient detail for causal attribution.",
+      "sample_size": null,
+      "source_id": "dart_world_cup_service_2026",
+      "source_locator": "Post-event service summary, second paragraph",
+      "status": "observed",
+      "unit": "percent increase",
+      "value": 12.9
+    },
+    {
+      "calibration_use": "Observed matchday rail-demand context and match-to-match scaling",
+      "city": "Houston",
+      "granularity": "four matchday systemwide total",
+      "metric": "METRORail riders across the first four matchdays",
+      "metric_id": "hou_first_four_matchday_rail_riders",
+      "not_suitable_for": [
+        "stadium attendance",
+        "unique riders",
+        "station-level arrivals"
+      ],
+      "notes": "Systemwide matchday rail ridership includes ordinary travel and non-stadium event activity.",
+      "sample_size": 4,
+      "source_id": "houston_host_committee_world_cup_metrics_2026",
+      "source_locator": "Transportation Operations section",
+      "status": "observed",
+      "unit": "unlinked passenger trips",
+      "value": 246169
+    },
+    {
+      "calibration_use": "Observed upper matchday rail-demand benchmark",
+      "city": "Houston",
+      "granularity": "Portugal vs. Uzbekistan matchday",
+      "metric": "Highest reported METRORail matchday ridership",
+      "metric_id": "hou_peak_reported_matchday_rail_riders",
+      "not_suitable_for": [
+        "post-match egress",
+        "stadium mode share",
+        "peak passengers/hour"
+      ],
+      "notes": "This is a full-day systemwide rail count, not a venue-only passenger count.",
+      "sample_size": 1,
+      "source_id": "houston_host_committee_world_cup_metrics_2026",
+      "source_locator": "Transportation Operations matchday list",
+      "status": "observed",
+      "unit": "unlinked passenger trips/day",
+      "value": 69765
+    },
+    {
+      "calibration_use": "Sensitivity range for venue egress demand",
+      "city": "Houston",
+      "granularity": "Portugal vs. Uzbekistan post-match egress",
+      "metric": "Estimated post-match METRO egress surge midpoint",
+      "metric_id": "hou_post_match_egress_midpoint",
+      "not_suitable_for": [
+        "observed exact count",
+        "15-minute egress profile",
+        "all-mode departures"
+      ],
+      "notes": "Source range is 25,000-30,000 riders; 27,500 is its arithmetic midpoint and remains estimated.",
+      "sample_size": 1,
+      "source_id": "houston_host_committee_world_cup_metrics_2026",
+      "source_locator": "Transportation Operations closing paragraph",
+      "status": "estimated",
+      "unit": "riders",
+      "value": 27500
+    },
+    {
+      "calibration_use": "Downtown tournament-period transit-demand context",
+      "city": "Kansas City",
+      "granularity": "2026-06-11 through 2026-07-11 system total",
+      "metric": "KC Streetcar passenger trips during the tournament period",
+      "metric_id": "kc_streetcar_tournament_period_trips",
+      "not_suitable_for": [
+        "stadium shuttle demand",
+        "unique visitors",
+        "match mode share"
+      ],
+      "notes": "The count excludes Streetcar Link bus trips and includes everyday non-event travel.",
+      "sample_size": 31,
+      "source_id": "kc_streetcar_world_cup_recap_2026",
+      "source_locator": "World Cup Month recap opening paragraph",
+      "status": "observed",
+      "unit": "unlinked passenger trips",
+      "value": 838826
+    },
+    {
+      "calibration_use": "Observed peak downtown rail-demand benchmark",
+      "city": "Kansas City",
+      "granularity": "2026-07-11 systemwide day",
+      "metric": "Peak KC Streetcar daily passenger trips",
+      "metric_id": "kc_streetcar_peak_daily_trips",
+      "not_suitable_for": [
+        "stadium attendance",
+        "hourly vehicle load",
+        "venue access mode share"
+      ],
+      "notes": "The date included the FIFA Fan Festival and a stadium match; attribution is not separable.",
+      "sample_size": 1,
+      "source_id": "kc_streetcar_world_cup_recap_2026",
+      "source_locator": "World Cup Month results paragraph",
+      "status": "observed",
+      "unit": "unlinked passenger trips/day",
+      "value": 55973
+    },
+    {
+      "calibration_use": "Event-day downtown activity benchmark",
+      "city": "Kansas City",
+      "granularity": "FIFA Fan Festival day average",
+      "metric": "Average KC Streetcar trips on FIFA Fan Festival days",
+      "metric_id": "kc_fan_fest_average_daily_trips",
+      "not_suitable_for": [
+        "stadium access demand",
+        "causal event uplift",
+        "unique visitors"
+      ],
+      "notes": "The publication does not state the number of days included in this average.",
+      "sample_size": null,
+      "source_id": "kc_streetcar_world_cup_recap_2026",
+      "source_locator": "World Cup Month results paragraph",
+      "status": "observed",
+      "unit": "unlinked passenger trips/day",
+      "value": 33689
+    },
+    {
+      "calibration_use": "Observed event fleet-deployment bound",
+      "city": "Kansas City",
+      "granularity": "peak festival-hour deployment upper bound",
+      "metric": "Maximum streetcars operated during peak festival hours",
+      "metric_id": "kc_streetcar_peak_fleet",
+      "not_suitable_for": [
+        "passenger capacity without vehicle specification",
+        "scheduled departures",
+        "load factor"
+      ],
+      "notes": "The source reports a range of 9-12 streetcars and 6-8 supplemental buses.",
+      "sample_size": null,
+      "source_id": "kc_streetcar_world_cup_recap_2026",
+      "source_locator": "Service expansion paragraph",
+      "status": "observed",
+      "unit": "streetcars",
+      "value": 12
+    },
+    {
+      "calibration_use": "Operational staffing-scale benchmark",
+      "city": "Kansas City",
+      "granularity": "tournament-period total",
+      "metric": "Streetcar Ambassador deployment during the tournament",
+      "metric_id": "kc_streetcar_ambassador_hours",
+      "not_suitable_for": [
+        "total transit staffing",
+        "labor cost",
+        "staff productivity"
+      ],
+      "notes": "Ambassador hours exclude other operations, safety, maintenance, and contracted labor.",
+      "sample_size": null,
+      "source_id": "kc_streetcar_world_cup_recap_2026",
+      "source_locator": "Teamwork section",
+      "status": "observed",
+      "unit": "staff-hours",
+      "value": 1680
+    },
+    {
+      "calibration_use": "Direct shuttle and feeder-service throughput benchmark",
+      "city": "Los Angeles",
+      "granularity": "eight-match tournament total",
+      "metric": "Direct enhanced-service rides to and from the stadium",
+      "metric_id": "la_direct_stadium_service_rides",
+      "not_suitable_for": [
+        "unique passengers",
+        "all-transit mode share",
+        "hourly hub loads"
+      ],
+      "notes": "The total covers direct service between the stadium and 15 parking/transit hubs.",
+      "sample_size": 8,
+      "source_id": "la_metro_world_cup_outcomes_2026",
+      "source_locator": "Opening results paragraph",
+      "status": "observed",
+      "unit": "passenger rides",
+      "value": 212865
+    },
+    {
+      "calibration_use": "Implementation-scale and funding benchmark",
+      "city": "Los Angeles",
+      "granularity": "program allocation",
+      "metric": "FTA funding coordinated for enhanced World Cup service",
+      "metric_id": "la_world_cup_transit_funding",
+      "not_suitable_for": [
+        "actual expenditure",
+        "per-match operating cost",
+        "benefit-cost ratio"
+      ],
+      "notes": "Allocated funding is not the same as audited expenditure.",
+      "sample_size": null,
+      "source_id": "la_metro_world_cup_outcomes_2026",
+      "source_locator": "Funding paragraph",
+      "status": "observed",
+      "unit": "USD",
+      "value": 9600000
+    },
+    {
+      "calibration_use": "Tournament rail-demand benchmark",
+      "city": "Miami",
+      "granularity": "seven-match tournament total",
+      "metric": "Metrorail riders carried to all matches",
+      "metric_id": "mia_metrorail_match_riders",
+      "not_suitable_for": [
+        "unique visitors",
+        "hourly station load",
+        "all-mode attendance"
+      ],
+      "notes": "The publication does not provide match-by-match or station-time records.",
+      "sample_size": 7,
+      "source_id": "miami_dade_world_cup_outcomes_2026",
+      "source_locator": "Moving the Masses results section",
+      "status": "observed",
+      "unit": "riders",
+      "value": 230000
+    },
+    {
+      "calibration_use": "Observed shuttle throughput benchmark",
+      "city": "Miami",
+      "granularity": "seven-match tournament total",
+      "metric": "Game Day Express passengers moved to and from the stadium",
+      "metric_id": "mia_game_day_shuttle_passengers",
+      "not_suitable_for": [
+        "unique passengers",
+        "hourly hub capacity",
+        "vehicle occupancy"
+      ],
+      "notes": "The source describes passengers moved in both directions; the artifact avoids treating the total as unique people.",
+      "sample_size": 7,
+      "source_id": "miami_dade_world_cup_outcomes_2026",
+      "source_locator": "Moving the Masses results section",
+      "status": "observed",
+      "unit": "passenger boardings",
+      "value": 203000
+    },
+    {
+      "calibration_use": "Downtown event-activity transit benchmark",
+      "city": "Miami",
+      "granularity": "Fan Festival period total",
+      "metric": "Metromover trips during Fan Festival period",
+      "metric_id": "mia_fan_fest_metromover_trips",
+      "not_suitable_for": [
+        "stadium demand",
+        "match mode share",
+        "unique visitors"
+      ],
+      "notes": "Fan Festival movement is separate from stadium access.",
+      "sample_size": null,
+      "source_id": "miami_dade_world_cup_outcomes_2026",
+      "source_locator": "Moving the Masses results section",
+      "status": "observed",
+      "unit": "unlinked passenger trips",
+      "value": 836000
+    },
+    {
+      "calibration_use": "Tournament transportation-volume lower bound",
+      "city": "New York/NJ",
+      "granularity": "eight-match tournament lower bound",
+      "metric": "Event-related passengers moved during eight matches",
+      "metric_id": "nynj_event_related_passenger_lower_bound",
+      "not_suitable_for": [
+        "exact total",
+        "unique passengers",
+        "single-mode ridership"
+      ],
+      "notes": "The report states over 370,000; the stored value is a lower bound, not an exact count.",
+      "sample_size": 8,
+      "source_id": "nj_transit_world_cup_aar_2026",
+      "source_locator": "Executive Summary, Record Ridership Volume",
+      "status": "partial",
+      "unit": "passengers",
+      "value": 370000
+    },
+    {
+      "calibration_use": "Observed venue transportation-throughput benchmark",
+      "city": "New York/NJ",
+      "granularity": "eight-match operational average",
+      "metric": "Average peak transportation throughput",
+      "metric_id": "nynj_average_peak_throughput",
+      "not_suitable_for": [
+        "15-minute profile",
+        "mode-specific load factor",
+        "roadway congestion"
+      ],
+      "notes": "The report presents an average and does not publish interval observations behind it.",
+      "sample_size": 8,
+      "source_id": "nj_transit_world_cup_aar_2026",
+      "source_locator": "Strengths / Successes item 1",
+      "status": "observed",
+      "unit": "passengers/hour",
+      "value": 24000
+    },
+    {
+      "calibration_use": "Observed regional transit travel-time benchmark",
+      "city": "New York/NJ",
+      "granularity": "tournament operational average",
+      "metric": "Average New York Penn Station to stadium trip time",
+      "metric_id": "nynj_average_penn_to_stadium_trip",
+      "not_suitable_for": [
+        "walking time",
+        "reliability distribution",
+        "door-to-door visitor time"
+      ],
+      "notes": "The publication does not state sample size or travel-time dispersion.",
+      "sample_size": null,
+      "source_id": "nj_transit_world_cup_aar_2026",
+      "source_locator": "Strengths / Successes item 7",
+      "status": "observed",
+      "unit": "minutes",
+      "value": 35
+    },
+    {
+      "calibration_use": "Operational staffing-scale benchmark",
+      "city": "New York/NJ",
+      "granularity": "eight-match tournament total lower bound",
+      "metric": "Transportation ambassador shifts staffed",
+      "metric_id": "nynj_ambassador_shifts",
+      "not_suitable_for": [
+        "staff-hours",
+        "labor cost",
+        "all-agency staffing"
+      ],
+      "notes": "The report states more than 4,000 shifts and more than 700 ambassadors.",
+      "sample_size": null,
+      "source_id": "nj_transit_world_cup_aar_2026",
+      "source_locator": "Strengths / Successes item 7",
+      "status": "partial",
+      "unit": "staff shifts",
+      "value": 4000
+    },
+    {
+      "calibration_use": "Observed post-match rail-egress benchmark",
+      "city": "Philadelphia",
+      "granularity": "average post-match station egress",
+      "metric": "Average passengers moved out of NRG Station after a match",
+      "metric_id": "phl_nrg_post_match_egress",
+      "not_suitable_for": [
+        "peak passengers/hour",
+        "all-mode attendance",
+        "individual match distribution"
+      ],
+      "notes": "The source reports an average and does not publish the averaging sample or time interval.",
+      "sample_size": null,
+      "source_id": "septa_june_2026_ridership",
+      "source_locator": "June ridership event comparison paragraph",
+      "status": "observed",
+      "unit": "passengers/match",
+      "value": 25671
+    },
+    {
+      "calibration_use": "Line-level match-day uplift benchmark",
+      "city": "Philadelphia",
+      "granularity": "June match-day average",
+      "metric": "Average B Line ridership change on match days",
+      "metric_id": "phl_b_line_match_day_change",
+      "not_suitable_for": [
+        "causal impact",
+        "station load",
+        "mode share"
+      ],
+      "notes": "The comparison baseline is the agency's published match-day comparison, not reconstructed here.",
+      "sample_size": null,
+      "source_id": "septa_june_2026_ridership",
+      "source_locator": "June ridership event comparison paragraph",
+      "status": "observed",
+      "unit": "percent increase",
+      "value": 82
+    },
+    {
+      "calibration_use": "Systemwide match-day uplift benchmark",
+      "city": "Philadelphia",
+      "granularity": "June match-day average",
+      "metric": "System ridership change on World Cup match days",
+      "metric_id": "phl_system_match_day_change",
+      "not_suitable_for": [
+        "causal impact",
+        "venue demand",
+        "mode share"
+      ],
+      "notes": "Systemwide change includes ordinary travel and other activity on match days.",
+      "sample_size": null,
+      "source_id": "septa_june_2026_ridership",
+      "source_locator": "June ridership closing paragraph",
+      "status": "observed",
+      "unit": "percent increase",
+      "value": 19
+    },
+    {
+      "calibration_use": "Observed match-specific VTA demand benchmark",
+      "city": "San Francisco",
+      "granularity": "Match M008 ingress and egress total",
+      "metric": "VTA passengers for the opening stadium match",
+      "metric_id": "sf_opening_match_vta_passengers",
+      "not_suitable_for": [
+        "unique passengers",
+        "all-transit mode share",
+        "hourly profile"
+      ],
+      "notes": "The source combines travel to and from the match.",
+      "sample_size": 1,
+      "source_id": "bart_vta_world_cup_opening_2026",
+      "source_locator": "Opening-match results paragraph",
+      "status": "observed",
+      "unit": "passengers",
+      "value": 37642
+    },
+    {
+      "calibration_use": "Observed upper bound for opening-match VTA egress",
+      "city": "San Francisco",
+      "granularity": "Match M008 post-match upper bound",
+      "metric": "Maximum reported post-match platform-clearance time",
+      "metric_id": "sf_opening_match_platform_clearance",
+      "not_suitable_for": [
+        "exact clearance time",
+        "passenger-level egress curve",
+        "all-mode departure time"
+      ],
+      "notes": "The source states less than 90 minutes; the stored value is an upper bound.",
+      "sample_size": 1,
+      "source_id": "bart_vta_world_cup_opening_2026",
+      "source_locator": "Platform-clearance results paragraph",
+      "status": "partial",
+      "unit": "minutes",
+      "value": 90
+    },
+    {
+      "calibration_use": "Regional rail contribution benchmark",
+      "city": "San Francisco",
+      "granularity": "Match M008 ingress and egress approximate total",
+      "metric": "Caltrain passengers for the opening stadium match",
+      "metric_id": "sf_opening_match_caltrain_passengers",
+      "not_suitable_for": [
+        "exact ridership",
+        "unique passengers",
+        "hourly transfer load"
+      ],
+      "notes": "The source states nearly 7,000; the stored value is approximate.",
+      "sample_size": 1,
+      "source_id": "bart_vta_world_cup_opening_2026",
+      "source_locator": "Caltrain partner-results paragraph",
+      "status": "partial",
+      "unit": "passengers",
+      "value": 7000
+    },
+    {
+      "calibration_use": "Intercity rail contribution benchmark",
+      "city": "San Francisco",
+      "granularity": "Match M008 approximate total",
+      "metric": "Capitol Corridor opening-match trips",
+      "metric_id": "sf_opening_match_capitol_corridor_trips",
+      "not_suitable_for": [
+        "exact ridership",
+        "unique passengers",
+        "hourly transfer load"
+      ],
+      "notes": "The source states nearly 2,400 trips.",
+      "sample_size": 1,
+      "source_id": "bart_vta_world_cup_opening_2026",
+      "source_locator": "Regional rail partner-results paragraph",
+      "status": "partial",
+      "unit": "passenger trips",
+      "value": 2400
+    },
+    {
+      "calibration_use": "Regional rail contribution benchmark",
+      "city": "San Francisco",
+      "granularity": "Match M008 approximate total",
+      "metric": "ACE opening-match trips",
+      "metric_id": "sf_opening_match_ace_trips",
+      "not_suitable_for": [
+        "exact ridership",
+        "unique passengers",
+        "hourly transfer load"
+      ],
+      "notes": "The source states almost 1,600 trips.",
+      "sample_size": 1,
+      "source_id": "bart_vta_world_cup_opening_2026",
+      "source_locator": "Regional rail partner-results paragraph",
+      "status": "partial",
+      "unit": "passenger trips",
+      "value": 1600
+    },
+    {
+      "calibration_use": "Observed station uplift lower bound",
+      "city": "San Francisco",
+      "granularity": "Match M008 station-day comparison",
+      "metric": "BART Milpitas ridership increase versus previous weekend",
+      "metric_id": "sf_opening_match_bart_milpitas_uplift",
+      "not_suitable_for": [
+        "causal effect",
+        "absolute passenger count",
+        "venue mode share"
+      ],
+      "notes": "The source states more than 160 percent; the stored value is a lower bound.",
+      "sample_size": 1,
+      "source_id": "bart_vta_world_cup_opening_2026",
+      "source_locator": "BART partner-results paragraph",
+      "status": "partial",
+      "unit": "percent increase lower bound",
+      "value": 160
+    },
+    {
+      "calibration_use": "Event-month systemwide rail-demand benchmark",
+      "city": "Seattle",
+      "granularity": "monthly systemwide total",
+      "metric": "June Link light-rail boardings",
+      "metric_id": "sea_june_link_boardings",
+      "not_suitable_for": [
+        "stadium attendance",
+        "match-hour arrivals",
+        "unique passengers"
+      ],
+      "notes": "Sound Transit labels these rapid-turnaround APC estimates as preliminary and subject to revision.",
+      "sample_size": 30,
+      "source_id": "sound_transit_world_cup_2026",
+      "source_locator": "Record results section",
+      "status": "partial",
+      "unit": "boardings",
+      "value": 5400000
+    },
+    {
+      "calibration_use": "Observed fleet-deployment benchmark",
+      "city": "Seattle",
+      "granularity": "each of six match days",
+      "metric": "Light-rail vehicles placed in service on each match day",
+      "metric_id": "sea_match_day_railcars",
+      "not_suitable_for": [
+        "passenger capacity without vehicle configuration",
+        "hourly departures",
+        "load factor"
+      ],
+      "notes": "Fleet deployed does not by itself establish scheduled or realized passenger capacity.",
+      "sample_size": 6,
+      "source_id": "sound_transit_world_cup_2026",
+      "source_locator": "Preparation pays off section",
+      "status": "observed",
+      "unit": "railcars",
+      "value": 174
+    }
+  ],
+  "schema_version": "1.2.0",
+  "snapshot_kind": "world_cup_operational_evidence",
+  "source_hash_scope": "Raw HTTP response bytes in ignored data/raw/operations files",
+  "sources": {
+    "bart_vta_world_cup_opening_2026": {
+      "city": "San Francisco",
+      "coverage_end": "2026-06-13",
+      "coverage_start": "2026-06-13",
+      "license": "Official agency publication; retain attribution and source terms",
+      "notes": "SHA-256 covers raw HTTP response bytes stored locally as san_francisco_bart_vta_world_cup_opening.html; raw files are intentionally ignored by Git.",
+      "publisher": "Bay Area Rapid Transit, reporting coordinated VTA, Caltrain, ACE, and Capitol Corridor results",
+      "raw_filename": "san_francisco_bart_vta_world_cup_opening.html",
+      "retrieved_at_utc": "2026-08-02T18:00:00Z",
+      "sha256": "fd0fc3445b352aab5a797bb2dcae5ee8b97efb56895e770eba63c178835b18d4",
+      "source": "Public Transit Ridership Records Broken for FIFA World Cup Stadium Opener",
+      "source_type": "match-specific operational report",
+      "status": "partial",
+      "url": "https://www.bart.gov/news/articles/2026/news20260615-0",
+      "verification_terms": [
+        "37,642",
+        "less than 90 minutes",
+        "nearly 7,000"
+      ],
+      "version": "Published 2026-06-15"
+    },
+    "dart_world_cup_service_2026": {
+      "city": "Dallas",
+      "coverage_end": "2026-07-19",
+      "coverage_start": "2026-06-08",
+      "license": "Official agency publication; retain attribution",
+      "notes": "SHA-256 covers raw HTTP response bytes stored locally as dallas_dart_world_cup_service.html; raw files are intentionally ignored by Git.",
+      "publisher": "Dallas Area Rapid Transit",
+      "raw_filename": "dallas_dart_world_cup_service.html",
+      "retrieved_at_utc": "2026-08-02T18:00:00Z",
+      "sha256": "f2e50686b82998d7473944e60cf8cf0fd400967960d6e8e6373b09f1060c0769",
+      "source": "DART Returns to Normal Service Frequency",
+      "source_type": "post-event operational report",
+      "status": "observed",
+      "url": "https://www.dart.org/about/news-and-events/newsreleases/newsrelease-detail/dart-returns-to-normal-service-frequency",
+      "verification_terms": [
+        "12.9%"
+      ],
+      "version": "Published 2026-07-15"
+    },
+    "houston_host_committee_world_cup_metrics_2026": {
+      "city": "Houston",
+      "coverage_end": "2026-06-23",
+      "coverage_start": "2026-06-14",
+      "license": "Official host-committee publication; retain attribution and source terms",
+      "notes": "SHA-256 covers raw HTTP response bytes stored locally as houston_host_committee_transportation_metrics.html; raw files are intentionally ignored by Git.",
+      "publisher": "FIFA World Cup 2026 Houston Host Committee",
+      "raw_filename": "houston_host_committee_transportation_metrics.html",
+      "retrieved_at_utc": "2026-08-02T18:00:00Z",
+      "sha256": "856ec687b3f94bfc85c836a6032e26e4435d5d15158b9500292338fda06dadc2",
+      "source": "Houston Host Committee Operational, Attendance and Transportation Metrics",
+      "source_type": "in-tournament operational report",
+      "status": "partial",
+      "url": "https://www.fwc26houston.com/post/fifa-world-cup-2026-houston-host-committee-reports-operational-attendance-and-transportation-metri",
+      "verification_terms": [
+        "246,169",
+        "69,765",
+        "25,000 to 30,000"
+      ],
+      "version": "First 15 tournament days; accessed 2026-08-02"
+    },
+    "kc_streetcar_world_cup_recap_2026": {
+      "city": "Kansas City",
+      "coverage_end": "2026-07-11",
+      "coverage_start": "2026-06-11",
+      "license": "Official public-authority publication; retain attribution and source terms",
+      "notes": "SHA-256 covers raw HTTP response bytes stored locally as kansas_city_streetcar_world_cup_recap.html; raw files are intentionally ignored by Git.",
+      "publisher": "Kansas City Streetcar Authority",
+      "raw_filename": "kansas_city_streetcar_world_cup_recap.html",
+      "retrieved_at_utc": "2026-08-02T18:00:00Z",
+      "sha256": "8f19c0f13e8eb4fdf6812df29d278056fc723903fc8e7443ce04d91f23fe6a9b",
+      "source": "World Cup Month + KC Streetcar Recap",
+      "source_type": "post-event operational report",
+      "status": "observed",
+      "url": "https://kcstreetcar.org/world-cup-recap/",
+      "verification_terms": [
+        "838,826",
+        "55,973",
+        "1,680"
+      ],
+      "version": "Published 2026-07-21"
+    },
+    "la_metro_world_cup_outcomes_2026": {
+      "city": "Los Angeles",
+      "coverage_end": "2026-07-10",
+      "coverage_start": "2026-06-12",
+      "license": "Official agency publication; retain attribution",
+      "notes": "SHA-256 covers raw HTTP response bytes stored locally as los_angeles_metro_world_cup_outcomes.html; raw files are intentionally ignored by Git.",
+      "publisher": "Los Angeles County Metropolitan Transportation Authority",
+      "raw_filename": "los_angeles_metro_world_cup_outcomes.html",
+      "retrieved_at_utc": "2026-08-02T18:00:00Z",
+      "sha256": "d9616d6d95e9db26f25db0fd706a998ce3efad648d885762f6cc173ed5964b04",
+      "source": "Metro Delivers Golden Boot Service for World Cup Fans",
+      "source_type": "post-event operational report",
+      "status": "observed",
+      "url": "https://www.metro.net/about/metro-delivers-golden-boot-service-for-world-cup-fans-delivering-more-than-210000-rides-celebratory-customer-experience/",
+      "verification_terms": [
+        "212,865",
+        "9.6 million"
+      ],
+      "version": "Published 2026-07-16"
+    },
+    "marta_world_cup_situation_2026": {
+      "city": "Atlanta",
+      "coverage_end": "2026-07-15",
+      "coverage_start": "2026-06-11",
+      "license": "Official public information; retain publisher attribution and source terms",
+      "notes": "SHA-256 covers raw HTTP response bytes stored locally as atlanta_marta_world_cup_situation.html; raw files are intentionally ignored by Git.",
+      "publisher": "Metropolitan Atlanta Rapid Transit Authority",
+      "raw_filename": "atlanta_marta_world_cup_situation.html",
+      "retrieved_at_utc": "2026-08-02T18:00:00Z",
+      "sha256": "2d38e27aca875200484dd9c46a2f9b26db4a0dc7d4af7025280884fb83bdc5df",
+      "source": "MARTA World Cup Situation Report",
+      "source_type": "post-event operational report",
+      "status": "observed",
+      "url": "https://itsmarta.com/marta-world-cup-situation-report.aspx",
+      "verification_terms": [
+        "4,655,000",
+        "240,000"
+      ],
+      "version": "Updated through 2026-07-15"
+    },
+    "mass_world_cup_outcomes_2026": {
+      "city": "Boston",
+      "coverage_end": "2026-07-09",
+      "coverage_start": "2026-06-13",
+      "license": "Official operator publication; retain attribution and source terms",
+      "notes": "SHA-256 covers raw HTTP response bytes stored locally as boston_keolis_world_cup_operations.html; raw files are intentionally ignored by Git.",
+      "publisher": "Keolis Commuter Services, MBTA operating partner",
+      "raw_filename": "boston_keolis_world_cup_operations.html",
+      "retrieved_at_utc": "2026-08-02T18:00:00Z",
+      "sha256": "38f9b1d66477e66c375e23de9d96dd4f7869d5ea3362157de7a3542e85dedc7a",
+      "source": "MBTA and Keolis Deliver Unprecedented Boston Stadium Train Service",
+      "source_type": "post-event operational report",
+      "status": "observed",
+      "url": "https://www.keolis.com/en/newsroom-en/news/mbta-and-keolis-deliver-unprecedented-boston-stadium-train-service",
+      "verification_terms": [
+        "108,940",
+        "88%"
+      ],
+      "version": "Published 2026-07-20"
+    },
+    "miami_dade_world_cup_outcomes_2026": {
+      "city": "Miami",
+      "coverage_end": "2026-07-18",
+      "coverage_start": "2026-06-15",
+      "license": "Official county publication; retain attribution",
+      "notes": "SHA-256 covers raw HTTP response bytes stored locally as miami_dade_world_cup_outcomes.html; raw files are intentionally ignored by Git.",
+      "publisher": "Miami-Dade County",
+      "raw_filename": "miami_dade_world_cup_outcomes.html",
+      "retrieved_at_utc": "2026-08-02T18:00:00Z",
+      "sha256": "bfcc37a6aa62961c6dcad5630f716cd113a2fe83183902ece4759f1814a2e733",
+      "source": "Miami-Dade World Cup Tournament Conclusion",
+      "source_type": "post-event operational report",
+      "status": "observed",
+      "url": "https://www.miamidade.gov/global/release.page?Mduid_release=rel1784578276391561",
+      "verification_terms": [
+        "230,000",
+        "203,000",
+        "836,000"
+      ],
+      "version": "Post-tournament release accessed 2026-08-02"
+    },
+    "nj_transit_world_cup_aar_2026": {
+      "city": "New York/NJ",
+      "coverage_end": "2026-07-19",
+      "coverage_start": "2026-06-13",
+      "license": "Official agency publication; retain attribution and source terms",
+      "notes": "SHA-256 covers raw HTTP response bytes stored locally as new_york_new_jersey_transportation_aar.html; raw files are intentionally ignored by Git.",
+      "publisher": "New Jersey Transit Corporation",
+      "raw_filename": "new_york_new_jersey_transportation_aar.html",
+      "retrieved_at_utc": "2026-08-02T18:00:00Z",
+      "sha256": "66c727f0d5f6fec24b3031a339e094e683f85b623a32d9bda530b46b55179b7a",
+      "source": "New Jersey Interagency Transportation After Action Report at NJNY Stadium",
+      "source_type": "post-event interagency after-action report",
+      "status": "observed",
+      "url": "https://www.njtransit.com/press-releases/new-jersey-interagency-transportation-after-action-report-aar-njny-stadium-fifa",
+      "verification_terms": [
+        "370,000",
+        "24,000",
+        "American Dream Pedestrian Count"
+      ],
+      "version": "Report dated 2026-07-21"
+    },
+    "septa_june_2026_ridership": {
+      "city": "Philadelphia",
+      "coverage_end": "2026-06-30",
+      "coverage_start": "2026-06-01",
+      "license": "Official agency publication; retain attribution",
+      "notes": "SHA-256 covers raw HTTP response bytes stored locally as philadelphia_septa_june_2026_ridership.html; raw files are intentionally ignored by Git.",
+      "publisher": "Southeastern Pennsylvania Transportation Authority",
+      "raw_filename": "philadelphia_septa_june_2026_ridership.html",
+      "retrieved_at_utc": "2026-08-02T18:00:00Z",
+      "sha256": "847383022ab5aa9ed355f46c75858b15b253d7c89805bb28e846ad82c0f4f15e",
+      "source": "SEPTA Ridership: June 2026",
+      "source_type": "monthly operational report with event comparisons",
+      "status": "observed",
+      "url": "https://wwww.septa.org/news/ridership-june-2026/",
+      "verification_terms": [
+        "25,671",
+        "82%",
+        "19%"
+      ],
+      "version": "Published 2026-07-17"
+    },
+    "sound_transit_world_cup_2026": {
+      "city": "Seattle",
+      "coverage_end": "2026-07-06",
+      "coverage_start": "2026-06-01",
+      "license": "Official agency publication; retain attribution and source terms",
+      "notes": "SHA-256 covers raw HTTP response bytes stored locally as seattle_sound_transit_world_cup_outcomes.html; raw files are intentionally ignored by Git.",
+      "publisher": "Sound Transit",
+      "raw_filename": "seattle_sound_transit_world_cup_outcomes.html",
+      "retrieved_at_utc": "2026-08-02T18:00:00Z",
+      "sha256": "2d67f284b5553503b308e8a245520eaf23246015fa83ff70e9f02c860d4ad306",
+      "source": "A Tournament to Remember",
+      "source_type": "post-event operational report",
+      "status": "observed",
+      "url": "https://www.soundtransit.org/blog/platform/tournament-to-remember",
+      "verification_terms": [
+        "5.4 million",
+        "174"
+      ],
+      "version": "Published 2026-07-10"
+    }
+  },
+  "status": "partial"
+}

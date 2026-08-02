@@ -49,7 +49,8 @@ are mobility/economic proxies, not stadium attendance or ticketed-fan behavior.
 
 ## Supplemental release evidence
 
-FIFA schedule, agency GTFS, OpenStreetMap networks, and EPA/FTA/FHWA factor
+FIFA schedule, agency GTFS, OpenStreetMap networks, official post-event
+operations, and EPA/FTA/FHWA factor
 references are not part of the Rice collection. They are eligible only after an
 offline pipeline records publisher, URL, retrieval time, version, license,
 coverage, evidence status, and SHA-256. Their intended uses and current
@@ -62,6 +63,13 @@ integration status are listed in `docs/SOURCE_REGISTER.md`.
   accessibility or route safety.
 - EPA/FTA/FHWA inputs are planning factors and conceptual costs, not local
   inventories, engineering estimates, or bids.
+- Official post-event reports provide 33 source-located aggregate benchmarks
+  across all 11 cities and 13 source-located match records. They are observed
+  operational context, but none supplies a complete match-hour calibration set.
+- NOAA Global Hourly replaces only distant Rice weather rows for Miami and New
+  York/New Jersey. USGS Landsat Collection 2 Level-2 surface temperature replaces
+  only Boston's missing venue-buffer UHI row. Both supplements are pinned,
+  hashed, and remain explicitly non-Rice evidence.
 
 ## Overview
 
