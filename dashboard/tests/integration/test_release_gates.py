@@ -1,7 +1,16 @@
+import json
 import math
 from pathlib import Path
 
-from dashboard.domain.scoring import composite_score, heat_safety_score, normalize_weights, uhi_safety_score
+import pandas as pd
+
+from dashboard.domain.scoring import (
+    build_city_metrics,
+    composite_score,
+    heat_safety_score,
+    normalize_weights,
+    uhi_safety_score,
+)
 from dashboard.mobility_platform.contracts import EvidenceMetric, EvidenceStatus, ScenarioConfig
 from dashboard.mobility_platform.mappings import HOST_CITIES
 
@@ -62,3 +71,22 @@ def test_application_shell_does_not_scan_raw_data():
     assert "read_csv" not in source
     assert "Rice WC Hack" not in source
     assert "load_artifacts" in source
+
+
+def test_supplied_metric_sources_name_the_rice_collection():
+    weather = pd.DataFrame({
+        "city": ["Atlanta"],
+        "date": pd.to_datetime(["2024-06-01"]),
+        "avg_temp_c": [30.0],
+        "max_temp_c": [35.0],
+        "min_temp_c": [24.0],
+        "humidity": [60.0],
+        "evidence_status": ["derived"],
+    })
+    uhi = pd.DataFrame({"city": ["Atlanta"], "venue_p90_uhi": [5.0], "venue_points": [12], "evidence_status": ["derived"]})
+    poi = pd.DataFrame({"city": ["Atlanta"], "category": ["Transit"], "poi_count_1mi": [20], "evidence_status": ["derived"]})
+    metrics = build_city_metrics(pd.DataFrame(), weather, uhi, poi, {})
+    evidence = json.loads(metrics.loc[metrics["city"] == "Atlanta", "evidence_json"].iloc[0])
+    assert evidence["heat"]["source"].startswith("Rice WC Hack / daily-weather-rice")
+    assert evidence["uhi"]["source"].startswith("Rice WC Hack / urban-heat-index-rice")
+    assert evidence["access"]["source"].startswith("Rice WC Hack / core-poi-geometry-rice")

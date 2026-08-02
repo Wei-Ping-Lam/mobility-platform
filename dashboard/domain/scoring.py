@@ -10,13 +10,14 @@ import pandas as pd
 
 from dashboard.mobility_platform.contracts import EvidenceMetric, EvidenceStatus, ScenarioConfig, ScenarioResult
 from dashboard.mobility_platform.mappings import HOST_CITIES
-
+from dashboard.mobility_platform.sources import GTFS_SOURCE, rice_source
 
 DEFAULT_WEIGHTS = {
     "balanced": {"transit": 0.35, "heat": 0.20, "uhi": 0.15, "access": 0.30},
     "transit_access": {"transit": 0.50, "heat": 0.10, "uhi": 0.10, "access": 0.30},
     "heat_resilience": {"transit": 0.25, "heat": 0.35, "uhi": 0.25, "access": 0.15},
     "sustainability": {"transit": 0.30, "heat": 0.20, "uhi": 0.25, "access": 0.25},
+    "rice_supplied_data": {"transit": 0.00, "heat": 0.35, "uhi": 0.25, "access": 0.40},
 }
 
 DIMENSIONS = ("transit", "heat", "uhi", "access")
@@ -168,10 +169,19 @@ def build_city_metrics(
             heat_index = float(np.percentile(heat_values, 90)) if heat_values else None
             avg_temp = float(event_weather["avg_temp_c"].mean())
             humidity = float(event_weather["humidity"].mean())
-            heat_status = EvidenceStatus.DERIVED.value if heat_index is not None else EvidenceStatus.UNAVAILABLE.value
+            weather_source_status = (
+                str(event_weather["evidence_status"].iloc[0])
+                if "evidence_status" in event_weather and not event_weather["evidence_status"].empty
+                else EvidenceStatus.DERIVED.value
+            )
+            heat_status = weather_source_status if heat_index is not None else EvidenceStatus.UNAVAILABLE.value
+            weather_station = str(event_weather.iloc[0].get("station", "unknown"))
+            weather_station_distance = event_weather.iloc[0].get("station_distance_mi")
         else:
             heat_index = avg_temp = humidity = None
             heat_status = EvidenceStatus.UNAVAILABLE.value
+            weather_station = None
+            weather_station_distance = None
 
         uhi_city = uhi[uhi["city"] == city] if not uhi.empty and "city" in uhi else pd.DataFrame()
         uhi_value = None
@@ -179,7 +189,13 @@ def build_city_metrics(
             uhi_value = uhi_city.iloc[0].get("venue_p90_uhi")
             if pd.isna(uhi_value):
                 uhi_value = uhi_city.iloc[0].get("p90_uhi")
-        uhi_status = EvidenceStatus.DERIVED.value if uhi_value is not None and not pd.isna(uhi_value) else EvidenceStatus.UNAVAILABLE.value
+        uhi_status = (
+            str(uhi_city.iloc[0].get("evidence_status", EvidenceStatus.DERIVED.value))
+            if uhi_value is not None and not pd.isna(uhi_value)
+            else EvidenceStatus.UNAVAILABLE.value
+        )
+        venue_points_value = uhi_city.iloc[0].get("venue_points") if not uhi_city.empty else None
+        venue_point_count = int(venue_points_value) if venue_points_value is not None and pd.notna(venue_points_value) else 0
 
         gtfs_row = gtfs.get(city, {})
         transit_value = gtfs_row.get("gtfs_transit_score")
@@ -195,11 +211,24 @@ def build_city_metrics(
             if reference > 0 and city in all_counts.index:
                 access_values.append(min(100.0, poi_count / reference * 100.0))
         access_value = access_values[0] if access_values else None
-        access_status = EvidenceStatus.DERIVED.value if access_value is not None else EvidenceStatus.UNAVAILABLE.value
+        poi_city = poi[poi["city"] == city] if not poi.empty and "city" in poi else pd.DataFrame()
+        access_status = (
+            str(poi_city.iloc[0].get("evidence_status", EvidenceStatus.DERIVED.value))
+            if access_value is not None and not poi_city.empty
+            else EvidenceStatus.UNAVAILABLE.value
+        )
 
         visits_city = visits[visits["city"] == city] if not visits.empty and {"city", "daily_visits"}.issubset(visits.columns) else pd.DataFrame()
         average_visits = float(visits_city["daily_visits"].mean()) if not visits_city.empty else None
         peak_visits = float(visits_city["daily_visits"].max()) if not visits_city.empty else None
+        demand_status = (
+            str(visits_city.iloc[0].get("evidence_status", EvidenceStatus.DERIVED.value))
+            if not visits_city.empty
+            else EvidenceStatus.UNAVAILABLE.value
+        )
+        demand_source_market = (
+            str(visits_city.iloc[0].get("source_market", city)) if not visits_city.empty else None
+        )
         peak_visitors = int(float(meta["capacity"]) * 0.95) if meta.get("capacity") else None
 
         row: dict[str, Any] = {
@@ -221,16 +250,30 @@ def build_city_metrics(
             "heat_index_c_p90": heat_index,
             "avg_temp_c": avg_temp,
             "humidity": humidity,
+            "weather_station": weather_station,
+            "weather_station_distance_mi": weather_station_distance,
             "avg_uhi_c": float(uhi_value) if uhi_value is not None and not pd.isna(uhi_value) else None,
             "avg_daily_visits": average_visits,
             "peak_daily_visits": peak_visits,
+            "demand_status": demand_status,
+            "demand_source_market": demand_source_market,
             "peak_visitors": peak_visitors,
             "transit_stops_0_5mi": gtfs_row.get("stops_0_5mi"),
             "nearest_stop_mi": gtfs_row.get("nearest_stop_mi"),
             "route_count": gtfs_row.get("route_count"),
             "feed_status": gtfs_row.get("feed_status", "unavailable"),
         }
-        row["first_last_mile_gap"] = None if transit_value is None or heat_index is None else round(max(0.0, (100 - transit_value) * (1 + max(0.0, heat_index - 25) / 35)), 1)
+        gap_inputs_eligible = (
+            transit_value is not None
+            and heat_index is not None
+            and evidence_allowed(str(transit_status), include_estimates)
+            and evidence_allowed(str(heat_status), include_estimates)
+        )
+        row["first_last_mile_gap"] = (
+            round(max(0.0, (100 - transit_value) * (1 + max(0.0, heat_index - 25) / 35)), 1)
+            if gap_inputs_eligible
+            else None
+        )
         row["transit_status"] = transit_status
         row["heat_status"] = heat_status
         row["uhi_status"] = uhi_status
@@ -245,7 +288,7 @@ def build_city_metrics(
                 transit_value,
                 unit="score (0-100)",
                 status=transit_status,
-                source="Pinned GTFS venue snapshot",
+                source=GTFS_SOURCE,
                 coverage_start=gtfs_row.get("coverage_start"),
                 coverage_end=gtfs_row.get("coverage_end"),
                 sample_size=gtfs_row.get("total_agency_stops"),
@@ -255,25 +298,38 @@ def build_city_metrics(
                 row["heat_score"],
                 unit="safety score (0-100)",
                 status=heat_status,
-                source="Daily weather host station, June-July p90 heat index",
+                source=rice_source(
+                    "daily-weather-rice",
+                    f"station {weather_station}, June-July p90 heat index"
+                    if weather_station
+                    else "host-area station unavailable",
+                ),
                 coverage_start=event_weather["date"].min().date() if not event_weather.empty and "date" in event_weather else None,
                 coverage_end=event_weather["date"].max().date() if not event_weather.empty and "date" in event_weather else None,
                 sample_size=len(event_weather),
-                assumptions=("NOAA Rothfusz heat-index formula applied to station observations.",),
+                assumptions=(
+                    "NOAA Rothfusz heat-index formula applied to Rice WC Hack station observations.",
+                    f"Station is {float(weather_station_distance):.1f} miles from the venue."
+                    if weather_station_distance is not None and pd.notna(weather_station_distance)
+                    else "Station-to-venue distance is unavailable.",
+                ),
             ),
             "uhi": _metric_payload(
                 row["uhi_score"],
                 unit="safety score (0-100)",
                 status=uhi_status,
-                source="Urban heat index points within two miles of venue",
-                sample_size=int(uhi_city.iloc[0].get("venue_points")) if not uhi_city.empty and pd.notna(uhi_city.iloc[0].get("venue_points")) else None,
+                source=rice_source(
+                    "urban-heat-index-rice",
+                    "points within two miles of venue" if venue_point_count > 0 else "market-level p90 fallback",
+                ),
+                sample_size=venue_point_count or None,
                 assumptions=("Distance-weighted venue context is not a pedestrian shade or surface-temperature audit.",),
             ),
             "access": _metric_payload(
                 row["access_score"],
                 unit="support-density score (0-100)",
                 status=access_status,
-                source="Core POI counts within one mile of venue",
+                source=rice_source("core-poi-geometry-rice", "POI counts within one mile of venue"),
                 sample_size=int(poi_count) if access_value is not None else None,
                 assumptions=("POI density is a venue-support proxy, not a safe-route or accessibility audit.",),
             ),
@@ -285,7 +341,6 @@ def build_city_metrics(
 
 def intervention_result(row: pd.Series | dict[str, Any], config: ScenarioConfig) -> ScenarioResult:
     row = row.to_dict() if isinstance(row, pd.Series) else row
-    baseline_transit = float(row.get("transit_score") or 0.0)
     baseline_demand = int(row.get("peak_visitors") or row.get("capacity") or 0)
     added_shuttle_capacity = int(config.shuttle_buses_per_hour * config.shuttle_hours * config.bus_capacity * config.uptake_rate)
     added_park_ride_capacity = int(config.park_ride_spaces * config.uptake_rate)

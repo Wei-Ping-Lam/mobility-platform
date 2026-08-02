@@ -44,7 +44,8 @@ def validation_metrics(visits: pd.DataFrame) -> pd.DataFrame:
         for holdout_year in (2023, 2024):
             holdout_start = pd.Timestamp(f"{holdout_year}-01-01")
             holdout_end = pd.Timestamp(f"{holdout_year + 1}-01-01")
-            training = city_frame[city_frame["date"] < holdout_start]
+            primary_start = pd.Timestamp("2022-01-01")
+            training = city_frame[(city_frame["date"] >= primary_start) & (city_frame["date"] < holdout_start)]
             holdout = city_frame[(city_frame["date"] >= holdout_start) & (city_frame["date"] < holdout_end)].copy()
             if training.empty or holdout.empty:
                 continue
@@ -67,6 +68,8 @@ def validation_metrics(visits: pd.DataFrame) -> pd.DataFrame:
             rows.append({
                 "city": city,
                 "holdout_year": holdout_year,
+                "training_start": training["date"].min(),
+                "training_end": training["date"].max(),
                 "n": len(holdout),
                 "mae": float(candidate_error.abs().mean()),
                 "rmse": float(np.sqrt((candidate_error**2).mean())),
@@ -85,11 +88,17 @@ def scenario_band(visits: pd.DataFrame, city: str, uplift_low: float = 1.5, upli
     if baseline.empty:
         return pd.DataFrame(columns=["date", "low", "base", "high", "status"])
     event_dates = pd.date_range("2026-06-11", "2026-07-19", freq="D")
-    reference = float(baseline["baseline"].median())
-    return pd.DataFrame({
-        "date": event_dates,
-        "low": reference * uplift_low,
-        "base": reference * uplift_base,
-        "high": reference * uplift_high,
-        "status": "scenario",
-    })
+    reference = baseline.copy()
+    reference["month"] = reference["date"].dt.month
+    reference["weekday"] = reference["date"].dt.dayofweek
+    profile = reference.groupby(["month", "weekday"])["baseline"].median()
+    result = pd.DataFrame({"date": event_dates})
+    result["month"] = result["date"].dt.month
+    result["weekday"] = result["date"].dt.dayofweek
+    fallback = float(baseline["baseline"].median())
+    result["reference"] = [profile.get((month, weekday), fallback) for month, weekday in zip(result["month"], result["weekday"])]
+    result["low"] = result["reference"] * uplift_low
+    result["base"] = result["reference"] * uplift_base
+    result["high"] = result["reference"] * uplift_high
+    result["status"] = "scenario"
+    return result[["date", "low", "base", "high", "status"]]
