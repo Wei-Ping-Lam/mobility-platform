@@ -13,6 +13,7 @@ import streamlit as st
 
 from dashboard.domain.scoring import DEFAULT_WEIGHTS, intervention_result
 from dashboard.mobility_platform.contracts import ScenarioConfig
+from dashboard.mobility_platform.sources import GTFS_SOURCE, RICE_COLLECTION, rice_source
 from dashboard.models.demand import scenario_band, seasonal_baseline, validation_metrics
 from dashboard.models.economics import economic_impact_range
 from dashboard.ui.theme import (
@@ -146,7 +147,7 @@ def _executive_map(metrics: pd.DataFrame) -> go.Figure:
     return style_map(figure, 525, zoom=3.0, lat=38.5, lon=-96)
 
 
-def render_executive(metrics: pd.DataFrame, artifacts: dict[str, Any]) -> None:
+def render_executive(metrics: pd.DataFrame, artifacts: dict[str, Any], *, supplied_data_lens: bool = False) -> None:
     rankable_mask = metrics["rankable"].fillna(False).astype(bool)
     rankable = metrics[rankable_mask].copy()
     incomplete = metrics[~rankable_mask].copy()
@@ -158,7 +159,7 @@ def render_executive(metrics: pd.DataFrame, artifacts: dict[str, Any]) -> None:
         (
             f"{len(metrics)} cities in view",
             "Evidence-gated ranking",
-            "FIFA 2026 event window",
+            f"{RICE_COLLECTION} source collection",
         ),
     )
     _metric_grid(
@@ -169,6 +170,12 @@ def render_executive(metrics: pd.DataFrame, artifacts: dict[str, Any]) -> None:
             (_safe(mean_coverage * 100, "%"), "Mean evidence coverage", "derived", "Weighted required components", "amber"),
         ]
     )
+    if supplied_data_lens:
+        callout(
+            "info",
+            "Rice supplied-data lens is active",
+            "The ranking uses supplied weather, urban-heat, and venue-support evidence. Transit stays visible but has zero weight; use a transit-weighted profile after pinned GTFS evidence is available for a complete mobility-readiness comparison.",
+        )
     if not incomplete.empty:
         callout(
             "warning",
@@ -244,7 +251,7 @@ def render_executive(metrics: pd.DataFrame, artifacts: dict[str, Any]) -> None:
             st.markdown(priority_card(str(row["city"]), title, body, status), unsafe_allow_html=True)
 
 
-def _demand_chart(visits: pd.DataFrame, city: str) -> tuple[go.Figure | None, pd.DataFrame]:
+def _demand_chart(visits: pd.DataFrame, city: str, demand_status: str) -> tuple[go.Figure | None, pd.DataFrame]:
     series = seasonal_baseline(visits, city)
     if series.empty:
         return None, series
@@ -253,7 +260,7 @@ def _demand_chart(visits: pd.DataFrame, city: str) -> tuple[go.Figure | None, pd
         go.Scatter(
             x=series["date"],
             y=series["actual"],
-            name="Observed mobility proxy",
+            name="Allocated mobility proxy" if demand_status == "partial" else "Rice WC Hack mobility proxy",
             line=dict(color=SERIES_COLORS["observed"], width=1.25),
             opacity=.58,
             hovertemplate="%{x|%b %d, %Y}<br>Observed proxy: %{y:,.0f}<extra></extra>",
@@ -364,7 +371,7 @@ def render_explorer(
         (
             f"{int(row['games'])} scheduled matches",
             f"Venue capacity {int(row['capacity']):,}",
-            "Estimates enabled" if include_estimates else "Observed-only mode",
+            f"{RICE_COLLECTION} supplied data",
         ),
     )
     if include_estimates:
@@ -374,6 +381,12 @@ def render_explorer(
             "warning",
             "Partial score - not rankable",
             "This city's partial MRS is visible for auditability but is excluded from the strict ranking until all weighted core evidence is eligible.",
+        )
+    if row.get("demand_status") == "partial":
+        callout(
+            "warning",
+            "Demand series uses an explicit equal allocation",
+            f"Rice WC Hack / store-visits-rice reports the combined market '{row.get('demand_source_market')}'. The city series is a transparent allocation, not an independently observed city total.",
         )
 
     _metric_grid(
@@ -393,7 +406,7 @@ def render_explorer(
             "Observed store-visit mobility is shown separately from the seasonal baseline and the explicit low-high event scenario.",
             "Movement",
         )
-        figure, series = _demand_chart(artifacts["visits"], city)
+        figure, series = _demand_chart(artifacts["visits"], city, str(row.get("demand_status", "unavailable")))
         if figure is None:
             callout("info", "Demand artifact unavailable", "Run the offline ETL to enable the historical baseline and event scenario.")
         else:
@@ -401,6 +414,76 @@ def render_explorer(
             st.caption("The event range is a scenario band, not a probability interval. Validation against seasonal-naive holdouts is reported in Methods & QA.")
             with st.expander("Accessible table: demand baseline"):
                 st.dataframe(series[["date", "actual", "baseline"]], hide_index=True, use_container_width=True)
+
+        section_header(
+            "Commercial activity mix and customer origins",
+            "These Rice measures provide movement context; neither category visits nor customer-home counts represent ticketed spectators.",
+            "Context",
+        )
+        activity_column, origin_column = st.columns(2, gap="large")
+        category_frame = artifacts.get("visits_category", pd.DataFrame())
+        category_frame = category_frame[category_frame.get("city", pd.Series(dtype=str)) == city].copy()
+        if not category_frame.empty:
+            category_frame["date"] = pd.to_datetime(category_frame["date"], errors="coerce")
+            category_frame = category_frame[category_frame["date"].dt.year.between(2022, 2024)]
+            category_table = (
+                category_frame.groupby("category", as_index=False)["daily_visits"].sum()
+                .nlargest(8, "daily_visits")
+                .sort_values("daily_visits")
+            )
+        else:
+            category_table = pd.DataFrame(columns=["category", "daily_visits"])
+        with activity_column:
+            st.markdown("##### Leading activity categories")
+            if category_table.empty:
+                callout("info", "Category context unavailable", "Run the full Rice ETL to build category-level mobility summaries.")
+            else:
+                category_figure = px.bar(
+                    category_table,
+                    x="daily_visits",
+                    y="category",
+                    orientation="h",
+                    color_discrete_sequence=[COLORS["teal"]],
+                    labels={"daily_visits": "Store-visit proxy (2022-2024)", "category": ""},
+                )
+                category_figure.update_layout(margin=dict(l=10, r=18, t=10, b=25))
+                st.plotly_chart(style_figure(category_figure, 360, legend=False), use_container_width=True, config={"displayModeBar": False})
+                with st.expander("Accessible table: activity categories"):
+                    st.dataframe(
+                        category_table.rename(columns={"category": "Category", "daily_visits": "Store-visit proxy"}),
+                        hide_index=True,
+                        use_container_width=True,
+                    )
+
+        origins = artifacts.get("origins", pd.DataFrame())
+        origins = origins[origins.get("city", pd.Series(dtype=str)) == city].copy()
+        if not origins.empty:
+            origins["count"] = pd.to_numeric(origins["count"], errors="coerce")
+            origin_table = origins[origins["home_state"] != "Unknown"].nlargest(8, "count").sort_values("count")
+        else:
+            origin_table = pd.DataFrame(columns=["home_state", "count"])
+        with origin_column:
+            st.markdown("##### Leading customer-home states")
+            if origin_table.empty:
+                callout("info", "Origin context unavailable", "Run the full Rice ETL to build customer-origin summaries.")
+            else:
+                origin_figure = px.bar(
+                    origin_table,
+                    x="count",
+                    y="home_state",
+                    orientation="h",
+                    color_discrete_sequence=[COLORS["blue"]],
+                    labels={"count": "Customer-origin count", "home_state": "State"},
+                )
+                origin_figure.update_layout(margin=dict(l=10, r=18, t=10, b=25))
+                st.plotly_chart(style_figure(origin_figure, 360, legend=False), use_container_width=True, config={"displayModeBar": False})
+                with st.expander("Accessible table: customer origins"):
+                    st.dataframe(
+                        origin_table[["home_state", "count"]].rename(columns={"home_state": "State", "count": "Customer-origin count"}),
+                        hide_index=True,
+                        use_container_width=True,
+                    )
+        st.caption(f"Sources: {rice_source('store-visits-rice', 'category activity')} and {rice_source('spend-patterns-rice', 'customer-home summaries')}.")
 
         section_header(
             "Venue access layer",
@@ -571,10 +654,20 @@ def render_explorer(
             "Audit",
         )
         evidence = [
-            ("Transit", str(row["transit_status"]), "Pinned GTFS venue snapshot"),
-            ("Heat safety", str(row["heat_status"]), "Host-station weather, June-July event window"),
-            ("Urban heat", str(row["uhi_status"]), "Venue-buffer urban heat summary"),
-            ("Venue support", str(row["access_status"]), "POI density within one mile"),
+            ("Demand context", str(row.get("demand_status", "unavailable")), rice_source("store-visits-rice", "daily market mobility")),
+            ("Transit", str(row["transit_status"]), GTFS_SOURCE),
+            (
+                "Heat safety",
+                str(row["heat_status"]),
+                rice_source(
+                    "daily-weather-rice",
+                    f"station {row.get('weather_station')} ({float(row.get('weather_station_distance_mi')):.1f} mi from venue)"
+                    if row.get("weather_station_distance_mi") is not None and pd.notna(row.get("weather_station_distance_mi"))
+                    else "host-area station unavailable",
+                ),
+            ),
+            ("Urban heat", str(row["uhi_status"]), rice_source("urban-heat-index-rice", "venue buffer")),
+            ("Venue support", str(row["access_status"]), rice_source("core-poi-geometry-rice", "one-mile venue buffer")),
         ]
         ledger_html = "".join(evidence_row(name, status, source) for name, status, source in evidence)
         st.markdown(f"<div class='evidence-list'>{ledger_html}</div>", unsafe_allow_html=True)
@@ -650,7 +743,7 @@ def render_methods(metrics: pd.DataFrame, artifacts: dict[str, Any]) -> None:
         "Audit every headline number",
         "Inspect coverage, provenance, transformations, scoring rules, assumptions, and validation before using the platform for a decision.",
         (
-            "Contracted metrics",
+            f"{RICE_COLLECTION} canonical source",
             "Explicit missingness",
             "Downloadable evidence",
         ),
@@ -686,7 +779,7 @@ def render_methods(metrics: pd.DataFrame, artifacts: dict[str, Any]) -> None:
     with provenance_tab:
         section_header(
             "Dataset manifest",
-            "Version, time coverage, source hashes, row counts, and quality outcomes are generated by the offline pipeline rather than entered by hand.",
+            f"Every supplied-data artifact resolves to its exact dataset under {RICE_COLLECTION}. Version, coverage, hashes, row counts, and quality outcomes are pipeline-generated.",
             "Sources",
         )
         datasets = manifest.get("datasets", [])

@@ -16,6 +16,7 @@ if str(REPO_ROOT) not in sys.path:
 from dashboard.domain.scoring import DEFAULT_WEIGHTS, build_city_metrics, normalize_weights  # noqa: E402
 from dashboard.mobility_platform.config import project_paths  # noqa: E402
 from dashboard.mobility_platform.mappings import HOST_CITIES  # noqa: E402
+from dashboard.mobility_platform.sources import RICE_COLLECTION  # noqa: E402
 from dashboard.ui.data import load_artifacts  # noqa: E402
 from dashboard.ui.theme import apply_theme, brand_block, sidebar_status  # noqa: E402
 from dashboard.ui.views import render_executive, render_explorer, render_methods  # noqa: E402
@@ -49,7 +50,20 @@ with st.sidebar:
     )
     st.markdown("<div class='sidebar-kicker'>Scope and scoring</div>", unsafe_allow_html=True)
     selected_city = st.selectbox("City focus", ["All cities"] + sorted(HOST_CITIES), index=0)
-    profile = st.selectbox("Weight profile", list(DEFAULT_WEIGHTS), index=0)
+    profile_labels = {
+        "balanced": "Balanced mobility",
+        "transit_access": "Transit and access",
+        "heat_resilience": "Heat resilience",
+        "sustainability": "Sustainability",
+        "rice_supplied_data": "Rice supplied-data lens",
+    }
+    profile_options = list(DEFAULT_WEIGHTS)
+    profile = st.selectbox(
+        "Weight profile",
+        profile_options,
+        index=profile_options.index("rice_supplied_data"),
+        format_func=profile_labels.get,
+    )
     weights = dict(DEFAULT_WEIGHTS[profile])
     with st.expander("Tune score weights"):
         weights = {
@@ -59,6 +73,8 @@ with st.sidebar:
             "access": st.slider("Venue support", 0.0, 1.0, float(weights["access"]), 0.05),
         }
     weights = normalize_weights(weights)
+    if profile == "rice_supplied_data":
+        st.caption(f"This lens uses only {RICE_COLLECTION} weather, UHI, and venue-support evidence; it does not score transit service.")
     include_estimates = st.checkbox(
         "Include estimated values",
         value=False,
@@ -88,7 +104,7 @@ else:
     selected_metrics = metrics
 
 if mode == "Executive":
-    render_executive(selected_metrics, artifacts)
+    render_executive(selected_metrics, artifacts, supplied_data_lens=weights["transit"] == 0)
 elif mode == "Explorer":
     render_explorer(metrics, artifacts, selected_city if selected_city != "All cities" else metrics.iloc[0]["city"], weights, include_estimates)
 else:
