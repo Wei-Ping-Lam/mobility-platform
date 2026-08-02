@@ -2,12 +2,11 @@
 
 ## Status and intended decision
 
-Contract `0.3.0` defines a match-specific transportation design for the 11 US
-host cities. The current integrated application still provides the earlier
-Rice evidence lens and generic planning scenarios. FIFA schedule, eligible
-GTFS, pinned OpenStreetMap networks, factor registries, physical access gaps,
-and city-specific intervention outcomes remain release acceptance work until
-their artifacts and tests are integrated.
+Contract `0.3.0` and the integrated application provide match-specific planning
+for the 11 US host cities. The six Rice datasets remain canonical context; the
+pinned FIFA schedule, eligible GTFS, five-mile OpenStreetMap graphs, strict
+factor registry, physical access gaps, and city-specific intervention outcomes
+are connected through compact cache-only artifacts.
 
 The release is intended to answer: **where is the access gap, why does it
 exist, which package addresses it, what modeled range results, at what planning

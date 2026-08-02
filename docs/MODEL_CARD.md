@@ -4,8 +4,8 @@
 
 - Contract: `0.3.0`
 - Intended release: competition-ready planning MVP
-- Current state: contracts and Rice evidence are implemented; the public-source
-  pipelines and contract-0.3 transportation models are pending integration
+- Current state: Rice and public-source pipelines, contract-0.3 transportation
+  models, and all three dashboard workspaces are integrated and tested
 - Decision authority: advisory only; agencies retain operational and engineering
   responsibility
 
@@ -55,8 +55,8 @@ are defined in `VALIDATION.md`.
 
 ## Current evidence limitations
 
-- Current GTFS values are unavailable for strict scoring until eligible pinned
-  snapshots are integrated.
+- GTFS is observed for four cities, partial for five, and unavailable for Kansas
+  City and Philadelphia; strict transportation results remain evidence-gated.
 - The present event-demand band is generic and did not beat its comparator in
   both validation years; it remains a planning scenario.
 - Boston lacks eligible two-mile Rice UHI coverage; Miami and New York/New
@@ -66,6 +66,8 @@ are defined in `VALIDATION.md`.
 - Spatial jitter in supplied data limits parcel- or route-level interpretation.
 - OSM tag presence cannot establish sidewalk condition, crossing safety, or ADA
   compliance.
+- Five-mile OSM isochrones cover all venues, but event-relevant stop paths are
+  withheld where GTFS eligibility is absent; tag completeness varies by city.
 - GTFS cannot establish actual service delivery, ridership, crowding, or delay.
 - National cost and emissions factors do not replace local fleet, procurement,
   labor, design, or construction evidence.

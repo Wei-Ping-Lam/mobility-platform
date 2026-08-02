@@ -12,14 +12,15 @@ items are presenter prompts, not values to read aloud.
 3. Open **Explorer**. “The current event band is a planning scenario. It is not
    observed match attendance, and the current model has not passed both annual
    holdout gates.”
-4. Show the transit status. “Strict transit comparison is unavailable until a
-   pinned, event-valid GTFS snapshot is integrated. We do not substitute an
-   expert score.”
-5. “Contract 0.3 defines the release-ready schedule, hourly movement, physical
-   access-gap, intervention-outcome, and investment-recommendation interfaces.
-   Those interfaces are not evidence that the results are complete.”
+4. Show the transit status. “Strict transit comparison is available only where
+   the pinned feed is event-valid. Kansas City and Philadelphia remain
+   unavailable, and we never substitute an expert score.”
+5. Show the OSM route and isochrones. “All venues have pinned five-mile network
+   context; a route to transit appears only when an event-relevant stop passes
+   the GTFS gate. Missing tags do not certify accessibility.”
 
-Stop here if the competition-ready release gates have not passed.
+Continue with a city whose selected match has eligible service; use Methods & QA
+to demonstrate unavailable evidence for the others.
 
 ## Release demonstration after all gates pass
 

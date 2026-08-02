@@ -79,29 +79,35 @@ completed analytical result.
   compliance, causal effects, and observed mode shift.
 - Team/contact placeholders are replaced by the team before submission.
 
-## Release evidence record — 2026-08-01
+## Release evidence record — 2026-08-02
 
-- Integration commits: `b008af7` (transportation bundle wiring) and `7ec3cad`
-  (refreshed, per-match GTFS capacity evidence).
-- Automated suite: `139 passed`.
-- Ruff: passed for `dashboard`.
-- Whitespace: `git diff --check` passed.
-- Public cache validator: 78 schedule events, 11 walking city fixtures, 11 GTFS
-  city records, five factor families; validator passed. The refreshed GTFS snapshot
-  SHA-256 is `7d27c0f19982e667ce936ad107f5f19d7aaab118cecd33672b6be1be95ff1ded`;
-  it is partial with 38 event-valid matches across four observed, two usable partial,
-  and five unavailable cities.
-- Streamlit AppTest: Executive, Explorer, and Methods & QA rendered without an
-  exception; all 11 cities and named scenarios passed adapter checks.
-- Local cache-only preview: HTTP 200 at `http://127.0.0.1:8502`.
-- Screenshot record: not completed because the in-app browser policy blocked the
-  visual connection. No screenshot claim is made.
-- Known release failures: five cities lack event-valid GTFS evidence; walking
-  layers are estimated schema fixtures rather than pinned OSM extracts; team/contact
-  metadata is missing; final desktop/narrow screenshot review remains outstanding.
-- Narrative reconciliation: completed against the current evidence-to-claim and
-  supplemental-source registers. Capacity-qualified access gaps are withheld while
-  GTFS is unavailable.
+- Environment: uv 0.11.16, CPython 3.11, committed lockfile, and project `.venv`;
+  no machine-specific preview runtime is referenced.
+- Automated suite: `155 passed`; Ruff and whitespace checks pass.
+- Public cache validator: 78 schedule events, 20 planning factors, 11 GTFS city
+  records, and 11 graph-derived walking records; validator passed.
+- GTFS artifact SHA-256:
+  `34cc6428c1542b5c375d83ce890d1a1cd7762fa09ac8e920b039710f63e642a8`.
+  It contains 38 event-valid matches, 2,157 venue-area stops, and 108 bounded
+  route shapes across four observed, five partial, and two unavailable cities.
+- OSM artifact SHA-256:
+  `c3c6007536a06720f23500dfead188125937753952c32e2505d3915a66ee7c5e`.
+  All 11 venues have five-mile graph-derived isochrones; stop paths are partial
+  where event-relevant GTFS evidence is unavailable.
+- Factor artifact SHA-256:
+  `f36cba57ede7b6c7dfb720c492ee584545b46912e0cac7da4d7337c5bdb1bbd6`.
+  Production composition fails on missing/incomplete factors and every outcome
+  includes this hash in its assumptions.
+- Streamlit AppTest: Executive, Explorer, and Methods & QA render without an
+  exception. All 78 movement timelines and before/after tables pass nonempty,
+  reconciliation, and peak-reduction checks.
+- Local project-owned Streamlit preview: health check returned HTTP 200 at
+  `http://127.0.0.1:8503`; the stale port-8501 preview process was stopped.
+- Screenshot record: failed because the in-app browser sandbox-policy handshake
+  blocked localhost control. No desktop/narrow screenshot claim is made.
+- Known release failures: Kansas City and Philadelphia lack eligible event-window
+  transit; several other feeds/routes remain partial; team/contact metadata and
+  final desktop/narrow screenshot review remain outstanding.
 
 This is a competition MVP validation record, not certification for operational
 traffic management.
@@ -109,7 +115,7 @@ traffic management.
 Run W6-owned checks from the repository root:
 
 ```powershell
-pytest dashboard/tests/integration
-ruff check dashboard/tests/integration
+uv run python -m pytest dashboard/tests/integration
+uv run ruff check dashboard/tests/integration
 git diff --check
 ```

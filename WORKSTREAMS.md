@@ -9,7 +9,7 @@ This repository uses isolated branches and Git worktrees so agents and people ca
 - Work only on `work/<stream>` branches in `.worktrees/<stream>` directories.
 - Pull requests target `integration/rigor-upgrade`, never `main`.
 - Raw data in `Rice WC Hack/` is local, read-only, and must never be staged.
-- Generated artifacts are owned by ETL or GTFS only; do not hand-edit them.
+- Generated artifacts are owned by their ETL, GTFS, OSM, or factor pipeline only; do not hand-edit them.
 - Shared contracts must change first and require integrator review.
 - Every change must include focused tests and `git diff --check` output.
 
@@ -17,7 +17,7 @@ This repository uses isolated branches and Git worktrees so agents and people ca
 
 | Stream | Branch | Worktree | Owned paths | Depends on |
 | --- | --- | --- | --- | --- |
-| W0 Foundation | integration-owned | repository root | `dashboard/app.py`, shared contracts/source registry, fixtures, `.gitignore`, `WORKSTREAMS.md` | None |
+| W0 Foundation | integration-owned | repository root | `pyproject.toml`, `uv.lock`, `.python-version`, CI, `dashboard/app.py`, shared contracts/source registry, fixtures, `.gitignore`, `WORKSTREAMS.md` | None |
 | W1 Public evidence | `work/gtfs` | `.worktrees/gtfs` | `dashboard/pipeline/gtfs/`, `dashboard/pipeline/public/`, `dashboard/tests/gtfs/`, `dashboard/tests/public/`, `data/snapshots/` | W0 contracts |
 | W2 Rice enrichment | `work/etl` | `.worktrees/etl` | `dashboard/pipeline/etl/`, `dashboard/pipeline/schemas/`, `dashboard/tests/etl/`, Rice-derived cache artifacts | W0 contracts |
 | W3 Movement/access | `work/models` | `.worktrees/models` | `dashboard/models/movement.py`, `dashboard/models/access.py`, `dashboard/tests/models/` | W0 fixtures |

@@ -91,7 +91,8 @@ def test_supplemental_source_register_is_complete_and_statuses_are_honest():
     assert "78 US match events, observed" in text
     assert "4 observed and 2 partial cities" in text
     assert "2 failed-feed cities" in text
-    assert "actual five-mile extracts pending" in text
+    assert "Integrated for all 11 venues" in text
+    assert "OSMnx 2.1.0" in text
     assert "not a local MOVES inventory" in text
     assert "SHA-256" in text
 

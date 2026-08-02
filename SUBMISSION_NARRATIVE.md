@@ -58,12 +58,13 @@ gaps and intervention outcomes—not rank—lead the decision.
 - The GTFS refresh produced event-valid evidence for 38 matches across six cities;
   three downloaded feeds are outside the event window and Kansas City/Philadelphia
   remain unavailable.
+- Five-mile OSM walking graphs and hashes cover all 11 venues; all venues retain
+  isochrones, while event-relevant stop routes remain partial where GTFS is ineligible.
 
 ### Required before the competition-ready claim
 
-- Repair or replace failed/out-of-window GTFS feeds and pin five-mile OSM networks
-  so every city has capacity-qualified access evidence.
-- Replace the estimated walking fixture with validated network extracts and route geometry.
+- Repair or replace failed/out-of-window GTFS feeds so every city can support a
+  capacity-qualified match access result.
 - Run the final full-data, narrow-screen, and screenshot release record against the integrated branch.
 - Replace the team/contact placeholders above.
 

@@ -13,11 +13,11 @@ three decision workspaces, and Methods & QA downloads. Cited factor ranges are
 integrated as scenario/estimated evidence.
 
 Transportation evidence remains incomplete after the explicit GTFS refresh:
-38 matches across four observed cities plus Los Angeles and Seattle have usable
-event-valid service; three cities are outside the event window, and Kansas City/
-Philadelphia failed. The displayed OSM geometry is an estimated contract fixture rather than
-a pinned five-mile extract. The UI suppresses capacity-qualified gaps and marks
-recommendations partial wherever event-valid service remains unavailable.
+38 matches have event-valid service evidence; four cities are observed, five are
+partial, and Kansas City/Philadelphia remain unavailable. Pinned five-mile OSM
+walking graphs now provide isochrones for all 11 venues and event-relevant stop
+routes where GTFS eligibility permits. The UI suppresses capacity-qualified gaps
+and marks recommendations partial wherever required evidence remains unavailable.
 
 ## Run locally
 
@@ -25,8 +25,9 @@ The dashboard reads compact artifacts and makes no startup network request.
 
 ```powershell
 $env:MOBILITY_DATA_ROOT = "C:\path\to\Rice WC Hack"
-python -m dashboard.pipeline.etl.build --data-root $env:MOBILITY_DATA_ROOT
-python -m streamlit run dashboard/app.py
+uv sync --all-groups --locked
+uv run python -m dashboard.pipeline.etl.build --data-root $env:MOBILITY_DATA_ROOT
+uv run python -m streamlit run dashboard/app.py
 ```
 
 Public-source refresh commands are owned by their pipelines and must run
@@ -78,8 +79,8 @@ supplemental; see [SOURCE_REGISTER.md](../docs/SOURCE_REGISTER.md).
 ## Verification and presentation
 
 ```powershell
-pytest dashboard/tests/integration
-ruff check dashboard/tests/integration
+uv run python -m pytest dashboard/tests/integration
+uv run ruff check dashboard/tests/integration
 git diff --check
 ```
 
