@@ -1,9 +1,9 @@
-"""Executive, Explorer, and Methods/QA Streamlit views."""
+"""Decision-oriented Executive, Explorer, and Methods/QA Streamlit views."""
 
 from __future__ import annotations
 
 import json
-from typing import Any
+from typing import Any, Mapping
 
 import numpy as np
 import pandas as pd
@@ -11,875 +11,602 @@ import plotly.express as px
 import plotly.graph_objects as go
 import streamlit as st
 
-from dashboard.domain.scoring import DEFAULT_WEIGHTS, intervention_result
-from dashboard.mobility_platform.contracts import ScenarioConfig
 from dashboard.mobility_platform.sources import GTFS_SOURCE, RICE_COLLECTION, rice_source
 from dashboard.models.demand import scenario_band, seasonal_baseline, validation_metrics
-from dashboard.models.economics import economic_impact_range
-from dashboard.ui.theme import (
-    callout,
-    evidence_row,
-    metric_card,
-    page_header,
-    priority_card,
-    section_header,
+from dashboard.ui.presentation import (
+    AccessView,
+    CityDecisionView,
+    MovementView,
+    PlatformPresentation,
+    RecommendationView,
+    ScenarioView,
+    build_presentation,
+    city_layer_records,
 )
-from dashboard.viz.style import (
-    COLORS,
-    READINESS_SCALE,
-    SERIES_COLORS,
-    STATUS_COLORS,
-    discrete_status_scale,
-    style_figure,
-    style_map,
-)
+from dashboard.ui.theme import callout, evidence_row, metric_card, page_header, priority_card, section_header
+from dashboard.viz.style import COLORS, SERIES_COLORS, STATUS_COLORS, discrete_status_scale, style_figure, style_map
 
 
-def _safe(value: Any, suffix: str = "") -> str:
-    if value is None or (isinstance(value, (float, np.floating)) and not np.isfinite(value)):
+def _safe(value: Any, suffix: str = "", decimals: int = 1) -> str:
+    if value is None:
         return "Not available"
-    if isinstance(value, (float, np.floating)):
-        return f"{value:,.1f}{suffix}"
-    return f"{value:,}{suffix}" if isinstance(value, (int, np.integer)) else f"{value}{suffix}"
+    try:
+        parsed = float(value)
+    except (TypeError, ValueError):
+        return str(value)
+    if not np.isfinite(parsed):
+        return "Not available"
+    if decimals == 0:
+        return f"{parsed:,.0f}{suffix}"
+    return f"{parsed:,.{decimals}f}{suffix}"
+
+
+def _money(value: Any) -> str:
+    if value is None:
+        return "Not available"
+    parsed = float(value)
+    if abs(parsed) >= 1_000_000:
+        return f"${parsed / 1_000_000:,.1f}M"
+    if abs(parsed) >= 1_000:
+        return f"${parsed / 1_000:,.0f}K"
+    return f"${parsed:,.0f}"
+
+
+def _money_range(low: Any, high: Any, base: Any = None) -> str:
+    if low is not None and high is not None:
+        return f"{_money(low)}–{_money(high)}"
+    return _money(base)
+
+
+def _number_range(low: Any, high: Any, base: Any = None, suffix: str = "") -> str:
+    if low is not None and high is not None:
+        return f"{_safe(low, suffix, 0)}–{_safe(high, suffix, 0)}"
+    return _safe(base, suffix, 0)
 
 
 def _metric_grid(items: list[tuple[str, str, str | None, str | None, str]]) -> None:
-    columns = st.columns(len(items))
-    for column, (value, label, status, note, accent) in zip(columns, items):
-        with column:
-            st.markdown(
-                metric_card(value, label, status, note=note, accent=accent),
-                unsafe_allow_html=True,
-            )
+    for start in range(0, len(items), 4):
+        group = items[start : start + 4]
+        columns = st.columns(len(group))
+        for column, (value, label, status, note, accent) in zip(columns, group):
+            with column:
+                st.markdown(metric_card(value, label, status, note=note, accent=accent), unsafe_allow_html=True)
 
 
-def _recommendation(row: pd.Series) -> tuple[str, str, str]:
-    dimensions = [
-        ("Transit", row.get("transit_score"), row.get("transit_status")),
-        ("Heat", row.get("heat_score"), row.get("heat_status")),
-        ("Urban heat", row.get("uhi_score"), row.get("uhi_status")),
-        ("Venue support", row.get("access_score"), row.get("access_status")),
-    ]
-    missing = [name for name, _, status in dimensions if status == "unavailable"]
+def _fallback_recommendation(decision: CityDecisionView, access: AccessView) -> RecommendationView:
+    missing: list[str] = []
+    metric = decision.metric
+    if access.peak_demand_per_hour is None:
+        missing.append("match-hour demand")
+    if access.transit_capacity_base is None:
+        missing.append("event transit capacity")
+    if access.network_walk_distance_m is None:
+        missing.append("walking-network access")
     if missing:
-        names = ", ".join(missing)
-        return (
-            "Close the evidence gap",
-            f"Complete or refresh {names.lower()} evidence before using this city in the strict ranking.",
-            "partial",
+        return RecommendationView(
+            intervention="Complete the access evidence",
+            rationale=f"Pin {', '.join(missing)} before selecting a transportation investment.",
+            status="partial",
+            responsible_actor="Transit and venue planning team",
+            dependencies=tuple(missing),
         )
-    available = [(name, float(value)) for name, value, _ in dimensions if value is not None and pd.notna(value)]
-    if not available:
-        return "Build the evidence baseline", "No eligible readiness component is available for a defensible priority.", "unavailable"
-    weakest = min(available, key=lambda item: item[1])[0]
-    actions = {
-        "Transit": ("Strengthen event transit", "Test added service frequency, venue shuttles, and timed transfers against event demand."),
-        "Heat": ("Protect hot travel windows", "Prioritize shade, water, cooling, and shorter transfer waits during peak arrival periods."),
-        "Urban heat": ("Create a cooler venue corridor", "Target shade and surface-cooling investments along the highest-volume walking approaches."),
-        "Venue support": ("Repair the first/last mile", "Focus safe walking, accessible crossings, bike parking, and wayfinding near the venue."),
-    }
-    title, body = actions[weakest]
-    return title, body, str(row.get("score_status", "derived"))
+    if access.residual_passengers and access.residual_passengers > 0:
+        return RecommendationView(
+            intervention="Close the peak passenger gap",
+            rationale="Compare added service, shuttle, active-travel, cooling, and arrival-management packages against the documented hourly shortfall.",
+            status=access.status,
+            gap_resolved_passengers=access.residual_passengers,
+            responsible_actor="Host city mobility command",
+            dependencies=("Package-level cost and operations evidence",),
+        )
+    weakest = min(
+        ((label, metric.get(column)) for label, column in (("heat protection", "heat_score"), ("venue access", "access_score"), ("transit service", "transit_score")) if metric.get(column) is not None),
+        key=lambda item: float(item[1]),
+        default=("access operations", 0),
+    )[0]
+    return RecommendationView(
+        intervention=f"Strengthen {weakest}",
+        rationale="Use the scenario comparison to test measurable benefits before committing funds.",
+        status=str(metric.get("score_status") or "partial"),
+    )
 
 
-def _executive_map(metrics: pd.DataFrame) -> go.Figure:
-    scored = metrics[metrics["rankable"].fillna(False)].copy()
-    incomplete = metrics[~metrics["rankable"].fillna(False)].copy()
-    if scored.empty:
-        figure = go.Figure()
-    else:
-        figure = px.scatter_mapbox(
-            scored,
-            lat="lat",
-            lon="lon",
-            size="games",
-            size_max=25,
-            color="score",
-            color_continuous_scale=READINESS_SCALE,
-            range_color=[0, 100],
-            hover_name="city",
-            hover_data={
-                "venue": True,
-                "score_status": True,
-                "score": ":.1f",
-                "data_coverage": ":.0%",
-                "games": True,
-                "lat": False,
-                "lon": False,
-            },
-            zoom=3.0,
-            center={"lat": 38.5, "lon": -96},
+def _decision_rows(presentation: PlatformPresentation) -> pd.DataFrame:
+    rows: list[dict[str, Any]] = []
+    for city in sorted(presentation.cities):
+        decision = presentation.cities[city]
+        match = decision.match()
+        access = decision.access(match.match_id)
+        recommendations = decision.recommendation_set(match.match_id)
+        recommendation = recommendations[0] if recommendations else _fallback_recommendation(decision, access)
+        rows.append(
+            {
+                "city": city,
+                "venue": decision.venue,
+                "lat": decision.lat,
+                "lon": decision.lon,
+                "match_id": match.match_id,
+                "peak_gap": access.residual_passengers,
+                "peak_demand": access.peak_demand_per_hour,
+                "investment": recommendation.intervention,
+                "cost_range": _money_range(recommendation.cost_low, recommendation.cost_high, recommendation.cost_base),
+                "cost_base": recommendation.cost_base,
+                "net_co2e": recommendation.net_co2e_kg,
+                "lead_time": recommendation.lead_time_band,
+                "evidence": recommendation.status,
+                "rationale": recommendation.rationale,
+                "responsible_actor": recommendation.responsible_actor,
+                "mrs": decision.metric.get("score"),
+                "rankable": bool(decision.metric.get("rankable", False)),
+            }
         )
-        figure.update_traces(name="Rankable city", showlegend=True)
-    if not incomplete.empty:
+    return pd.DataFrame(rows)
+
+
+def _priority_map(rows: pd.DataFrame) -> go.Figure:
+    figure = go.Figure()
+    valid = rows.dropna(subset=["lat", "lon"])
+    for status in ("observed", "derived", "scenario", "partial", "estimated", "unavailable"):
+        subset = valid[valid["evidence"] == status]
+        if subset.empty:
+            continue
+        sizes = pd.to_numeric(subset["peak_gap"], errors="coerce").fillna(0)
+        sizes = 13 + 18 * (sizes / max(float(sizes.max()), 1))
         figure.add_trace(
             go.Scattermapbox(
-                lat=incomplete["lat"],
-                lon=incomplete["lon"],
+                lat=subset["lat"],
+                lon=subset["lon"],
                 mode="markers",
-                marker=dict(
-                    size=(incomplete["games"].clip(lower=1) * 4).tolist(),
-                    color=COLORS["slate"],
-                    opacity=.85,
-                    symbol="square",
-                ),
-                text=incomplete["city"],
-                customdata=incomplete[["venue", "score_status", "data_coverage"]],
+                marker=dict(size=sizes, color=STATUS_COLORS[status], opacity=.86),
+                name=status.title(),
+                customdata=subset[["city", "peak_gap", "investment", "cost_range", "lead_time"]],
                 hovertemplate=(
-                    "%{text}<br>%{customdata[0]}<br>Evidence: %{customdata[1]}"
-                    "<br>Coverage: %{customdata[2]:.0%}<extra></extra>"
+                    "<b>%{customdata[0]}</b><br>Peak gap: %{customdata[1]:,.0f} passengers/hour"
+                    "<br>Priority: %{customdata[2]}<br>Cost: %{customdata[3]}<br>Lead time: %{customdata[4]}<extra></extra>"
                 ),
-                name="Incomplete evidence (square)",
-                showlegend=True,
             )
         )
-    figure.update_layout(
-        coloraxis_colorbar=dict(
-            title="Readiness",
-            thickness=10,
-            len=.55,
-            y=.72,
-            tickfont=dict(color=COLORS["muted"], size=10),
-            title_font=dict(color=COLORS["muted"], size=10),
-            outlinewidth=0,
-        )
-    )
-    return style_map(figure, 525, zoom=3.0, lat=38.5, lon=-96)
+    return style_map(figure, 515, zoom=3.0, lat=38.5, lon=-96)
 
 
 def render_executive(metrics: pd.DataFrame, artifacts: dict[str, Any], *, supplied_data_lens: bool = False) -> None:
-    rankable_mask = metrics["rankable"].fillna(False).astype(bool)
-    rankable = metrics[rankable_mask].copy()
-    incomplete = metrics[~rankable_mask].copy()
-    mean_coverage = float(metrics["data_coverage"].mean()) if not metrics.empty else 0.0
+    presentation = build_presentation(metrics, artifacts)
+    rows = _decision_rows(presentation)
+    known_gaps = rows["peak_gap"].notna().sum() if not rows.empty else 0
     page_header(
         "Executive decision view",
-        "Host City Mobility Readiness",
-        "Compare venue access, climate exposure, transit evidence, and intervention priorities without hiding incomplete data.",
-        (
-            f"{len(metrics)} cities in view",
-            "Evidence-gated ranking",
-            f"{RICE_COLLECTION} source collection",
-        ),
+        "Where mobility investment matters most",
+        "Compare match-hour passenger gaps, investment choices, costs, climate outcomes, lead times, and evidence strength. Readiness scoring remains secondary.",
+        (f"{len(rows)} host cities", "Match-specific planning", "Cache-only evidence"),
     )
     _metric_grid(
         [
-            (str(len(metrics)), "Host cities", None, "Current selection", "teal"),
-            (str(len(rankable)), "Strictly rankable", "observed" if len(rankable) else "partial", "All core evidence eligible", "blue"),
-            (_safe(metrics["games"].sum()), "Scheduled matches", None, "Across cities in view", "violet"),
-            (_safe(mean_coverage * 100, "%"), "Mean evidence coverage", "derived", "Weighted required components", "amber"),
+            (str(len(rows)), "Cities in scope", None, "Current selection", "teal"),
+            (str(int(known_gaps)), "Cities with quantified peak gaps", "derived" if known_gaps else "unavailable", "Passengers per hour", "blue"),
+            (_safe(rows["peak_gap"].max() if known_gaps else None, " pph", 0), "Peak access gap — largest", "scenario" if known_gaps else "unavailable", "Not a roadway measure", "coral"),
+            (str(rows["investment"].ne("Complete the access evidence").sum()), "Cities with investment guidance", "scenario", "Evidence-qualified actions", "amber"),
         ]
     )
     if supplied_data_lens:
         callout(
             "info",
-            "Rice supplied-data lens is active",
-            "The ranking uses supplied weather, urban-heat, and venue-support evidence. Transit stays visible but has zero weight; use a transit-weighted profile after pinned GTFS evidence is available for a complete mobility-readiness comparison.",
+            "Rice supplied-data lens remains context, not the transportation headline",
+            "The supplied datasets inform heat, venue context, activity, origins, and economic sensitivity. Match-hour access claims require pinned public schedule, transit, and walking-network evidence.",
         )
-    if not incomplete.empty:
+    if known_gaps < len(rows):
         callout(
             "warning",
-            f"{len(incomplete)} cities remain outside the strict ranking",
-            "They stay visible on the map and in the decision table. Open Methods & QA to see the exact missing component for each city.",
+            f"{len(rows) - known_gaps} cities do not yet have a quantified passenger gap",
+            "They remain visible with an evidence-completion action. Missing transit or walking evidence is never replaced with an expert score.",
         )
 
     section_header(
-        "National readiness picture",
-        "Circle markers are rankable; square markers have incomplete core evidence. Marker size reflects scheduled matches.",
-        "Compare",
+        "Priority city map",
+        "Marker size reflects the documented peak passenger gap. Written evidence labels and the table provide alternatives to color.",
+        "Where",
     )
-    map_column, table_column = st.columns([1.5, 1], gap="large")
+    map_column, table_column = st.columns([1.35, 1], gap="large")
     with map_column:
-        st.plotly_chart(_executive_map(metrics), use_container_width=True, config={"displayModeBar": False})
-        st.caption("Venue coordinates are stadium-specific. Readiness color is withheld when a city is not rankable.")
+        st.plotly_chart(_priority_map(rows), use_container_width=True, config={"displayModeBar": False})
+        st.caption("Venue points are not corridor boundaries. Open Explorer for route-ready layers and missing-data warnings.")
     with table_column:
-        display = metrics[
-            ["city", "score", "rankable", "score_status", "data_coverage", "first_last_mile_gap", "transit_score"]
-        ].copy()
-        display["Rankability"] = np.where(display["rankable"], "Rankable", "Partial evidence")
-        display["Coverage"] = (pd.to_numeric(display["data_coverage"], errors="coerce") * 100).round(0)
-        display["MRS"] = pd.to_numeric(display["score"], errors="coerce").round(1)
-        display["Gap"] = pd.to_numeric(display["first_last_mile_gap"], errors="coerce").round(1)
-        display["Transit"] = pd.to_numeric(display["transit_score"], errors="coerce").round(1)
-        display = display.sort_values(["rankable", "score"], ascending=[False, False], na_position="last")
-        display = display[["city", "MRS", "Rankability", "Coverage", "Gap", "Transit"]]
-        display.columns = ["City", "MRS", "Rankability", "Coverage (%)", "Gap", "Transit"]
+        display = rows[["city", "peak_gap", "investment", "cost_range", "lead_time", "evidence"]].copy()
+        display["peak_gap"] = pd.to_numeric(display["peak_gap"], errors="coerce").round(0)
+        display.columns = ["City", "Peak gap (passengers/hour)", "Top investment", "Cost range", "Lead time", "Evidence"]
+        display = display.sort_values("Peak gap (passengers/hour)", ascending=False, na_position="last")
         st.dataframe(display, hide_index=True, use_container_width=True, height=415)
-        callout(
-            "info",
-            "How to use the table",
-            "MRS is the weighted score over eligible evidence. Partial scores remain visible for auditability, but do not enter the strict ranking.",
-        )
+        callout("info", "Decision reading order", "Start with the physical gap, then compare cost, climate outcome, delivery time, and evidence status. No single opaque optimization selects the answer.")
 
-    if not rankable.empty:
-        section_header(
-            "Readiness among evidence-eligible cities",
-            "Scores are shown only for cities that pass the strict evidence gate; coverage remains visible in hover details.",
-            "Ranking",
+    section_header("Priority actions", "Each card names the current action, responsible actor, measurable gap, and evidence status.", "What")
+    top = rows.sort_values(["peak_gap", "cost_base"], ascending=[False, True], na_position="last").head(3)
+    columns = st.columns(max(1, len(top)))
+    for column, (_, row) in zip(columns, top.iterrows()):
+        body = (
+            f"{row['rationale']} Peak gap: {_safe(row['peak_gap'], ' passengers/hour', 0)}. "
+            f"Cost: {row['cost_range']}. Lead: {row['lead_time']}. Owner: {row['responsible_actor']}."
         )
-        ranking = rankable.sort_values("score", ascending=True)
-        figure = go.Figure(
-            go.Bar(
-                x=ranking["score"],
-                y=ranking["city"],
-                orientation="h",
-                marker=dict(color=COLORS["teal"], line=dict(width=0)),
-                text=ranking["score"].map(lambda value: f"{value:.1f}"),
-                textposition="outside",
-                customdata=ranking[["data_coverage", "venue"]],
-                hovertemplate=(
-                    "%{y}<br>MRS: %{x:.1f}<br>Coverage: %{customdata[0]:.0%}"
-                    "<br>%{customdata[1]}<extra></extra>"
-                ),
-            )
-        )
-        figure.update_xaxes(range=[0, 105], title="Mobility Readiness Score (0-100)")
-        st.plotly_chart(style_figure(figure, max(300, 52 * len(ranking)), legend=False), use_container_width=True, config={"displayModeBar": False})
-
-    section_header(
-        "What to act on next",
-        "These are transparent rule-based priorities based on the weakest available component or the first missing evidence dimension; they are not causal impact estimates.",
-        "Decision queue",
-    )
-    queue = metrics.copy()
-    queue["_gap"] = pd.to_numeric(queue["first_last_mile_gap"], errors="coerce").fillna(-1)
-    queue = queue.sort_values(["rankable", "_gap", "data_coverage"], ascending=[False, False, True]).head(3)
-    columns = st.columns(max(1, len(queue)))
-    for column, (_, row) in zip(columns, queue.iterrows()):
-        title, body, status = _recommendation(row)
         with column:
-            st.markdown(priority_card(str(row["city"]), title, body, status), unsafe_allow_html=True)
+            st.markdown(priority_card(str(row["city"]), str(row["investment"]), body, str(row["evidence"])), unsafe_allow_html=True)
+
+    with st.expander("Secondary index: Mobility Readiness Score (MRS)"):
+        callout("info", "Use MRS for sensitivity, not investment selection", "MRS summarizes weighted evidence. It does not replace match-hour capacity, cost-effectiveness, or implementation constraints.")
+        secondary = rows[["city", "mrs", "rankable"]].copy()
+        secondary.columns = ["City", "MRS", "Rankable under selected profile"]
+        secondary["MRS"] = pd.to_numeric(secondary["MRS"], errors="coerce").round(1)
+        st.dataframe(secondary.sort_values("MRS", ascending=False, na_position="last"), hide_index=True, use_container_width=True)
 
 
-def _demand_chart(visits: pd.DataFrame, city: str, demand_status: str) -> tuple[go.Figure | None, pd.DataFrame]:
+def _legacy_demand_chart(visits: pd.DataFrame, city: str, demand_status: str) -> tuple[go.Figure | None, pd.DataFrame]:
     series = seasonal_baseline(visits, city)
     if series.empty:
         return None, series
     figure = go.Figure()
-    figure.add_trace(
-        go.Scatter(
-            x=series["date"],
-            y=series["actual"],
-            name="Allocated mobility proxy" if demand_status == "partial" else "Rice WC Hack mobility proxy",
-            line=dict(color=SERIES_COLORS["observed"], width=1.25),
-            opacity=.58,
-            hovertemplate="%{x|%b %d, %Y}<br>Observed proxy: %{y:,.0f}<extra></extra>",
-        )
-    )
-    figure.add_trace(
-        go.Scatter(
-            x=series["date"],
-            y=series["baseline"],
-            name="Seasonal baseline",
-            line=dict(color=SERIES_COLORS["baseline"], width=2.5),
-            hovertemplate="%{x|%b %d, %Y}<br>Baseline: %{y:,.0f}<extra></extra>",
-        )
-    )
-    scenario = scenario_band(visits, city)
-    if not scenario.empty and {"date", "low", "high"}.issubset(scenario.columns):
-        figure.add_trace(
-            go.Scatter(
-                x=scenario["date"],
-                y=scenario["low"],
-                name="Scenario low",
-                line=dict(color="rgba(0,0,0,0)", width=0),
-                hoverinfo="skip",
-                showlegend=False,
-            )
-        )
-        figure.add_trace(
-            go.Scatter(
-                x=scenario["date"],
-                y=scenario["high"],
-                name="Low-high event scenario",
-                fill="tonexty",
-                fillcolor=SERIES_COLORS["scenario_fill"],
-                line=dict(color=SERIES_COLORS["scenario"], width=1.8, dash="dash"),
-                hovertemplate="%{x|%b %d, %Y}<br>Scenario high: %{y:,.0f}<extra></extra>",
-            )
-        )
-    figure.update_xaxes(title=None)
-    figure.update_yaxes(title="Daily visits proxy")
-    return style_figure(figure, 410), series
+    figure.add_trace(go.Scatter(x=series["date"], y=series["actual"], name="Rice commercial-mobility context", line=dict(color=SERIES_COLORS["observed"], width=1.2), opacity=.58))
+    figure.add_trace(go.Scatter(x=series["date"], y=series["baseline"], name="Seasonal baseline", line=dict(color=SERIES_COLORS["baseline"], width=2.4)))
+    band = scenario_band(visits, city)
+    if not band.empty and {"date", "low", "high"}.issubset(band.columns):
+        figure.add_trace(go.Scatter(x=band["date"], y=band["low"], line=dict(width=0), showlegend=False, hoverinfo="skip"))
+        figure.add_trace(go.Scatter(x=band["date"], y=band["high"], name="Planning range", fill="tonexty", fillcolor=SERIES_COLORS["scenario_fill"], line=dict(color=SERIES_COLORS["scenario"], dash="dash")))
+    figure.update_yaxes(title="Daily commercial visits proxy")
+    return style_figure(figure, 390), series
 
 
-def _access_map(row: pd.Series, stop_points: list[dict[str, Any]]) -> go.Figure:
+def _hour_column(frame: pd.DataFrame) -> str | None:
+    return next((key for key in ("timestamp", "hour", "time", "window_start", "datetime") if key in frame.columns), None)
+
+
+def _movement_chart(movement: MovementView) -> tuple[go.Figure | None, pd.DataFrame]:
+    frame = pd.DataFrame(movement.hourly_rows)
+    hour = _hour_column(frame)
+    if frame.empty or hour is None:
+        return None, frame
     figure = go.Figure()
-    figure.add_trace(
-        go.Scattermapbox(
-            lat=[point["lat"] for point in stop_points],
-            lon=[point["lon"] for point in stop_points],
-            mode="markers",
-            marker=dict(size=8, color=COLORS["blue"], opacity=.76),
-            name="GTFS stops",
-            hovertemplate="Transit stop<br>%{lat:.4f}, %{lon:.4f}<extra></extra>",
-        )
+    for direction, color in (("arrivals", COLORS["blue"]), ("departures", COLORS["teal"])):
+        base = next((column for column in (f"{direction}_base", direction, f"base_{direction}") if column in frame), None)
+        low = next((column for column in (f"{direction}_low", f"low_{direction}") if column in frame), None)
+        high = next((column for column in (f"{direction}_high", f"high_{direction}") if column in frame), None)
+        if low and high:
+            figure.add_trace(go.Scatter(x=frame[hour], y=frame[low], line=dict(width=0), hoverinfo="skip", showlegend=False))
+            figure.add_trace(go.Scatter(x=frame[hour], y=frame[high], fill="tonexty", fillcolor="rgba(53,107,154,.10)" if direction == "arrivals" else "rgba(11,113,105,.10)", line=dict(width=0), name=f"{direction.title()} range"))
+        if base:
+            figure.add_trace(go.Scatter(x=frame[hour], y=frame[base], line=dict(color=color, width=2.5), name=f"{direction.title()} base"))
+    figure.update_yaxes(title="Passengers per hour")
+    return style_figure(figure, 390), frame
+
+
+def _coordinates(row: Mapping[str, Any]) -> tuple[float, float] | None:
+    lat = row.get("lat", row.get("latitude", row.get("stop_lat")))
+    lon = row.get("lon", row.get("longitude", row.get("stop_lon")))
+    try:
+        return float(lat), float(lon)
+    except (TypeError, ValueError):
+        return None
+
+
+def _layer_map(decision: CityDecisionView, artifacts: Mapping[str, Any]) -> tuple[go.Figure, pd.DataFrame]:
+    figure = go.Figure()
+    readiness: list[dict[str, str]] = []
+    layers = (
+        ("gtfs", "GTFS stops", COLORS["blue"]),
+        ("walk", "Walking network", COLORS["teal"]),
+        ("uhi", "Heat observations", COLORS["coral"]),
+        ("poi", "Venue-support places", COLORS["amber"]),
+        ("origin", "Origin flows", COLORS["violet"]),
     )
-    figure.add_trace(
-        go.Scattermapbox(
-            lat=[row["lat"]],
-            lon=[row["lon"]],
-            mode="markers",
-            marker=dict(size=19, color=COLORS["amber"]),
-            name="Venue",
-            text=[row["venue"]],
-            hovertemplate="%{text}<br>%{lat:.4f}, %{lon:.4f}<extra></extra>",
-        )
+    for key, label, color in layers:
+        raw_rows = city_layer_records(artifacts, decision.city, key)
+        points = [(record, coordinate) for record in raw_rows if (coordinate := _coordinates(record))]
+        if points:
+            figure.add_trace(
+                go.Scattermapbox(
+                    lat=[coordinate[0] for _, coordinate in points],
+                    lon=[coordinate[1] for _, coordinate in points],
+                    mode="markers",
+                    marker=dict(size=7 if key != "uhi" else 9, color=color, opacity=.66),
+                    name=label,
+                    text=[str(record.get("name") or record.get("category") or label) for record, _ in points],
+                    hovertemplate="%{text}<extra></extra>",
+                )
+            )
+        line_count = 0
+        for record in raw_rows:
+            coordinates = record.get("coordinates") or record.get("geometry")
+            if isinstance(coordinates, list) and coordinates and isinstance(coordinates[0], (list, tuple)):
+                pairs = [(float(pair[1]), float(pair[0])) for pair in coordinates if len(pair) >= 2]
+                if pairs:
+                    figure.add_trace(go.Scattermapbox(lat=[pair[0] for pair in pairs], lon=[pair[1] for pair in pairs], mode="lines", line=dict(color=color, width=2), name=label, showlegend=line_count == 0))
+                    line_count += 1
+        available = len(points) + line_count
+        readiness.append({"Layer": label, "Status": "Available" if available else "Unavailable", "Displayable records": str(available), "Meaning": "Planning context; not an audited accessibility finding" if key == "walk" else "Evidence layer"})
+    if decision.lat is not None and decision.lon is not None:
+        figure.add_trace(go.Scattermapbox(lat=[decision.lat], lon=[decision.lon], mode="markers", marker=dict(size=20, color=COLORS["ink"]), name="Venue", text=[decision.venue], hovertemplate="%{text}<extra></extra>"))
+    return style_map(figure, 465, zoom=11, lat=decision.lat or 38.5, lon=decision.lon or -96), pd.DataFrame(readiness)
+
+
+def _scenario_table(scenarios: tuple[ScenarioView, ...]) -> pd.DataFrame:
+    return pd.DataFrame(
+        [
+            {
+                "Scenario": item.name,
+                "Evidence": item.status,
+                "Gap resolved (passengers)": item.gap_resolved_passengers,
+                "Vehicle trips (base)": item.venue_vehicle_trips_base,
+                "Net VMT (base)": item.net_vmt_base,
+                "Net CO2e avoided (kg, base)": item.net_co2e_kg_base,
+                "Heat person-hours avoided": item.heat_exposure_person_hours_avoided,
+                "Cost low": item.cost_low,
+                "Cost base": item.cost_base,
+                "Cost high": item.cost_high,
+                "Cost per passenger": item.cost_per_passenger,
+                "Lead time": item.lead_time_band,
+                "Basis": item.basis,
+            }
+            for item in scenarios
+        ]
     )
-    return style_map(figure, 440, zoom=11, lat=float(row["lat"]), lon=float(row["lon"]))
 
 
-def _relationship_chart(metrics: pd.DataFrame) -> tuple[go.Figure | None, pd.DataFrame]:
-    chart = metrics[["city", "transit_score", "first_last_mile_gap", "heat_index_c_p90", "score_status"]].copy()
-    chart = chart.dropna(subset=["transit_score", "first_last_mile_gap"])
-    if chart.empty:
-        return None, chart
-    figure = px.scatter(
-        chart,
-        x="transit_score",
-        y="first_last_mile_gap",
-        color="score_status",
-        symbol="score_status",
-        text="city",
-        hover_name="city",
-        hover_data={"heat_index_c_p90": ":.1f", "score_status": True},
-        labels={
-            "transit_score": "Transit evidence score",
-            "first_last_mile_gap": "First/last-mile gap",
-            "heat_index_c_p90": "P90 heat index (C)",
-            "score_status": "Evidence status",
-        },
-        color_discrete_map=STATUS_COLORS,
-    )
-    figure.update_traces(textposition="top center", marker=dict(size=11, line=dict(color="#ffffff", width=1.5)))
-    return style_figure(figure, 390), chart
+def _before_after(movement: MovementView, scenario: ScenarioView) -> pd.DataFrame:
+    frame = pd.DataFrame(movement.hourly_rows)
+    hour = _hour_column(frame)
+    arrivals = next((column for column in ("arrivals_base", "arrivals", "base_arrivals") if column in frame), None)
+    if frame.empty or hour is None or arrivals is None:
+        return pd.DataFrame()
+    values = pd.to_numeric(frame[arrivals], errors="coerce").fillna(0).to_numpy(dtype=float)
+    after = values.copy()
+    spreading = float(scenario.package.get("arrival_spreading_pct", 0) or 0)
+    if len(after) >= 3 and spreading > 0 and after.sum() > 0:
+        peak = int(np.argmax(after))
+        movable = after[peak] * min(spreading, 100) / 100
+        neighbors = [index for index in (peak - 1, peak + 1) if 0 <= index < len(after)]
+        after[peak] -= movable
+        for index in neighbors:
+            after[index] += movable / len(neighbors)
+    return pd.DataFrame({"Time": frame[hour], "Before": values, "After": after})
 
 
-def render_explorer(
-    metrics: pd.DataFrame,
-    artifacts: dict[str, Any],
-    selected_city: str,
-    weights: dict[str, float],
-    include_estimates: bool,
-) -> None:
-    city = selected_city if selected_city in metrics["city"].values else str(metrics.iloc[0]["city"])
-    row = metrics[metrics["city"] == city].iloc[0]
+def render_explorer(metrics: pd.DataFrame, artifacts: dict[str, Any], selected_city: str, weights: dict[str, float], include_estimates: bool) -> None:
+    presentation = build_presentation(metrics, artifacts)
+    decision = presentation.city(selected_city)
+    match_options = {item.match_id: item.label for item in decision.matches}
+    selected_match_id = st.selectbox("Match", list(match_options), format_func=match_options.get, key=f"match_selector_{decision.city}")
+    match = decision.match(selected_match_id)
+    movement = decision.movement(match.match_id)
+    access = decision.access(match.match_id)
+    scenarios = decision.scenario_set(match.match_id)
+    recommendations = decision.recommendation_set(match.match_id)
+    recommendation = recommendations[0] if recommendations else _fallback_recommendation(decision, access)
+
     page_header(
         "City explorer",
-        f"{city} / {row['venue']}",
-        "Explore mobility demand, access evidence, and intervention tradeoffs. Retail mobility is never presented as stadium attendance.",
-        (
-            f"{int(row['games'])} scheduled matches",
-            f"Venue capacity {int(row['capacity']):,}",
-            f"{RICE_COLLECTION} supplied data",
-        ),
+        f"{decision.city} / {match.venue}",
+        "Explore one match at a time: hourly movement, route-ready evidence layers, intervention tradeoffs, and the assumptions behind each value.",
+        (match.stage, match.kickoff_local or "Schedule evidence unavailable", f"Capacity {_safe(match.capacity, '', 0)}"),
     )
     if include_estimates:
-        callout("warning", "Estimated components are enabled", "Estimated values remain labeled and are included only because the sidebar opt-in is active.")
-    if not bool(row["rankable"]):
-        callout(
-            "warning",
-            "Partial score - not rankable",
-            "This city's partial MRS is visible for auditability but is excluded from the strict ranking until all weighted core evidence is eligible.",
-        )
-    if row.get("demand_status") == "partial":
-        callout(
-            "warning",
-            "Demand series uses an explicit equal allocation",
-            f"Rice WC Hack / store-visits-rice reports the combined market '{row.get('demand_source_market')}'. The city series is a transparent allocation, not an independently observed city total.",
-        )
+        callout("warning", "Estimated evidence is enabled", "Estimated values remain labeled and appear only because the sidebar sensitivity option is active.")
+    if match.status == "unavailable":
+        callout("warning", "Official match record unavailable", "The compatibility portfolio view remains usable, but match-hour conclusions are withheld until a pinned schedule record is supplied.")
 
     _metric_grid(
         [
-            (_safe(row["score"]), "Mobility readiness", str(row["score_status"]), "Weighted eligible evidence", "teal"),
-            (_safe(row["transit_score"]), "Transit evidence", str(row["transit_status"]), "Pinned venue GTFS", "blue"),
-            (_safe(row["heat_score"]), "Heat safety", str(row["heat_status"]), "June-July event window", "amber"),
-            (_safe(row["first_last_mile_gap"]), "First/last-mile gap", "derived" if pd.notna(row["first_last_mile_gap"]) else "unavailable", "Higher means more pressure", "coral"),
-            (_safe(row["nearest_stop_mi"], " mi"), "Nearest transit stop", str(row["transit_status"]), "Straight-line venue distance", "violet"),
+            (_safe(access.residual_passengers, " pph", 0), "Peak access gap", access.status, "Passengers per hour", "coral"),
+            (_safe(access.peak_demand_per_hour, " pph", 0), "Peak movement demand", movement.status, movement.uncertainty_type, "blue"),
+            (_number_range(access.transit_capacity_low, access.transit_capacity_high, access.transit_capacity_base, " pph"), "Scheduled transit capacity", access.status, "Planning capacity range", "teal"),
+            (recommendation.intervention, "Current priority", recommendation.status, recommendation.lead_time_band, "amber"),
         ]
     )
 
-    demand_tab, scenario_tab, evidence_tab = st.tabs(["Demand & access", "Intervention scenario", "Evidence details"])
-    with demand_tab:
-        section_header(
-            "Demand baseline and event range",
-            "Observed store-visit mobility is shown separately from the seasonal baseline and the explicit low-high event scenario.",
-            "Movement",
-        )
-        figure, series = _demand_chart(artifacts["visits"], city, str(row.get("demand_status", "unavailable")))
-        if figure is None:
-            callout("info", "Demand artifact unavailable", "Run the offline ETL to enable the historical baseline and event scenario.")
-        else:
+    movement_tab, map_tab, scenario_tab, evidence_tab = st.tabs(["Movement", "Map & layers", "Scenarios", "Evidence"])
+    with movement_tab:
+        section_header("Match-hour demand timeline", "Low, base, and high arrivals/departures are planning ranges; supplied commercial activity is separate context.", "Movement")
+        figure, movement_table = _movement_chart(movement)
+        if figure is not None:
             st.plotly_chart(figure, use_container_width=True, config={"displayModeBar": False})
-            st.caption("The event range is a scenario band, not a probability interval. Validation against seasonal-naive holdouts is reported in Methods & QA.")
-            with st.expander("Accessible table: demand baseline"):
-                st.dataframe(series[["date", "actual", "baseline"]], hide_index=True, use_container_width=True)
-
-        section_header(
-            "Commercial activity mix and customer origins",
-            "These Rice measures provide movement context; neither category visits nor customer-home counts represent ticketed spectators.",
-            "Context",
-        )
-        activity_column, origin_column = st.columns(2, gap="large")
-        category_frame = artifacts.get("visits_category", pd.DataFrame())
-        category_frame = category_frame[category_frame.get("city", pd.Series(dtype=str)) == city].copy()
-        if not category_frame.empty:
-            category_frame["date"] = pd.to_datetime(category_frame["date"], errors="coerce")
-            category_frame = category_frame[category_frame["date"].dt.year.between(2022, 2024)]
-            category_table = (
-                category_frame.groupby("category", as_index=False)["daily_visits"].sum()
-                .nlargest(8, "daily_visits")
-                .sort_values("daily_visits")
-            )
+            with st.expander("Table alternative: match-hour movement"):
+                st.dataframe(movement_table, hide_index=True, use_container_width=True)
         else:
-            category_table = pd.DataFrame(columns=["category", "daily_visits"])
-        with activity_column:
-            st.markdown("##### Leading activity categories")
-            if category_table.empty:
-                callout("info", "Category context unavailable", "Run the full Rice ETL to build category-level mobility summaries.")
+            callout("warning", "Match-hour movement unavailable", "No contract 0.3 hourly rows are available for this match. The chart below is commercial-mobility context, not fan movement.")
+            legacy_figure, legacy_table = _legacy_demand_chart(artifacts.get("visits", pd.DataFrame()), decision.city, str(decision.metric.get("demand_status", "unavailable")))
+            if legacy_figure is not None:
+                st.plotly_chart(legacy_figure, use_container_width=True, config={"displayModeBar": False})
+                with st.expander("Table alternative: commercial-mobility baseline"):
+                    st.dataframe(legacy_table, hide_index=True, use_container_width=True)
             else:
-                category_figure = px.bar(
-                    category_table,
-                    x="daily_visits",
-                    y="category",
-                    orientation="h",
-                    color_discrete_sequence=[COLORS["teal"]],
-                    labels={"daily_visits": "Store-visit proxy (2022-2024)", "category": ""},
-                )
-                category_figure.update_layout(margin=dict(l=10, r=18, t=10, b=25))
-                st.plotly_chart(style_figure(category_figure, 360, legend=False), use_container_width=True, config={"displayModeBar": False})
-                with st.expander("Accessible table: activity categories"):
-                    st.dataframe(
-                        category_table.rename(columns={"category": "Category", "daily_visits": "Store-visit proxy"}),
-                        hide_index=True,
-                        use_container_width=True,
-                    )
+                callout("info", "Commercial activity artifact unavailable", "Run the offline Rice ETL to restore historical city context.")
+        st.caption("Rice store visits describe commercial activity. They are not stadium attendance or ticket-holder behavior.")
 
+    with map_tab:
+        section_header("Venue access evidence", "Toggle-ready layers share one venue-centered map. Unavailable layers remain listed rather than silently omitted.", "Place")
+        layer_figure, layer_table = _layer_map(decision, artifacts)
+        st.plotly_chart(layer_figure, use_container_width=True, config={"displayModeBar": False})
+        unavailable = layer_table[layer_table["Status"] == "Unavailable"]["Layer"].tolist()
+        if unavailable:
+            callout("warning", "Some map layers are unavailable", f"No displayable records for: {', '.join(unavailable)}. Aggregate evidence may still appear below, but no geometry is inferred.")
+        with st.expander("Table alternative: map-layer readiness", expanded=True):
+            st.dataframe(layer_table, hide_index=True, use_container_width=True)
         origins = artifacts.get("origins", pd.DataFrame())
-        origins = origins[origins.get("city", pd.Series(dtype=str)) == city].copy()
-        if not origins.empty:
-            origins["count"] = pd.to_numeric(origins["count"], errors="coerce")
-            origin_table = origins[origins["home_state"] != "Unknown"].nlargest(8, "count").sort_values("count")
-        else:
-            origin_table = pd.DataFrame(columns=["home_state", "count"])
-        with origin_column:
-            st.markdown("##### Leading customer-home states")
-            if origin_table.empty:
-                callout("info", "Origin context unavailable", "Run the full Rice ETL to build customer-origin summaries.")
-            else:
-                origin_figure = px.bar(
-                    origin_table,
-                    x="count",
-                    y="home_state",
-                    orientation="h",
-                    color_discrete_sequence=[COLORS["blue"]],
-                    labels={"count": "Customer-origin count", "home_state": "State"},
-                )
-                origin_figure.update_layout(margin=dict(l=10, r=18, t=10, b=25))
-                st.plotly_chart(style_figure(origin_figure, 360, legend=False), use_container_width=True, config={"displayModeBar": False})
-                with st.expander("Accessible table: customer origins"):
-                    st.dataframe(
-                        origin_table[["home_state", "count"]].rename(columns={"home_state": "State", "count": "Customer-origin count"}),
-                        hide_index=True,
-                        use_container_width=True,
-                    )
-        st.caption(f"Sources: {rice_source('store-visits-rice', 'category activity')} and {rice_source('spend-patterns-rice', 'customer-home summaries')}.")
-
-        section_header(
-            "Venue access layer",
-            "The venue and stops within two miles come from the pinned GTFS snapshot. Aggregate heat and POI evidence remains in the Evidence details tab.",
-            "Map",
-        )
-        gtfs_row = artifacts.get("gtfs", {}).get(city, {})
-        stop_points = gtfs_row.get("stop_points_2mi", [])
-        if stop_points:
-            st.plotly_chart(_access_map(row, stop_points), use_container_width=True, config={"displayModeBar": False})
-            st.caption("Blue markers are scheduled transit stops; the amber marker is the venue. Distances are spatial proxies, not audited walking routes.")
-        else:
-            callout(
-                "info",
-                "Stop coordinates are not available",
-                "The pinned snapshot does not contain a displayable two-mile stop layer for this city. Feed status and aggregate counts remain auditable in Methods & QA.",
-            )
-
-        section_header(
-            "Cross-city transit and climate context",
-            "Marker color and shape both encode evidence status. City labels provide a non-color identification channel.",
-            "Context",
-        )
-        relationship, chart_table = _relationship_chart(metrics)
-        if relationship is None:
-            callout("info", "Comparison unavailable", "No cities currently have both transit and first/last-mile gap evidence.")
-        else:
-            st.plotly_chart(relationship, use_container_width=True, config={"displayModeBar": False})
-            with st.expander("Accessible table: transit and climate"):
-                st.dataframe(
-                    chart_table.rename(
-                        columns={
-                            "city": "City",
-                            "transit_score": "Transit evidence",
-                            "first_last_mile_gap": "First/last-mile gap",
-                            "heat_index_c_p90": "P90 heat index (C)",
-                            "score_status": "Evidence status",
-                        }
-                    ),
-                    hide_index=True,
-                    use_container_width=True,
-                )
+        if isinstance(origins, pd.DataFrame) and not origins.empty and "city" in origins:
+            origin_table = origins[origins["city"] == decision.city].sort_values("count", ascending=False).head(10)
+            if not origin_table.empty:
+                section_header("Customer-home context", "Descriptive Rice spending origins; not ticket-holder origins.", "Origins")
+                figure = px.bar(origin_table.sort_values("count"), x="count", y="home_state", orientation="h", color_discrete_sequence=[COLORS["violet"]])
+                st.plotly_chart(style_figure(figure, 330, legend=False), use_container_width=True, config={"displayModeBar": False})
+                with st.expander("Table alternative: customer-home states"):
+                    st.dataframe(origin_table, hide_index=True, use_container_width=True)
 
     with scenario_tab:
-        section_header(
-            "Build an intervention package",
-            "Adjust service and access assumptions, then compare modeled traffic-pressure and emissions proxies with a zero-intervention baseline.",
-            "Scenario",
+        section_header("Three-package comparison", "Baseline, Operational, and Capital packages are compared without collapsing cost, passenger benefit, climate outcome, lead time, and evidence into one opaque answer.", "Tradeoffs")
+        scenario_names = [item.name for item in scenarios]
+        selected_name = st.radio(
+            "Focus scenario",
+            scenario_names,
+            index=scenario_names.index("Operational Package"),
+            horizontal=True,
+            key=f"scenario_focus_{decision.city}_{match.match_id}",
         )
-        controls, outputs = st.columns([.82, 1.18], gap="large")
-        with controls:
-            st.markdown("##### Package assumptions")
-            shuttle = st.slider("Shuttle buses per hour", 0, 60, 10, 5, key="scenario_shuttle")
-            hours = st.slider("Shuttle operating hours", 1.0, 12.0, 6.0, 0.5, key="scenario_hours")
-            park = st.slider("Park-and-ride spaces", 0, 20000, 2000, 1000, key="scenario_park")
-            bike = st.slider("Bike-share stations", 0, 50, 5, 5, key="scenario_bike")
-            pedestrian = st.slider("Pedestrian and cooling upgrade (%)", 0, 100, 20, 10, key="scenario_ped")
-            st.caption("Uptake, occupancy, bus capacity, trip distance, emissions, and unit costs use the transparent defaults in the scenario contract.")
-
-        scenario_config = ScenarioConfig(
-            city=city,
-            shuttle_buses_per_hour=shuttle,
-            shuttle_hours=hours,
-            park_ride_spaces=park,
-            bike_stations=bike,
-            pedestrian_upgrade_pct=pedestrian,
+        selected = next((item for item in scenarios if item.name == selected_name), scenarios[0])
+        _metric_grid(
+            [
+                (_safe(selected.gap_resolved_passengers, " passengers", 0), "Gap resolved", selected.status, selected.basis, "teal"),
+                (_money_range(selected.cost_low, selected.cost_high, selected.cost_base), "Planning cost", selected.status, selected.lead_time_band, "amber"),
+                (_number_range(selected.net_co2e_kg_low, selected.net_co2e_kg_high, selected.net_co2e_kg_base, " kg"), "Net CO2e avoided", selected.status, "Negative values indicate an increase", "blue"),
+                (_safe(selected.cost_per_passenger, " / passenger", 0), "Cost-effectiveness", selected.status, "Planning ratio", "violet"),
+            ]
         )
-        baseline_config = ScenarioConfig(
-            city=city,
-            shuttle_buses_per_hour=0,
-            shuttle_hours=hours,
-            park_ride_spaces=0,
-            bike_stations=0,
-            pedestrian_upgrade_pct=0,
-        )
-        result = intervention_result(row, scenario_config)
-        baseline_result = intervention_result(row, baseline_config)
-        with outputs:
-            _metric_grid(
-                [
-                    (_safe(result.potential_mode_shift), "Potential mode shift", "scenario", "Passenger capacity proxy", "teal"),
-                    (_safe(result.residual_vehicle_trips), "Residual vehicle pressure", "scenario", "Not measured congestion", "coral"),
-                ]
-            )
-            _metric_grid(
-                [
-                    (_safe(result.emissions_avoided_kg / 1000, " t"), "Potential emissions avoided", "scenario", "Range proxy", "blue"),
-                    (f"${result.capital_cost + result.operating_cost_per_match:,.0f}", "Modeled package cost", "scenario", "Capital plus one match operation", "violet"),
-                ]
-            )
-
-        comparison = pd.DataFrame(
-            {
-                "Measure": ["Potential mode shift", "Residual vehicle pressure"],
-                "Zero intervention": [baseline_result.potential_mode_shift, baseline_result.residual_vehicle_trips],
-                "Selected package": [result.potential_mode_shift, result.residual_vehicle_trips],
-            }
-        )
-        long_comparison = comparison.melt(id_vars="Measure", var_name="Scenario", value_name="People / trips proxy")
-        comparison_figure = px.bar(
-            long_comparison,
-            x="Measure",
-            y="People / trips proxy",
-            color="Scenario",
-            barmode="group",
-            text_auto=",.0f",
-            color_discrete_map={"Zero intervention": COLORS["slate"], "Selected package": COLORS["teal"]},
-        )
-        comparison_figure.update_traces(textposition="outside", cliponaxis=False)
-        st.plotly_chart(style_figure(comparison_figure, 355), use_container_width=True, config={"displayModeBar": False})
-        callout(
-            "info",
-            "Interpret as capacity and pressure proxies",
-            "These outputs do not claim measured roadway congestion, observed mode shift, or a calibrated emissions forecast.",
-        )
-        full_comparison = pd.DataFrame(
-            {
-                "Measure": ["Potential mode shift", "Residual vehicle trips", "Vehicle-km avoided", "Emissions avoided (kg)"],
-                "Zero intervention": [
-                    baseline_result.potential_mode_shift,
-                    baseline_result.residual_vehicle_trips,
-                    baseline_result.vehicle_km_avoided,
-                    baseline_result.emissions_avoided_kg,
-                ],
-                "Selected package": [
-                    result.potential_mode_shift,
-                    result.residual_vehicle_trips,
-                    result.vehicle_km_avoided,
-                    result.emissions_avoided_kg,
-                ],
-            }
-        )
-        with st.expander("Accessible table: zero intervention vs selected package"):
-            st.dataframe(full_comparison, hide_index=True, use_container_width=True)
-
-        economic = economic_impact_range(artifacts.get("brand_spend", pd.DataFrame()), city)
-        section_header(
-            "Economic activity context",
-            "Commercial activity remains a low-high scenario and is not presented as causal impact or venue attendance.",
-            "Co-benefit",
-        )
-        if economic.get("status") == "scenario":
-            _metric_grid(
-                [
-                    (
-                        f"${economic['low']:,.0f} to ${economic['high']:,.0f}",
-                        "Incremental spend range",
-                        "scenario",
-                        "Commercial activity sensitivity",
-                        "amber",
-                    )
-                ]
-            )
+        comparison = _scenario_table(scenarios)
+        chart = comparison.dropna(subset=["Cost base", "Gap resolved (passengers)"])
+        if not chart.empty:
+            chart = chart.copy()
+            chart["Climate magnitude"] = pd.to_numeric(chart["Net CO2e avoided (kg, base)"], errors="coerce").abs().fillna(0) + 1
+            tradeoff = px.scatter(chart, x="Cost base", y="Gap resolved (passengers)", color="Scenario", text="Scenario", size="Climate magnitude", size_max=28, hover_data={"Net CO2e avoided (kg, base)": True, "Climate magnitude": False}, color_discrete_map={"Baseline": COLORS["slate"], "Operational Package": COLORS["teal"], "Capital Package": COLORS["blue"]})
+            tradeoff.update_traces(textposition="top center")
+            tradeoff.update_xaxes(tickprefix="$", title="Planning cost")
+            st.plotly_chart(style_figure(tradeoff, 390), use_container_width=True, config={"displayModeBar": False})
         else:
-            callout("info", "Economic artifact unavailable", "No city-level commercial activity scenario can be shown for this city.")
-        st.download_button(
-            "Download this scenario (JSON)",
-            json.dumps(result.to_dict(), indent=2),
-            file_name=f"{city.lower().replace(' ', '-')}-scenario.json",
-            mime="application/json",
-            key="scenario_download",
-        )
+            callout("info", "Cost-effectiveness chart unavailable", "Package cost and passenger-benefit evidence have not both been supplied.")
+        with st.expander("Table alternative: exact scenario comparison", expanded=True):
+            st.dataframe(comparison, hide_index=True, use_container_width=True)
+
+        section_header("Before and after by hour", "Arrival spreading changes timing only and preserves total demand. Other intervention effects remain in the package outcomes above.", "Time")
+        timeline = _before_after(movement, selected)
+        if timeline.empty:
+            callout("info", "Hourly before/after unavailable", "Provide contract 0.3 movement rows to compare the package timing assumption by hour.")
+        else:
+            long = timeline.melt("Time", var_name="State", value_name="Passengers per hour")
+            timeline_figure = px.line(long, x="Time", y="Passengers per hour", color="State", markers=True, color_discrete_map={"Before": COLORS["coral"], "After": COLORS["teal"]})
+            st.plotly_chart(style_figure(timeline_figure, 355), use_container_width=True, config={"displayModeBar": False})
+            with st.expander("Table alternative: before and after"):
+                st.dataframe(timeline, hide_index=True, use_container_width=True)
+
+        callout("info", "What this means for residents", "The packages test whether more people can reach and leave the venue with less car travel and lower heat exposure. Values are planning ranges, not observed behavior.")
+        exact_json = presentation.scenario_json(decision.city, match.match_id)
+        st.download_button("Download exact scenario JSON", exact_json, file_name=f"{decision.city.lower().replace(' ', '-')}-{match.match_id.lower()}-scenarios.json", mime="application/json", key=f"scenario_download_{decision.city}_{match.match_id}", use_container_width=True)
 
     with evidence_tab:
-        section_header(
-            "Evidence ledger",
-            "Every readiness component retains a status and source. Color is always paired with a written evidence label.",
-            "Audit",
-        )
+        section_header("Decision evidence ledger", "Every headline value retains a written status, source, and limitation.", "Audit")
         evidence = [
-            ("Demand context", str(row.get("demand_status", "unavailable")), rice_source("store-visits-rice", "daily market mobility")),
-            ("Transit", str(row["transit_status"]), GTFS_SOURCE),
-            (
-                "Heat safety",
-                str(row["heat_status"]),
-                rice_source(
-                    "daily-weather-rice",
-                    f"station {row.get('weather_station')} ({float(row.get('weather_station_distance_mi')):.1f} mi from venue)"
-                    if row.get("weather_station_distance_mi") is not None and pd.notna(row.get("weather_station_distance_mi"))
-                    else "host-area station unavailable",
-                ),
-            ),
-            ("Urban heat", str(row["uhi_status"]), rice_source("urban-heat-index-rice", "venue buffer")),
-            ("Venue support", str(row["access_status"]), rice_source("core-poi-geometry-rice", "one-mile venue buffer")),
+            ("Official match", match.status, "Pinned FIFA schedule supplement"),
+            ("Movement scenario", movement.status, movement.uncertainty_type),
+            ("Access gap", access.status, "Event transit capacity + network access"),
+            ("Transit", str(decision.metric.get("transit_status", "unavailable")), GTFS_SOURCE),
+            ("Heat", str(decision.metric.get("heat_status", "unavailable")), rice_source("daily-weather-rice", "event-window heat")),
+            ("Urban heat", str(decision.metric.get("uhi_status", "unavailable")), rice_source("urban-heat-index-rice", "venue context")),
+            ("Venue support", str(decision.metric.get("access_status", "unavailable")), rice_source("core-poi-geometry-rice", "venue buffer")),
         ]
-        ledger_html = "".join(evidence_row(name, status, source) for name, status, source in evidence)
-        st.markdown(f"<div class='evidence-list'>{ledger_html}</div>", unsafe_allow_html=True)
-        evidence_table = pd.DataFrame(
-            {
-                "Component": ["Transit", "Heat safety", "Urban heat", "Venue support"],
-                "Score": [row["transit_score"], row["heat_score"], row["uhi_score"], row["access_score"]],
-                "Status": [row["transit_status"], row["heat_status"], row["uhi_status"], row["access_status"]],
-                "Weight": [weights["transit"], weights["heat"], weights["uhi"], weights["access"]],
-            }
-        )
-        evidence_table["Score"] = pd.to_numeric(evidence_table["Score"], errors="coerce").round(1)
-        evidence_table["Weight"] = (evidence_table["Weight"] * 100).round(0).astype(int).astype(str) + "%"
-        st.dataframe(evidence_table, hide_index=True, use_container_width=True)
-
-        weight_chart = pd.DataFrame(
-            {"Component": ["Transit", "Heat safety", "Urban heat", "Venue support"], "Weight": [weights["transit"], weights["heat"], weights["uhi"], weights["access"]]}
-        )
-        weight_chart["Weight (%)"] = weight_chart["Weight"] * 100
-        weight_figure = px.bar(
-            weight_chart.sort_values("Weight (%)"),
-            x="Weight (%)",
-            y="Component",
-            orientation="h",
-            color_discrete_sequence=[COLORS["blue"]],
-            text="Weight (%)",
-        )
-        weight_figure.update_traces(texttemplate="%{text:.0f}%", textposition="outside", cliponaxis=False)
-        weight_figure.update_xaxes(range=[0, max(45, float(weight_chart["Weight (%)"].max()) + 8)])
-        st.plotly_chart(style_figure(weight_figure, 300, legend=False), use_container_width=True, config={"displayModeBar": False})
-        st.caption("The chart reflects the normalized profile currently selected in the sidebar.")
+        st.markdown(f"<div class='evidence-list'>{''.join(evidence_row(*item) for item in evidence)}</div>", unsafe_allow_html=True)
+        assumptions = [*movement.assumptions, *access.assumptions, *selected.assumptions]
+        st.markdown("##### Assumptions used for this selection")
+        if assumptions:
+            st.dataframe(pd.DataFrame({"Assumption": list(dict.fromkeys(assumptions))}), hide_index=True, use_container_width=True)
+        else:
+            callout("info", "No assumptions supplied", "Upstream contract results should include an explicit assumption register before release.")
 
 
 def _coverage_heatmap(metrics: pd.DataFrame) -> go.Figure:
-    dimensions = {
-        "Transit": "transit_status",
-        "Heat": "heat_status",
-        "Urban heat": "uhi_status",
-        "Venue support": "access_status",
-    }
-    status_order = ["unavailable", "partial", "estimated", "derived", "observed"]
+    dimensions = {"Transit": "transit_status", "Heat": "heat_status", "Urban heat": "uhi_status", "Venue support": "access_status"}
+    status_order = ["unavailable", "partial", "estimated", "scenario", "derived", "observed"]
     colorscale, mapping = discrete_status_scale(status_order)
-    status_matrix = metrics[list(dimensions.values())].applymap(lambda value: value if value in mapping else "unavailable")
-    z = status_matrix.applymap(mapping.get).to_numpy()
-    text = status_matrix.applymap(lambda value: str(value).upper()).to_numpy()
-    figure = go.Figure(
-        go.Heatmap(
-            z=z,
-            x=list(dimensions),
-            y=metrics["city"],
-            text=text,
-            customdata=status_matrix.to_numpy(),
-            texttemplate="%{text}",
-            textfont=dict(color="#ffffff", size=10),
-            colorscale=colorscale,
-            zmin=0,
-            zmax=len(status_order) - 1,
-            showscale=False,
-            xgap=4,
-            ygap=4,
-            hovertemplate="%{y}<br>%{x}: %{customdata}<extra></extra>",
-        )
-    )
-    figure.update_xaxes(side="top", title=None)
-    figure.update_yaxes(title=None, autorange="reversed")
+    available_columns = [column for column in dimensions.values() if column in metrics]
+    status_matrix = metrics[available_columns].applymap(lambda value: value if value in mapping else "unavailable")
+    labels = [label for label, column in dimensions.items() if column in available_columns]
+    figure = go.Figure(go.Heatmap(z=status_matrix.applymap(mapping.get).to_numpy(), x=labels, y=metrics["city"], text=status_matrix.applymap(lambda value: str(value).upper()).to_numpy(), customdata=status_matrix.to_numpy(), texttemplate="%{text}", textfont=dict(color="#ffffff", size=10), colorscale=colorscale, zmin=0, zmax=len(status_order) - 1, showscale=False, xgap=4, ygap=4, hovertemplate="%{y}<br>%{x}: %{customdata}<extra></extra>"))
+    figure.update_xaxes(side="top")
+    figure.update_yaxes(autorange="reversed")
     return style_figure(figure, max(390, 35 * len(metrics)), legend=False, margin=dict(l=105, r=20, t=55, b=20))
 
 
+def _legacy_source_rows(manifest: Mapping[str, Any]) -> pd.DataFrame:
+    datasets = manifest.get("datasets", []) if isinstance(manifest, Mapping) else []
+    return pd.DataFrame(datasets)
+
+
 def render_methods(metrics: pd.DataFrame, artifacts: dict[str, Any]) -> None:
+    presentation = build_presentation(metrics, artifacts)
     manifest = artifacts.get("manifest", {})
     page_header(
         "Methods and quality assurance",
-        "Audit every headline number",
-        "Inspect coverage, provenance, transformations, scoring rules, assumptions, and validation before using the platform for a decision.",
-        (
-            f"{RICE_COLLECTION} canonical source",
-            "Explicit missingness",
-            "Downloadable evidence",
-        ),
+        "Audit every transportation claim",
+        "Inspect source hashes, factor ranges, network coverage, validation, and index sensitivity before using a scenario in a public decision.",
+        (f"{RICE_COLLECTION} canonical", "Public supplements pinned", "Exact exports"),
     )
-    if manifest.get("status") == "unavailable":
-        callout(
-            "error",
-            "Offline ETL manifest unavailable",
-            "The dashboard is using compatibility artifacts. Rankings are not fully auditable until the versioned ETL is run.",
-        )
+    if not isinstance(manifest, Mapping) or manifest.get("status") == "unavailable":
+        callout("error", "Versioned manifest unavailable", "Compatibility data can render, but release claims require pipeline-generated source hashes and coverage.")
     elif artifacts.get("legacy_mode"):
-        callout("warning", "Legacy compatibility mode", "Run the full ETL to produce versioned artifacts, hashes, and complete quality reports.")
+        callout("warning", "Compatibility mode", "Run the offline pipelines to restore versioned public supplements and complete quality evidence.")
     else:
-        callout("success", "Versioned artifacts loaded", f"Manifest generated {manifest.get('generated_at_utc', 'at an unknown time')}.")
+        callout("success", "Versioned Rice artifacts loaded", f"Manifest generated {manifest.get('generated_at_utc', 'at an unknown time')}.")
 
-    coverage_tab, provenance_tab, model_tab, download_tab = st.tabs(
-        ["Coverage", "Provenance & transit", "Model & assumptions", "Downloads"]
-    )
-    with coverage_tab:
-        section_header(
-            "Evidence eligibility by city",
-            "Each cell contains a written status in addition to its color. The table below is the accessible equivalent.",
-            "Coverage",
-        )
+    sources_tab, factors_tab, validation_tab, sensitivity_tab = st.tabs(["Sources & hashes", "Factors & network", "Validation", "MRS sensitivity & downloads"])
+    with sources_tab:
+        section_header("Evidence eligibility by city", "Text appears inside every status cell; the table is the accessible equivalent.", "Coverage")
         st.plotly_chart(_coverage_heatmap(metrics), use_container_width=True, config={"displayModeBar": False})
-        coverage = metrics[
-            ["city", "rankable", "score_status", "data_coverage", "transit_status", "heat_status", "uhi_status", "access_status"]
-        ].copy()
-        coverage["data_coverage"] = (coverage["data_coverage"] * 100).round(0).astype(int).astype(str) + "%"
-        coverage.columns = ["City", "Rankable", "Score status", "Coverage", "Transit", "Heat", "Urban heat", "Venue support"]
-        st.dataframe(coverage, hide_index=True, use_container_width=True)
-
-    with provenance_tab:
-        section_header(
-            "Dataset manifest",
-            f"Every supplied-data artifact resolves to its exact dataset under {RICE_COLLECTION}. Version, coverage, hashes, row counts, and quality outcomes are pipeline-generated.",
-            "Sources",
-        )
-        datasets = manifest.get("datasets", [])
-        if datasets:
-            st.dataframe(pd.DataFrame(datasets), hide_index=True, use_container_width=True)
+        coverage_columns = [column for column in ("city", "transit_status", "heat_status", "uhi_status", "access_status", "data_coverage") if column in metrics]
+        st.dataframe(metrics[coverage_columns], hide_index=True, use_container_width=True)
+        section_header("Source registry", "URLs, publishers, versions, retrieval times, licenses, coverage, and SHA-256 values must come from deterministic pipelines.", "Provenance")
+        source_table = pd.DataFrame(presentation.source_rows)
+        if source_table.empty:
+            source_table = _legacy_source_rows(manifest)
+        if source_table.empty:
+            callout("warning", "Source registry unavailable", "No contract source references or manifest datasets were provided.")
         else:
-            callout("info", "No manifest entries", "Build the full derived artifact set to populate source-level provenance.")
+            st.dataframe(source_table, hide_index=True, use_container_width=True)
+            hash_columns = [column for column in source_table if "sha" in column.lower() or "hash" in column.lower()]
+            if not hash_columns:
+                callout("warning", "Public source hashes missing", "Release evidence must include a content hash for each pinned supplement.")
 
-        section_header(
-            "Pinned GTFS snapshot",
-            "A floor score remains an observed floor score. Missing or failed feeds remain unavailable and never silently fall back to expert judgment.",
-            "Transit",
-        )
+    with factors_tab:
+        section_header("Planning factor registry", "Low, base, and high cost, vehicle-capacity, VMT, and emissions factors retain their publisher and version.", "Factors")
+        factor_table = pd.DataFrame(presentation.factor_rows)
+        if factor_table.empty:
+            callout("warning", "Factor registry unavailable", "Do not interpret cost or climate outputs as implementation estimates until cited factor ranges are supplied.")
+        else:
+            st.dataframe(factor_table, hide_index=True, use_container_width=True)
+        section_header("Walking-network coverage", "Coverage reports geometry, detour, crossings, sidewalks, and tag completeness without implying audited accessibility.", "Network")
+        network_table = pd.DataFrame(presentation.network_rows)
+        if network_table.empty:
+            callout("warning", "Network coverage unavailable", "The venue map will show route-ready geometry only after pinned walking extracts are supplied.")
+        else:
+            st.dataframe(network_table, hide_index=True, use_container_width=True)
         gtfs_rows = []
-        for city, value in sorted(artifacts.get("gtfs", {}).items()):
-            gtfs_rows.append(
-                {
-                    "City": city,
-                    "Feed status": value.get("feed_status", "unavailable"),
-                    "Score status": value.get("score_status", "unavailable"),
-                    "Stops": value.get("total_agency_stops"),
-                    "Routes": value.get("route_count"),
-                    "Event departures": value.get("event_window_departures"),
-                    "Calendar": value.get("calendar_validity"),
-                    "Nearest stop (mi)": value.get("nearest_stop_mi"),
-                }
-            )
+        for city, value in sorted(artifacts.get("gtfs", {}).items() if isinstance(artifacts.get("gtfs", {}), Mapping) else []):
+            gtfs_rows.append({"City": city, "Feed status": value.get("feed_status", "unavailable"), "Score status": value.get("score_status", "unavailable"), "Hash": value.get("sha256") or value.get("content_hash"), "Calendar": value.get("calendar_validity"), "Event departures": value.get("event_window_departures"), "Nearest stop": value.get("nearest_stop_mi")})
         if gtfs_rows:
+            st.markdown("##### Pinned transit feeds")
             st.dataframe(pd.DataFrame(gtfs_rows), hide_index=True, use_container_width=True)
-        else:
-            callout("info", "No pinned GTFS snapshot", "Run the explicit refresh command to create a versioned snapshot.")
 
-    with model_tab:
-        section_header(
-            "Mobility Readiness Score",
-            "The score is a weighted average over available evidence-eligible components. Rankability is a separate, stricter gate.",
-            "Definition",
-        )
-        st.code("MRS = weighted average of Transit + Heat Safety + UHI Safety + Venue Support")
-        callout(
-            "info",
-            "Score is not the same as rankability",
-            "A partial MRS stays visible, but rankable remains false until every non-zero-weight core dimension is eligible. Estimates require explicit opt-in.",
-        )
-        profile_table = pd.DataFrame(DEFAULT_WEIGHTS).T.reset_index(names="Profile")
-        profile_table.columns = ["Profile", "Transit", "Heat", "Urban heat", "Venue support"]
-        st.dataframe(profile_table, hide_index=True, use_container_width=True)
-
-        with st.expander("Assumption register", expanded=True):
-            st.markdown(
-                "- Peak visitors are modeled as 95% of venue capacity.\n"
-                "- Demand uplift is a 1.5x / 3.0x / 4.5x low, base, and high scenario.\n"
-                "- Combined source markets use equal allocation and remain partial.\n"
-                "- Shuttle capacity, uptake, occupancy, trip distance, and emissions factors are editable scenario assumptions.\n"
-                "- Commercial uplift is a 2% / 5% / 10% scenario, not causal attribution.\n"
-                "- Traffic results are pressure proxies, not measured congestion."
-            )
-
-        section_header(
-            "Demand validation",
-            "MAE and WAPE use rolling 2023 and 2024 holdouts and are compared with a seasonal-naive baseline.",
-            "Backtest",
-        )
-        validation = validation_metrics(artifacts["visits"])
+    with validation_tab:
+        section_header("Movement validation", "Rolling holdouts are compared with a seasonal-naive baseline. Failure keeps the user-facing label at planning scenario.", "Backtest")
+        validation = pd.DataFrame(presentation.validation_rows)
         if validation.empty:
-            callout("info", "Validation unavailable", "Build the full visit artifact before interpreting the event demand model as anything beyond a scenario.")
+            validation = validation_metrics(artifacts.get("visits", pd.DataFrame()))
+        if validation.empty:
+            callout("warning", "Validation unavailable", "Movement outputs remain planning scenarios.")
         else:
             st.dataframe(validation, hide_index=True, use_container_width=True)
-            if "outperforms_seasonal_naive" in validation and bool(validation["outperforms_seasonal_naive"].all()):
-                callout("success", "Baseline clears the comparator", "It outperforms the seasonal-naive baseline on every reported holdout.")
+            comparator_column = next((column for column in ("outperforms_seasonal_naive", "beats_seasonal_naive") if column in validation), None)
+            if comparator_column and bool(validation[comparator_column].all()):
+                callout("success", "Reported holdouts clear the comparator", "The displayed validation rows all outperform their seasonal-naive comparator.")
             else:
-                callout("warning", "Treat demand as a scenario model", "The baseline does not consistently beat the seasonal-naive comparator.")
+                callout("warning", "Use planning-scenario language", "The supplied validation does not consistently clear the comparator.")
+        callout("info", "Not measured", "The platform does not report stadium attendance, observed mode shift, causal economic impact, audited pedestrian access, or roadway performance.")
 
-    with download_tab:
-        section_header(
-            "Reproduce the displayed values",
-            "Downloads expose the current weighted city metrics and the source manifest used by this session.",
-            "Export",
-        )
+    with sensitivity_tab:
+        section_header("MRS rank sensitivity", "MRS is secondary. Compare how named policy weights change rankability, score, and rank before citing it.", "Index")
+        sensitivity = pd.DataFrame(presentation.sensitivity_rows)
+        if sensitivity.empty:
+            callout("warning", "Sensitivity unavailable", "No named-profile sensitivity rows were provided or derivable.")
+        else:
+            st.dataframe(sensitivity, hide_index=True, use_container_width=True)
+            rankable = sensitivity.dropna(subset=["Rank"]) if "Rank" in sensitivity else pd.DataFrame()
+            if not rankable.empty:
+                rank_figure = px.line(rankable, x="Profile", y="Rank", color="City", markers=True)
+                rank_figure.update_yaxes(autorange="reversed", dtick=1)
+                st.plotly_chart(style_figure(rank_figure, 410), use_container_width=True, config={"displayModeBar": False})
+                with st.expander("Table alternative: rank sensitivity"):
+                    st.dataframe(rankable, hide_index=True, use_container_width=True)
         city_download, manifest_download = st.columns(2)
         with city_download:
-            st.download_button(
-                "Download city metrics (CSV)",
-                metrics.to_csv(index=False),
-                file_name="city_metrics.csv",
-                mime="text/csv",
-                key="metrics_download",
-                use_container_width=True,
-            )
+            st.download_button("Download displayed city metrics", metrics.to_csv(index=False), file_name="city_metrics.csv", mime="text/csv", key="metrics_download", use_container_width=True)
         with manifest_download:
-            st.download_button(
-                "Download manifest (JSON)",
-                json.dumps(manifest, indent=2, default=str),
-                file_name="manifest.json",
-                mime="application/json",
-                key="manifest_download",
-                use_container_width=True,
-            )
-        callout(
-            "info",
-            "Not measured",
-            "The platform does not measure stadium attendance, roadway congestion, observed mode shift, causal economic impact, or audited pedestrian accessibility.",
-        )
+            st.download_button("Download source manifest", json.dumps(manifest, indent=2, default=str), file_name="manifest.json", mime="application/json", key="manifest_download", use_container_width=True)

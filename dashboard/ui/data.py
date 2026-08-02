@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+from pathlib import Path
 from typing import Any
 
 import pandas as pd
@@ -106,6 +107,47 @@ def load_gtfs(paths: ProjectPaths) -> dict[str, dict[str, Any]]:
     return {}
 
 
+def _load_json(path: Path) -> Any:
+    try:
+        return json.loads(path.read_text(encoding="utf-8")) if path.exists() else None
+    except (OSError, json.JSONDecodeError):
+        return None
+
+
+def _load_public_supplements(paths: ProjectPaths) -> dict[str, Any]:
+    """Load explicit offline snapshots without scanning directories or fetching data."""
+
+    roots = (paths.artifact_root, paths.repo_root / "data" / "snapshots")
+    bundle: dict[str, Any] = {}
+    for root in roots:
+        payload = _load_json(root / "transportation_bundle.json")
+        if isinstance(payload, dict):
+            bundle.update(payload)
+            break
+    files = {
+        "match_events": "fifa_schedule.json",
+        "movement_scenarios": "movement_scenarios.json",
+        "access_gaps": "access_gaps.json",
+        "intervention_outcomes": "intervention_outcomes.json",
+        "investment_recommendations": "investment_recommendations.json",
+        "source_references": "source_references.json",
+        "factor_registry": "factor_registry.json",
+        "network_coverage": "network_coverage.json",
+        "map_layers": "map_layers.json",
+        "movement_validation": "movement_validation.json",
+        "mrs_sensitivity": "mrs_sensitivity.json",
+    }
+    for key, filename in files.items():
+        if key in bundle:
+            continue
+        for root in roots:
+            payload = _load_json(root / filename)
+            if payload is not None:
+                bundle[key] = payload
+                break
+    return bundle
+
+
 def load_artifacts(paths: ProjectPaths) -> dict[str, Any]:
     visits = read_parquet(paths, "visits_daily.parquet")
     if visits.empty:
@@ -120,7 +162,7 @@ def load_artifacts(paths: ProjectPaths) -> dict[str, Any]:
     if origins.empty or not {"city", "home_state", "count", "raw_total_spend"}.issubset(origins.columns):
         origins = _legacy_origins(paths)
     brand_spend = read_parquet(paths, "brand_spend_city_daily.parquet")
-    return {
+    artifacts = {
         "manifest": read_manifest(paths),
         "visits": visits,
         "visits_category": visits_category,
@@ -132,3 +174,5 @@ def load_artifacts(paths: ProjectPaths) -> dict[str, Any]:
         "gtfs": load_gtfs(paths),
         "legacy_mode": not (paths.artifact_root / "manifest.json").exists(),
     }
+    artifacts.update(_load_public_supplements(paths))
+    return artifacts
