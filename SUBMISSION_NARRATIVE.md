@@ -31,8 +31,8 @@ For a selected match, the current design:
 3. report network walking distance, service span, heat exposure, and residual
    passenger gap;
 4. compare Baseline, Operational Package, and Capital Package outcomes; and
-5. show Pareto tradeoffs across gap resolved, cost per passenger, net CO2e,
-   lead time, and evidence quality.
+5. show nondominated tradeoffs across gap resolved, lifecycle-comparison cost,
+   total cost, net CO2e, heat, lead time, and evidence quality.
 
 MRS remains available as a secondary, sensitivity-tested policy index. Physical
 gaps and intervention outcomes—not rank—lead the decision.
@@ -53,7 +53,7 @@ gaps and intervention outcomes—not rank—lead the decision.
 - The official schedule snapshot maps 78 US-hosted matches to all 11 cities with
   local kickoff times and source hashes.
 - Hourly movement, physical access, intervention accounting, city differentiation,
-  exact match-scoped Pareto screening, and all four UI workspaces are implemented and tested.
+  exact match-scoped nondominated screening, and all four UI workspaces are implemented and tested.
 - EPA/FTA/FHWA inputs are pinned as scenario/estimated planning ranges.
 - The GTFS refresh produced hash-checked, event-valid calendar evidence for all
   78 matches and all 11 cities. It also exposes a substantive red flag: 29

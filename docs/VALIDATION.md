@@ -87,9 +87,9 @@ completed analytical result.
 
 - Environment: uv 0.11.16, CPython 3.11, committed lockfile, and project `.venv`;
   no machine-specific preview runtime is referenced.
-- Automated suite: `172 passed`; Ruff, `uv lock --check`, public snapshot
+- Automated suite: `178 passed`; Ruff, `uv lock --check`, public snapshot
   validation, and `git diff --check` pass.
-- Public cache validator: 78 schedule events, 20 planning factors, 11 GTFS city
+- Public cache validator: 78 schedule events, 26 planning factors, 11 GTFS city
   records, and 11 graph-derived walking records; validator passed.
 - GTFS content artifact SHA-256:
   `c407473a29db9e71a2278fa73f7cc8fa2dcf72316ef6e84270c4b91e4c3f78d1`.
@@ -103,15 +103,23 @@ completed analytical result.
   path to an event-relevant GTFS stop. Boston, Dallas, and Miami remain partial
   for stop-route and route-heat evidence rather than receiving invented paths.
 - Factor artifact SHA-256:
-  `f36cba57ede7b6c7dfb720c492ee584545b46912e0cac7da4d7337c5bdb1bbd6`.
+  `6115126eb452e44807a7718a7242b57593dbc1c6c4e20841d133a17b85f5d652`.
   Production composition fails on missing/incomplete factors and every outcome
   includes this hash in its assumptions.
 - Streamlit AppTest: Decision Brief, Compare Cities, City & Match, and Methods & QA
   render without an exception. All 78 movement timelines and before/after tables
   pass nonempty, reconciliation, and peak-reduction checks.
-- Recommendation identity: all 226 Pareto records retain an exact `match_id`;
-  each match renders only its own nondominated options. The set contains 78
-  added-frequency, 78 shuttle, and 70 arrival-spreading options.
+- Recommendation identity: all 260 nondominated records retain an exact
+  `match_id`; 190 are evidence-qualified screening options and 70 are
+  exploratory arrival-management sensitivities. The set contains 71
+  added-frequency, 71 shuttle, 48 route/heat-qualified cooling, and 70 bounded
+  arrival-management records. Seven Atlanta matches have no intervention record
+  because modeled scheduled capacity leaves no residual peak gap to resolve.
+- Arrival-management behavior: effective spreading uses eligible share ×
+  compliance and a shoulder-capacity limit. Median match-level gap credit fell
+  from about 4,504 to 1,317 passengers/hour; it receives no vehicle-trip or
+  emissions credit and is never evidence-qualified without local response and
+  curb data.
 - Access evidence: all 78 gaps are capacity-qualified; 55 have scenario status
   with complete modeled route/heat components and 23 are partial for those
   components. Zero scheduled capacity remains a qualified observed result.

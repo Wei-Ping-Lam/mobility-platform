@@ -8,9 +8,14 @@ source quality, assumptions, uncertainty, cost, and implementation constraints.
 
 Contract `0.3.0` is frozen. The current branch implements Rice enrichment,
 the 78-match official schedule snapshot, match-specific movement scenarios,
-physical access contracts, six intervention types, match-scoped Pareto recommendations,
+physical access contracts, six intervention types, match-scoped nondominated option sets,
 four decision workspaces, and exact Methods & QA downloads. Cited factor ranges are
 integrated as scenario/estimated evidence.
+
+Recommendation policy is explicit: qualified screening options are separated
+from exploratory sensitivities, total cost remains visible, and reusable capital
+uses an auditable event-use comparison basis. Arrival management is exploratory
+until observed response, curb throughput, and shoulder capacity are supplied.
 
 The explicit GTFS refresh now supplies hash-checked event-window calendar
 evidence for all 78 matches across all 11 cities. It also finds 29 matches with

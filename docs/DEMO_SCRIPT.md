@@ -28,7 +28,7 @@ use Boston, Dallas, or New York/NJ to demonstrate honest unavailable evidence.
 1. Select `[city]` in **Decision Brief**.
    - Read `[peak_demand_per_hour]`, `[residual_passengers]`, and evidence status.
    - State one material limitation.
-2. Compare the exact match-scoped Pareto set.
+2. Compare the exact match-scoped nondominated set, separating qualified options from exploratory sensitivities.
    - Read gap resolved, cost per passenger, net CO2e, lead time, candidate owner,
      and dependencies without calling one option universally optimal.
 3. Compare **Baseline**, **Operational Package**, and **Capital Package**.

@@ -22,7 +22,7 @@ flowchart LR
   M --> A
   X[Pinned EPA/FTA/FHWA factors] --> I[Intervention accounting]
   A --> I
-  I --> P[Pareto investment comparison]
+  I --> P[Nondominated investment comparison]
   E --> Q[Methods and QA]
   F --> Q
   G --> Q
@@ -48,7 +48,7 @@ flowchart LR
    the calculation.
 5. **Compare tradeoffs.** Recommendations show gap resolved, cost per passenger,
    net CO2e, lead time, owner, dependencies, and evidence quality. They form a
-   Pareto comparison, not an unsupported universal optimum.
+   nondominated comparison, not an unsupported universal optimum.
 6. **Audit the claim.** A metric is presentation-ready only after its field,
    artifact status, source record, formula, and release test all pass.
 
@@ -102,11 +102,24 @@ flowchart LR
 - Bike uptake is distance-limited and capacity-capped.
 - Cooled walking investment must change a documented heat/walking outcome or
   remain absent from the release UI.
-- Arrival spreading reallocates peak demand to shoulder hours without creating
-  emissions savings by itself.
+- Arrival spreading uses requested share × eligible share × compliance, capped
+  by explicit shoulder-period capacity. It reallocates only that feasible amount,
+  conserves total arrivals, and creates no vehicle-trip or emissions credit.
+- Arrival response and curb throughput are not observed in the supplied data;
+  arrival management therefore remains an exploratory sensitivity rather than
+  an evidence-qualified headline option.
 - Net CO2e equals avoided private-vehicle emissions minus added service
   emissions. Negative net benefits are valid and must remain visible.
-- Costs are low/base/high order-of-magnitude planning ranges, not bids.
+- Total costs are low/base/high order-of-magnitude planning ranges, not bids.
+  Recommendation comparisons add per-event operations to reusable capital
+  divided by explicit event-use assumptions; total cost remains visible.
+- Nondominated screening compares resolved gap, lifecycle-comparison cost per
+  passenger, net CO2e, lead time, and heat benefit. Evidence-qualified options
+  are separated from exploratory sensitivities, and no row is called optimal.
+
+Stable definitions and variable meanings are maintained in
+`dashboard/models/equations.py` and rendered in Methods & QA. See
+`EQUATIONS.md` and `ASSUMPTIONS.md` for the reviewer-facing versions.
 
 MRS remains a secondary policy index. Transportation-weighted profiles require
 eligible transit evidence, and Methods & QA reports weight sensitivity and rank
