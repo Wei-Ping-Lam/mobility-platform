@@ -14,7 +14,7 @@ def test_factor_registry_ranges_and_primary_sources_are_ui_ready():
         if source_id != "scenario_assumptions":
             assert source["url"].startswith("https://")
         assert len(source["sha256"]) == 64
-    assert len(registry["factors"]) == 20
+    assert len(registry["factors"]) == 26
     for factor in registry["factors"].values():
         assert factor["low"] <= factor["base"] <= factor["high"]
         assert factor["source_ids"]

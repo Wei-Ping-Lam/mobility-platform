@@ -8,7 +8,7 @@ def test_all_checked_public_snapshots_validate():
     assert report == {
         "contract_version": "0.3.0",
         "schedule_events": 78,
-        "factor_count": 20,
+        "factor_count": 26,
         "walking_cities": 11,
         "walking_status": "derived",
         "gtfs_cities": 11,

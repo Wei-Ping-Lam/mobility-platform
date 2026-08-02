@@ -1,7 +1,29 @@
 {
-  "artifact_sha256": "f36cba57ede7b6c7dfb720c492ee584545b46912e0cac7da4d7337c5bdb1bbd6",
+  "artifact_sha256": "6115126eb452e44807a7718a7242b57593dbc1c6c4e20841d133a17b85f5d652",
   "contract_version": "0.3.0",
   "factors": {
+    "arrival_compliance_rate": {
+      "base": 0.45,
+      "basis": "Share of eligible travelers assumed to change arrival time; no observed host-city compliance study is supplied.",
+      "high": 0.7,
+      "low": 0.2,
+      "source_ids": [
+        "scenario_assumptions"
+      ],
+      "status": "scenario",
+      "unit": "fraction of eligible arrivals"
+    },
+    "arrival_eligible_share": {
+      "base": 0.65,
+      "basis": "Share of peak arrivals assumed reachable and eligible for timed communications or curb controls; no FIFA response observations are supplied.",
+      "high": 0.85,
+      "low": 0.4,
+      "source_ids": [
+        "scenario_assumptions"
+      ],
+      "status": "scenario",
+      "unit": "fraction of peak arrivals"
+    },
     "arrival_management_cost_per_pct": {
       "base": 2500,
       "basis": "Event communications, curb allocation, staffing, and enforcement screening allowance.",
@@ -13,6 +35,17 @@
       "status": "scenario",
       "unit": "2026 planning USD / percentage point"
     },
+    "arrival_shoulder_capacity_share": {
+      "base": 0.08,
+      "basis": "Maximum peak-equivalent demand that shoulder periods are assumed able to absorb without a local curb or holding-capacity study.",
+      "high": 0.15,
+      "low": 0.03,
+      "source_ids": [
+        "scenario_assumptions"
+      ],
+      "status": "scenario",
+      "unit": "fraction of peak demand"
+    },
     "bike_hub_cost_per_space": {
       "base": 700,
       "basis": "Order-of-magnitude installed secure parking and event operations allowance.",
@@ -23,6 +56,17 @@
       ],
       "status": "estimated",
       "unit": "2026 planning USD / space"
+    },
+    "bike_hub_reuse_events": {
+      "base": 40,
+      "basis": "Planning event uses over which reusable bike-hub capital is allocated for comparison; total project cost remains visible.",
+      "high": 80,
+      "low": 20,
+      "source_ids": [
+        "scenario_assumptions"
+      ],
+      "status": "scenario",
+      "unit": "event uses"
     },
     "bike_hub_turnover": {
       "base": 0.9,
@@ -69,6 +113,17 @@
       "status": "estimated",
       "unit": "2026 planning USD / km"
     },
+    "cooled_walkway_reuse_events": {
+      "base": 60,
+      "basis": "Planning event uses over which reusable walking-corridor capital is allocated for comparison; total project cost remains visible.",
+      "high": 120,
+      "low": 30,
+      "source_ids": [
+        "scenario_assumptions"
+      ],
+      "status": "scenario",
+      "unit": "event uses"
+    },
     "heat_exposure_hours_per_walker": {
       "base": 0.5,
       "basis": "Walking exposure-duration sensitivity for treated venue approaches.",
@@ -112,6 +167,17 @@
       ],
       "status": "scenario",
       "unit": "passengers / parked vehicle"
+    },
+    "park_ride_reuse_events": {
+      "base": 30,
+      "basis": "Planning event uses over which reusable park-and-ride capital is allocated for comparison; total project cost remains visible.",
+      "high": 60,
+      "low": 15,
+      "source_ids": [
+        "scenario_assumptions"
+      ],
+      "status": "scenario",
+      "unit": "event uses"
     },
     "park_ride_utilization": {
       "base": 0.7,
@@ -230,7 +296,7 @@
     "range_order": "low <= base <= high",
     "use": "Planning sensitivity only; not engineering estimates or a local emissions inventory"
   },
-  "schema_version": "1.0.0",
+  "schema_version": "1.1.0",
   "snapshot_kind": "planning_factor_registry",
   "sources": {
     "epa": {
@@ -297,11 +363,11 @@
       "notes": "Behavioral uptake, vehicle loading, heat-response, and screening-cost values are explicit planning assumptions, not observations.",
       "publisher": "Mobility Platform project team",
       "retrieved_at_utc": "2026-08-01T00:00:00Z",
-      "sha256": "bfee5b29a4e20ea4f015ccc3650509a72aebd2981c2e3a9bc91c3f761b31c80c",
+      "sha256": "eac1ea50bc17e29b6bc45aa4ed515bcb88e7e6781840442eb6db47c8b979f4f6",
       "source": "Mobility Platform scenario assumption register",
       "status": "derived",
       "url": "docs/MODEL_CARD.md",
-      "version": "contract-0.3.0-assumptions-1"
+      "version": "contract-0.3.0-assumptions-2"
     }
   },
   "status": "scenario"

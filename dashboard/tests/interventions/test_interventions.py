@@ -67,6 +67,11 @@ def event_inputs():
         network_walk_distance_m=500,
         service_span_after_match_min=180,
         route_heat_exposure_c=34.0,
+        transit_status=EvidenceStatus.DERIVED,
+        walking_status=EvidenceStatus.DERIVED,
+        service_span_status=EvidenceStatus.DERIVED,
+        heat_status=EvidenceStatus.DERIVED,
+        capacity_qualified=True,
     )
     city = CityInterventionInputs(
         city="Atlanta",
@@ -90,8 +95,9 @@ def evaluate(package, event_inputs, **replacements):
     movement = replace(movement, **replacements.pop("movement", {}))
     access = replace(access, **replacements.pop("access", {}))
     city = replace(city, **replacements.pop("city", {}))
+    factors = replacements.pop("factors", None)
     assert not replacements
-    return evaluate_intervention(package, match, movement, access, city)
+    return evaluate_intervention(package, match, movement, access, city, factors)
 
 
 def test_named_packages_and_custom_package_use_contract_outputs(event_inputs):
@@ -146,6 +152,44 @@ def test_every_control_changes_its_documented_effect(package, documented_effect,
         assert outcome.venue_vehicle_trips_base == baseline.venue_vehicle_trips_base
         assert outcome.net_vmt_base == baseline.net_vmt_base
         assert outcome.net_co2e_kg_base == baseline.net_co2e_kg_base
+
+
+def test_arrival_spreading_is_behavior_and_shoulder_capacity_limited(event_inputs):
+    package = InterventionPackage(name="spreading", arrival_spreading_pct=10)
+    outcome = evaluate(package, event_inputs)
+    expected = 18_000 * 0.10 * 0.65 * 0.45
+    assert outcome.arrival_shifted_pph_base == pytest.approx(expected)
+    assert outcome.gap_resolved_passengers == pytest.approx(expected)
+    assert outcome.arrival_shifted_pph_base < 18_000 * 0.10
+
+
+def test_zero_compliance_produces_zero_arrival_spreading(event_inputs):
+    factors = replace(
+        default_factor_registry(),
+        arrival_compliance_rate=FactorRange(0, 0, 0),
+    )
+    outcome = evaluate(
+        InterventionPackage(name="spreading", arrival_spreading_pct=15),
+        event_inputs,
+        factors=factors,
+    )
+    assert outcome.arrival_shifted_pph_base == 0
+    assert outcome.gap_resolved_passengers == 0
+
+
+def test_shoulder_capacity_caps_arrival_spreading(event_inputs):
+    factors = replace(
+        default_factor_registry(),
+        arrival_eligible_share=FactorRange(1, 1, 1),
+        arrival_compliance_rate=FactorRange(1, 1, 1),
+        arrival_shoulder_capacity_share=FactorRange(0.02, 0.02, 0.02),
+    )
+    outcome = evaluate(
+        InterventionPackage(name="spreading", arrival_spreading_pct=100),
+        event_inputs,
+        factors=factors,
+    )
+    assert outcome.arrival_shifted_pph_base == 360
 
 
 def test_more_capacity_cannot_reduce_resolved_gap(event_inputs):
@@ -273,13 +317,34 @@ def test_pareto_recommendations_are_contract_complete(event_inputs):
     for recommendation in recommendations:
         assert recommendation.city == "Atlanta"
         assert recommendation.match_id == "ATL-01"
-        assert recommendation.status is EvidenceStatus.SCENARIO
+        if recommendation.intervention == "Arrival spreading and curb management":
+            assert recommendation.status is EvidenceStatus.PARTIAL
+            assert not recommendation.evidence_qualified
+        else:
+            assert recommendation.status in {EvidenceStatus.SCENARIO, EvidenceStatus.PARTIAL}
         assert recommendation.cost_low <= recommendation.cost_base <= recommendation.cost_high
         assert recommendation.gap_resolved_passengers >= 0
         assert recommendation.lead_time_band
         assert recommendation.responsible_actor
         assert recommendation.dependencies
-        assert "Pareto-efficient" in recommendation.rationale
+        assert "Nondominated" in recommendation.rationale
+        assert "not a selected optimum" in recommendation.rationale
+        assert recommendation.cost_basis
+        assert recommendation.equation_ids
+
+
+def test_recommendation_list_places_qualified_options_before_exploratory(event_inputs):
+    match, movement, access, city = event_inputs
+    recommendations = pareto_recommendations(match, movement, access, city)
+    flags = [item.evidence_qualified for item in recommendations]
+    assert flags == sorted(flags, reverse=True)
+    arrival = next(
+        item
+        for item in recommendations
+        if item.intervention == "Arrival spreading and curb management"
+    )
+    assert arrival.evidence_quality == "low"
+    assert "curb-throughput" in arrival.evidence_reason
 
 
 def test_factor_ranges_and_city_inputs_validate_physical_bounds(event_inputs):

@@ -20,6 +20,12 @@ from dashboard.mobility_platform.contracts import (
     MatchEvent,
     MovementScenario,
 )
+from dashboard.models.equations import equation_ids
+from dashboard.models.recommendation_policy import (
+    assess_evidence,
+    lead_time_rank,
+    measure_policy,
+)
 
 
 @dataclass(frozen=True)
@@ -113,6 +119,12 @@ class InterventionFactorRegistry:
     bike_hub_cost_per_space: FactorRange
     cooled_walkway_cost_per_km: FactorRange
     arrival_management_cost_per_pct: FactorRange
+    arrival_eligible_share: FactorRange
+    arrival_compliance_rate: FactorRange
+    arrival_shoulder_capacity_share: FactorRange
+    park_ride_reuse_events: FactorRange
+    bike_hub_reuse_events: FactorRange
+    cooled_walkway_reuse_events: FactorRange
     bike_max_distance_m: float = 5000.0
 
     def __post_init__(self) -> None:
@@ -156,6 +168,12 @@ def default_factor_registry() -> InterventionFactorRegistry:
         bike_hub_cost_per_space=FactorRange(350, 700, 1300),
         cooled_walkway_cost_per_km=FactorRange(750_000, 1_600_000, 3_200_000),
         arrival_management_cost_per_pct=FactorRange(1200, 2500, 5000),
+        arrival_eligible_share=FactorRange(0.40, 0.65, 0.85),
+        arrival_compliance_rate=FactorRange(0.20, 0.45, 0.70),
+        arrival_shoulder_capacity_share=FactorRange(0.03, 0.08, 0.15),
+        park_ride_reuse_events=FactorRange(15, 30, 60),
+        bike_hub_reuse_events=FactorRange(20, 40, 80),
+        cooled_walkway_reuse_events=FactorRange(30, 60, 120),
     )
 
 
@@ -179,6 +197,12 @@ FACTOR_UNITS = {
     "bike_hub_cost_per_space": "2026 planning USD / space",
     "cooled_walkway_cost_per_km": "2026 planning USD / km",
     "arrival_management_cost_per_pct": "2026 planning USD / percentage point",
+    "arrival_eligible_share": "fraction of peak arrivals",
+    "arrival_compliance_rate": "fraction of eligible arrivals",
+    "arrival_shoulder_capacity_share": "fraction of peak demand",
+    "park_ride_reuse_events": "event uses",
+    "bike_hub_reuse_events": "event uses",
+    "cooled_walkway_reuse_events": "event uses",
     "bike_max_distance_m": "meters",
 }
 
@@ -260,6 +284,9 @@ class _CaseResult:
     net_co2e_kg: float
     heat_person_hours_avoided: float
     cost: float
+    capital_cost: float
+    operating_cost: float
+    arrival_shifted_pph: float
 
 
 def _validate_inputs(
@@ -360,7 +387,17 @@ def _case_result(
     walk_passengers = attendance * new_walk_share * cooled_coverage * heat_need
     walk_per_hour = walk_passengers / arrival_hours
 
-    spreading_peak_reduction = peak_demand * package.arrival_spreading_pct / 100.0
+    requested_spreading = peak_demand * package.arrival_spreading_pct / 100.0
+    behavior_limited_spreading = (
+        requested_spreading
+        * factors.arrival_eligible_share.value(case)
+        * factors.arrival_compliance_rate.value(case)
+    )
+    shoulder_capacity = peak_demand * factors.arrival_shoulder_capacity_share.value(case)
+    spreading_peak_reduction = min(
+        behavior_limited_spreading,
+        shoulder_capacity,
+    )
     physical_peak_capacity = shuttle_per_hour + transit_per_hour + park_per_hour + bike_per_hour + walk_per_hour
     gap_resolved = min(residual_peak, physical_peak_capacity + spreading_peak_reduction)
 
@@ -409,18 +446,21 @@ def _case_result(
         * heat_reduction_fraction
         * cooled_coverage
     )
-    cost = (
+    capital_cost = (
+        package.park_ride_spaces * factors.park_ride_cost_per_space.value(case)
+        + package.bike_hub_spaces * factors.bike_hub_cost_per_space.value(case)
+        + package.cooled_walkway_km * factors.cooled_walkway_cost_per_km.value(case)
+    )
+    operating_cost = (
         package.shuttle_buses_per_hour
         * arrival_hours
         * factors.shuttle_cost_per_bus_hour.value(case)
         + package.added_transit_departures_per_hour
         * arrival_hours
         * factors.transit_cost_per_departure.value(case)
-        + package.park_ride_spaces * factors.park_ride_cost_per_space.value(case)
-        + package.bike_hub_spaces * factors.bike_hub_cost_per_space.value(case)
-        + package.cooled_walkway_km * factors.cooled_walkway_cost_per_km.value(case)
         + package.arrival_spreading_pct * factors.arrival_management_cost_per_pct.value(case)
     )
+    cost = capital_cost + operating_cost
     return _CaseResult(
         gap_resolved=gap_resolved,
         venue_vehicle_trips=venue_vehicle_trips,
@@ -428,6 +468,9 @@ def _case_result(
         net_co2e_kg=net_co2e,
         heat_person_hours_avoided=heat_person_hours,
         cost=cost,
+        capital_cost=capital_cost,
+        operating_cost=operating_cost,
+        arrival_shifted_pph=spreading_peak_reduction,
     )
 
 
@@ -462,6 +505,16 @@ def evaluate_intervention(
         "Capacity is potential passenger throughput, not observed ridership or mode shift.",
         "Park-and-ride retains upstream private travel and avoids only the venue-area leg.",
         "Arrival spreading moves peak demand to shoulder periods and does not change total travel or emissions.",
+        (
+            "Arrival spreading equation EQ-SPREAD-01 applies requested share × eligible share × compliance, "
+            "capped by shoulder-period capacity and the residual gap."
+        ),
+        (
+            "Arrival assumptions (base): eligible share "
+            f"{registry.arrival_eligible_share.base:.3f}; compliance "
+            f"{registry.arrival_compliance_rate.base:.3f}; shoulder capacity "
+            f"{registry.arrival_shoulder_capacity_share.base:.3f} of peak demand."
+        ),
         "Positive net values are avoided impacts; negative values indicate added service impacts exceed avoided driving.",
         f"Access evidence status: {access.status.value}; transit: {access.transit_status.value}; walking: {access.walking_status.value}; heat: {access.heat_status.value}; movement: {movement.status.value}.",
     )
@@ -489,42 +542,17 @@ def evaluate_intervention(
         cost_low=round(cases["low"].cost, 2),
         cost_base=round(base.cost, 2),
         cost_high=round(cases["high"].cost, 2),
+        capital_cost_low=round(cases["low"].capital_cost, 2),
+        capital_cost_base=round(base.capital_cost, 2),
+        capital_cost_high=round(cases["high"].capital_cost, 2),
+        operating_cost_low=round(cases["low"].operating_cost, 2),
+        operating_cost_base=round(base.operating_cost, 2),
+        operating_cost_high=round(cases["high"].operating_cost, 2),
+        arrival_shifted_pph_low=round(cases["low"].arrival_shifted_pph, 3),
+        arrival_shifted_pph_base=round(base.arrival_shifted_pph, 3),
+        arrival_shifted_pph_high=round(cases["high"].arrival_shifted_pph, 3),
         assumptions=assumptions,
     )
-
-
-_RECOMMENDATION_METADATA = {
-    "Shuttle service": (
-        "0-6 months",
-        "Venue operator and transit agency",
-        ("Staging and layover space", "Event-day operator agreement"),
-    ),
-    "Added transit frequency": (
-        "3-12 months",
-        "Transit agency",
-        ("Fleet and operator availability", "Event-window timetable"),
-    ),
-    "Park-and-ride feeder service": (
-        "6-24 months",
-        "City, parking partner, and transit agency",
-        ("Remote lot agreement", "Feeder fleet", "Traffic management plan"),
-    ),
-    "Bike and micromobility hubs": (
-        "6-18 months",
-        "City transportation department",
-        ("Safe network connection", "Micromobility operating plan"),
-    ),
-    "Cooled walking corridors": (
-        "12-36 months",
-        "City public works department",
-        ("Right-of-way design", "Shade and cooling maintenance plan"),
-    ),
-    "Arrival spreading and curb management": (
-        "0-6 months",
-        "City and venue operator",
-        ("Ticket-holder communications", "Curb allocation and enforcement plan"),
-    ),
-}
 
 
 def recommendation_candidates() -> tuple[InterventionPackage, ...]:
@@ -542,35 +570,49 @@ def recommendation_candidates() -> tuple[InterventionPackage, ...]:
     )
 
 
-def _lead_time_rank(package_name: str) -> int:
-    lead_time = _RECOMMENDATION_METADATA.get(
-        package_name,
-        ("Requires scoping", "Multi-agency delivery team", ("Implementation plan",)),
-    )[0]
-    return {
-        "0-6 months": 1,
-        "3-12 months": 2,
-        "6-18 months": 3,
-        "6-24 months": 4,
-        "12-36 months": 5,
-        "Requires scoping": 6,
-    }.get(lead_time, 6)
+def _comparison_cost(
+    outcome: InterventionOutcome,
+    factors: InterventionFactorRegistry,
+    case: str = "base",
+) -> float:
+    policy = measure_policy(outcome.package.name)
+    capital = float(getattr(outcome, f"capital_cost_{case}"))
+    operating = float(getattr(outcome, f"operating_cost_{case}"))
+    if policy.reuse_factor:
+        reuse_range = getattr(factors, policy.reuse_factor)
+        reuse_events = max(reuse_range.value(case), 1.0)
+        capital /= reuse_events
+    return capital + operating
 
 
-def _dominates(left: InterventionOutcome, right: InterventionOutcome) -> bool:
-    left_cpp = left.cost_base / left.gap_resolved_passengers if left.gap_resolved_passengers > 0 else inf
-    right_cpp = right.cost_base / right.gap_resolved_passengers if right.gap_resolved_passengers > 0 else inf
+def _dominates(
+    left: InterventionOutcome,
+    right: InterventionOutcome,
+    access: AccessGapResult,
+    factors: InterventionFactorRegistry,
+) -> bool:
+    left_evidence = assess_evidence(left.package.name, access)
+    right_evidence = assess_evidence(right.package.name, access)
+    if not left_evidence.screening_eligible and right_evidence.screening_eligible:
+        return False
+    left_cpp = _comparison_cost(left, factors) / left.gap_resolved_passengers if left.gap_resolved_passengers > 0 else inf
+    right_cpp = _comparison_cost(right, factors) / right.gap_resolved_passengers if right.gap_resolved_passengers > 0 else inf
     no_worse = (
         left.gap_resolved_passengers >= right.gap_resolved_passengers
         and left.net_co2e_kg_base >= right.net_co2e_kg_base
         and left_cpp <= right_cpp
-        and _lead_time_rank(left.package.name) <= _lead_time_rank(right.package.name)
+        and lead_time_rank(left.package.name) <= lead_time_rank(right.package.name)
+        and left.heat_exposure_person_hours_avoided
+        >= right.heat_exposure_person_hours_avoided
     )
     strictly_better = (
         left.gap_resolved_passengers > right.gap_resolved_passengers
         or left.net_co2e_kg_base > right.net_co2e_kg_base
         or left_cpp < right_cpp
-        or _lead_time_rank(left.package.name) < _lead_time_rank(right.package.name)
+        or lead_time_rank(left.package.name) < lead_time_rank(right.package.name)
+        or left.heat_exposure_person_hours_avoided
+        > right.heat_exposure_person_hours_avoided
+        or left_evidence.screening_eligible > right_evidence.screening_eligible
     )
     return no_worse and strictly_better
 
@@ -585,50 +627,68 @@ def pareto_recommendations(
 ) -> list[InvestmentRecommendation]:
     """Return the nondominated investment choices without a composite optimum."""
 
+    registry = factors or default_factor_registry()
     packages = tuple(candidates or recommendation_candidates())
     outcomes = [
-        evaluate_intervention(package, match, movement, access, city, factors)
+        evaluate_intervention(package, match, movement, access, city, registry)
         for package in packages
     ]
     frontier = [
         outcome
         for outcome in outcomes
-        if not any(_dominates(other, outcome) for other in outcomes if other is not outcome)
+        if outcome.gap_resolved_passengers > 0
+        and not any(
+            _dominates(other, outcome, access, registry)
+            for other in outcomes
+            if other is not outcome
+        )
     ]
     recommendations: list[InvestmentRecommendation] = []
     for outcome in frontier:
         name = outcome.package.name
-        lead_time, actor, dependencies = _RECOMMENDATION_METADATA.get(
-            name,
-            ("Requires scoping", "Multi-agency delivery team", ("Implementation plan",)),
-        )
+        policy = measure_policy(name)
+        evidence = assess_evidence(name, access)
         gap = outcome.gap_resolved_passengers
-        cpp = outcome.cost_base / gap if gap > 0 else None
+        comparison_cost = _comparison_cost(outcome, registry)
+        cpp = comparison_cost / gap if gap > 0 else None
         recommendations.append(
             InvestmentRecommendation(
                 city=outcome.city,
                 match_id=outcome.match_id,
                 intervention=name,
                 rationale=(
-                    f"Pareto-efficient planning option resolving {gap:,.0f} peak passengers "
-                    f"with {outcome.net_co2e_kg_base:,.0f} kg net CO2e in the base case."
+                    f"Nondominated planning option resolving {gap:,.0f} peak passengers "
+                    f"with {outcome.net_co2e_kg_base:,.0f} kg net CO2e in the base case. "
+                    "It is not a selected optimum. "
+                    + evidence.reason
                 ),
-                status=EvidenceStatus.SCENARIO,
+                status=(
+                    EvidenceStatus.SCENARIO
+                    if evidence.screening_eligible
+                    else EvidenceStatus.PARTIAL
+                ),
                 cost_low=outcome.cost_low,
                 cost_base=outcome.cost_base,
                 cost_high=outcome.cost_high,
                 gap_resolved_passengers=gap,
                 cost_per_passenger=round(cpp, 2) if cpp is not None else None,
                 net_co2e_kg=outcome.net_co2e_kg_base,
-                lead_time_band=lead_time,
-                responsible_actor=actor,
-                dependencies=dependencies,
+                lead_time_band=policy.lead_time_band,
+                responsible_actor=policy.responsible_actor,
+                dependencies=policy.dependencies,
+                comparison_cost_base=round(comparison_cost, 2),
+                cost_basis=policy.comparison_cost_basis,
+                evidence_quality=evidence.quality,
+                evidence_qualified=evidence.screening_eligible,
+                evidence_reason=evidence.reason,
+                heat_person_hours_avoided=outcome.heat_exposure_person_hours_avoided,
+                equation_ids=equation_ids(),
             )
         )
     return sorted(
         recommendations,
         key=lambda item: (
-            -(item.gap_resolved_passengers),
-            item.cost_per_passenger if item.cost_per_passenger is not None else inf,
+            not item.evidence_qualified,
+            item.intervention,
         ),
     )

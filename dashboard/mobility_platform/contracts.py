@@ -143,6 +143,15 @@ class InterventionOutcome:
     cost_low: float
     cost_base: float
     cost_high: float
+    capital_cost_low: float = 0.0
+    capital_cost_base: float = 0.0
+    capital_cost_high: float = 0.0
+    operating_cost_low: float = 0.0
+    operating_cost_base: float = 0.0
+    operating_cost_high: float = 0.0
+    arrival_shifted_pph_low: float = 0.0
+    arrival_shifted_pph_base: float = 0.0
+    arrival_shifted_pph_high: float = 0.0
     assumptions: tuple[str, ...] = field(default_factory=tuple)
 
     def to_dict(self) -> dict[str, Any]:
@@ -168,11 +177,19 @@ class InvestmentRecommendation:
     lead_time_band: str
     responsible_actor: str
     dependencies: tuple[str, ...] = field(default_factory=tuple)
+    comparison_cost_base: float | None = None
+    cost_basis: str = "Unspecified planning cost"
+    evidence_quality: str = "low"
+    evidence_qualified: bool = False
+    evidence_reason: str = "Evidence gate not evaluated."
+    heat_person_hours_avoided: float = 0.0
+    equation_ids: tuple[str, ...] = field(default_factory=tuple)
 
     def to_dict(self) -> dict[str, Any]:
         data = asdict(self)
         data["status"] = self.status.value
         data["dependencies"] = list(self.dependencies)
+        data["equation_ids"] = list(self.equation_ids)
         return data
 
 

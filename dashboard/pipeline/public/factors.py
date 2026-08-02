@@ -17,7 +17,7 @@ SOURCE_DEFINITIONS = {
         "source": "Mobility Platform scenario assumption register",
         "url": "docs/MODEL_CARD.md",
         "publisher": "Mobility Platform project team",
-        "version": "contract-0.3.0-assumptions-1",
+        "version": "contract-0.3.0-assumptions-2",
         "license": "Project documentation",
         "notes": "Behavioral uptake, vehicle loading, heat-response, and screening-cost values are explicit planning assumptions, not observations.",
     },
@@ -95,12 +95,18 @@ def build_factor_registry() -> dict[str, Any]:
         "bike_hub_cost_per_space": factor("2026 planning USD / space", 350, 700, 1300, "estimated", ["fhwa"], "Order-of-magnitude installed secure parking and event operations allowance."),
         "cooled_walkway_cost_per_km": factor("2026 planning USD / km", 750000, 1600000, 3200000, "estimated", ["fhwa", "fta_ccd"], "Conceptual corridor allowance combining crossings, shade, cooling, and design contingency."),
         "arrival_management_cost_per_pct": factor("2026 planning USD / percentage point", 1200, 2500, 5000, "scenario", scenario, "Event communications, curb allocation, staffing, and enforcement screening allowance."),
+        "arrival_eligible_share": factor("fraction of peak arrivals", 0.40, 0.65, 0.85, "scenario", scenario, "Share of peak arrivals assumed reachable and eligible for timed communications or curb controls; no FIFA response observations are supplied."),
+        "arrival_compliance_rate": factor("fraction of eligible arrivals", 0.20, 0.45, 0.70, "scenario", scenario, "Share of eligible travelers assumed to change arrival time; no observed host-city compliance study is supplied."),
+        "arrival_shoulder_capacity_share": factor("fraction of peak demand", 0.03, 0.08, 0.15, "scenario", scenario, "Maximum peak-equivalent demand that shoulder periods are assumed able to absorb without a local curb or holding-capacity study."),
+        "park_ride_reuse_events": factor("event uses", 15, 30, 60, "scenario", scenario, "Planning event uses over which reusable park-and-ride capital is allocated for comparison; total project cost remains visible."),
+        "bike_hub_reuse_events": factor("event uses", 20, 40, 80, "scenario", scenario, "Planning event uses over which reusable bike-hub capital is allocated for comparison; total project cost remains visible."),
+        "cooled_walkway_reuse_events": factor("event uses", 30, 60, 120, "scenario", scenario, "Planning event uses over which reusable walking-corridor capital is allocated for comparison; total project cost remains visible."),
         "bike_max_distance_m": factor("meters", 3000, 5000, 8000, "scenario", scenario, "Maximum practical active-mode distance sensitivity; the model currently uses the base threshold."),
     }
     snapshot = base_snapshot("planning_factor_registry", RETRIEVED_AT)
     snapshot.update(
         {
-            "schema_version": "1.0.0",
+            "schema_version": "1.1.0",
             "status": "scenario",
             "sources": sources,
             "factors": factors,
