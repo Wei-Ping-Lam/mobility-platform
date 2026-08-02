@@ -29,6 +29,11 @@ def test_access_gap_exposes_peak_capacity_and_residual(movement, event_service, 
     assert result.network_walk_distance_m == 620
     assert result.service_span_after_match_min == 180
     assert result.route_heat_exposure_c == 33
+    assert result.capacity_qualified is True
+    assert result.transit_status == EvidenceStatus.SCENARIO
+    assert result.walking_status == EvidenceStatus.DERIVED
+    assert result.service_span_status == EvidenceStatus.SCENARIO
+    assert result.heat_status == EvidenceStatus.DERIVED
 
 
 def test_access_builder_accepts_single_service_dict(movement, event_service, walk_metrics):
@@ -65,6 +70,9 @@ def test_unavailable_transit_remains_unavailable(movement, walk_metrics):
     friction = access_friction_index(result)
 
     assert result.status == EvidenceStatus.UNAVAILABLE
+    assert result.capacity_qualified is False
+    assert result.transit_status == EvidenceStatus.UNAVAILABLE
+    assert result.walking_status == EvidenceStatus.DERIVED
     assert friction["status"] == "unavailable"
     assert friction["friction_index"] is None
     assert any("sentinels" in assumption for assumption in result.assumptions)
@@ -141,6 +149,25 @@ def test_missing_optional_metric_is_partial_and_weights_are_transparent(movement
     assert friction["status"] == "partial"
     assert "route_heat" not in friction["components"]
     assert sum(friction["effective_weights"].values()) == pytest.approx(1.0, abs=1e-5)
+
+
+def test_missing_walk_route_does_not_suppress_qualified_transit_gap(movement, event_service):
+    result = build_access_gap_result(
+        movement,
+        event_service,
+        {"status": "partial"},
+        service_span_after_match_min=180,
+    )
+    friction = access_friction_index(result)
+
+    assert result.status == EvidenceStatus.PARTIAL
+    assert result.capacity_qualified is True
+    assert result.transit_status == EvidenceStatus.SCENARIO
+    assert result.walking_status == EvidenceStatus.UNAVAILABLE
+    assert result.heat_status == EvidenceStatus.UNAVAILABLE
+    assert result.residual_passengers == result.peak_demand_per_hour - result.transit_capacity_base
+    assert friction["status"] == "partial"
+    assert "residual_gap" in friction["components"]
 
 
 def test_peak_hour_and_direction_filter_service_rows(match_record, walk_metrics):

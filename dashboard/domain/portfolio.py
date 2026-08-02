@@ -91,8 +91,13 @@ def build_portfolio_timeline(
         selected = [
             event
             for event in selected_scope
-            if str(access_by_match.get(str(event.get("match_id")), {}).get("status"))
-            in {"observed", "derived", "scenario"}
+            if bool(
+                access_by_match.get(str(event.get("match_id")), {}).get(
+                    "capacity_qualified",
+                    str(access_by_match.get(str(event.get("match_id")), {}).get("status"))
+                    in {"observed", "derived", "scenario"},
+                )
+            )
         ]
     else:
         selected = selected_scope

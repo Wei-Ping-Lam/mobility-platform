@@ -88,11 +88,18 @@ class AccessGapResult:
     network_walk_distance_m: float | None
     service_span_after_match_min: float | None
     route_heat_exposure_c: float | None
+    transit_status: EvidenceStatus = EvidenceStatus.UNAVAILABLE
+    walking_status: EvidenceStatus = EvidenceStatus.UNAVAILABLE
+    service_span_status: EvidenceStatus = EvidenceStatus.UNAVAILABLE
+    heat_status: EvidenceStatus = EvidenceStatus.UNAVAILABLE
+    capacity_qualified: bool = False
     assumptions: tuple[str, ...] = field(default_factory=tuple)
 
     def to_dict(self) -> dict[str, Any]:
         data = asdict(self)
         data["status"] = self.status.value
+        for key in ("transit_status", "walking_status", "service_span_status", "heat_status"):
+            data[key] = getattr(self, key).value
         data["assumptions"] = list(self.assumptions)
         return data
 

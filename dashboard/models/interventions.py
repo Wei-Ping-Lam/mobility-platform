@@ -463,7 +463,7 @@ def evaluate_intervention(
         "Park-and-ride retains upstream private travel and avoids only the venue-area leg.",
         "Arrival spreading moves peak demand to shoulder periods and does not change total travel or emissions.",
         "Positive net values are avoided impacts; negative values indicate added service impacts exceed avoided driving.",
-        f"Access evidence status: {access.status.value}; movement status: {movement.status.value}.",
+        f"Access evidence status: {access.status.value}; transit: {access.transit_status.value}; walking: {access.walking_status.value}; heat: {access.heat_status.value}; movement: {movement.status.value}.",
     )
     if access.route_heat_exposure_c is None and package.cooled_walkway_km:
         assumptions += ("Cooling has no quantified effect because route heat evidence is unavailable.",)

@@ -188,12 +188,12 @@ def build_transportation_bundle(
         ]
         intervention_inputs.append(asdict(city_inputs))
         city_recommendations = pareto_recommendations(match, movement, access, city_inputs, factor_registry)
-        if access.status == EvidenceStatus.UNAVAILABLE:
+        if not access.capacity_qualified:
             city_recommendations = [
                 replace(
                     item,
                     status=EvidenceStatus.PARTIAL,
-                    rationale="Screening option under unavailable event-transit evidence. " + item.rationale,
+                    rationale="Screening option without capacity-qualified event-transit evidence. " + item.rationale,
                     dependencies=("Pinned event-window GTFS capacity", *item.dependencies),
                 )
                 for item in city_recommendations

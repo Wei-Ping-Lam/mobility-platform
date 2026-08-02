@@ -86,3 +86,17 @@ def test_event_summary_uses_only_the_representative_match_recommendations():
     assert frame["representative_match_id"] == "A-2"
     assert frame["top_intervention"] == "Right match"
     assert frame["qualified_matches"] == 2
+
+
+def test_access_priority_orders_capacity_qualified_physical_gaps_for_all_cities():
+    access = [
+        {"city": "Complete", "match_id": "A-1", "capacity_qualified": True, "peak_demand_per_hour": 1200, "residual_passengers": 900},
+        {"city": "Partial", "match_id": "B-1", "capacity_qualified": True, "peak_demand_per_hour": 1000, "residual_passengers": 400},
+        {"city": "Missing", "match_id": "C-1", "capacity_qualified": True, "peak_demand_per_hour": 1100, "residual_passengers": 700},
+    ]
+
+    frame = build_city_comparison(_metrics(), access, []).set_index("city")
+
+    assert frame.loc["Complete", "access_priority_order"] == 1
+    assert frame.loc["Missing", "access_priority_order"] == 2
+    assert frame.loc["Partial", "access_priority_order"] == 3

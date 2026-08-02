@@ -89,6 +89,28 @@ def build_access_gap_result(
     capacity, transit_status, service_notes = _capacity_for_peak(service, peak)
     assumptions.extend(service_notes)
 
+    raw_walk_status = _status(walk.get("status"), default=EvidenceStatus.UNAVAILABLE)
+    walking_status = (
+        raw_walk_status
+        if network_distance is not None and raw_walk_status != EvidenceStatus.UNAVAILABLE
+        else EvidenceStatus.UNAVAILABLE
+    )
+    service_span_status = (
+        transit_status
+        if span is not None and transit_status != EvidenceStatus.UNAVAILABLE
+        else EvidenceStatus.UNAVAILABLE
+    )
+    heat_status = (
+        walking_status
+        if heat is not None and walking_status != EvidenceStatus.UNAVAILABLE
+        else EvidenceStatus.UNAVAILABLE
+    )
+    capacity_qualified = transit_status in {
+        EvidenceStatus.OBSERVED,
+        EvidenceStatus.DERIVED,
+        EvidenceStatus.SCENARIO,
+    }
+
     if transit_status == EvidenceStatus.UNAVAILABLE:
         assumptions.append(
             "Transit evidence is unavailable; zero capacity fields are sentinels and the residual is not a measured service gap."
@@ -105,12 +127,16 @@ def build_access_gap_result(
             network_walk_distance_m=network_distance,
             service_span_after_match_min=span,
             route_heat_exposure_c=heat,
+            transit_status=transit_status,
+            walking_status=walking_status,
+            service_span_status=service_span_status,
+            heat_status=heat_status,
+            capacity_qualified=False,
             assumptions=tuple(assumptions),
         )
 
     status = EvidenceStatus.SCENARIO
-    walk_status = _status(walk.get("status"), default=EvidenceStatus.PARTIAL)
-    if transit_status == EvidenceStatus.PARTIAL or walk_status in {
+    if transit_status == EvidenceStatus.PARTIAL or walking_status in {
         EvidenceStatus.PARTIAL,
         EvidenceStatus.UNAVAILABLE,
     }:
@@ -132,6 +158,11 @@ def build_access_gap_result(
         network_walk_distance_m=network_distance,
         service_span_after_match_min=span,
         route_heat_exposure_c=heat,
+        transit_status=transit_status,
+        walking_status=walking_status,
+        service_span_status=service_span_status,
+        heat_status=heat_status,
+        capacity_qualified=capacity_qualified,
         assumptions=tuple(assumptions),
     )
 
@@ -154,10 +185,13 @@ def access_friction_index(
 
     data = result.to_dict() if isinstance(result, AccessGapResult) else dict(result)
     status = _status(data.get("status"), default=EvidenceStatus.UNAVAILABLE)
+    transit_status = _status(data.get("transit_status", status.value), default=status)
     configured_weights = _validate_weights(
         DEFAULT_FRICTION_WEIGHTS if weights is None else weights
     )
-    if status == EvidenceStatus.UNAVAILABLE:
+    if transit_status == EvidenceStatus.UNAVAILABLE or not bool(
+        data.get("capacity_qualified", status != EvidenceStatus.UNAVAILABLE)
+    ):
         return {
             "friction_index": None,
             "status": EvidenceStatus.UNAVAILABLE.value,
@@ -348,6 +382,10 @@ def _capacity_for_peak(
     notes = list(quality_notes)
     if dropped:
         notes.append(f"Dropped {dropped} transit rows with invalid physical values.")
+    if float(frame["departures_per_hour"].sum()) == 0:
+        notes.append(
+            "The pinned event-date feed shows zero scheduled departures within the half-mile service catchment; this is a qualified observed service gap, not a missing-feed sentinel."
+        )
     return capacity, status, notes
 
 

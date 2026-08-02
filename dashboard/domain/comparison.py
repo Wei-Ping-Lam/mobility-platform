@@ -73,7 +73,16 @@ def _event_summary(
     recommendation_rows: Sequence[Mapping[str, Any]],
 ) -> dict[str, Any]:
     city_access = [row for row in access_rows if str(row.get("city")) == city]
-    qualified = [row for row in city_access if str(row.get("status")) in {"observed", "derived", "scenario"}]
+    qualified = [
+        row
+        for row in city_access
+        if bool(
+            row.get(
+                "capacity_qualified",
+                str(row.get("status")) in {"observed", "derived", "scenario"},
+            )
+        )
+    ]
     partial = [row for row in city_access if str(row.get("status")) == "partial"]
     unavailable = [row for row in city_access if str(row.get("status")) == "unavailable"]
     peak_row = max(
@@ -156,4 +165,10 @@ def build_city_comparison(
     )
     screening_ranks = {city: rank for rank, city in enumerate(screening["city"], 1)}
     frame["screening_order"] = frame["city"].map(screening_ranks).astype("Int64")
+    access_priority = frame[frame["capacity_qualified_gap_pph"].notna()].sort_values(
+        ["capacity_qualified_gap_pph", "peak_demand_pph", "city"],
+        ascending=[False, False, True],
+    )
+    access_ranks = {city: rank for rank, city in enumerate(access_priority["city"], 1)}
+    frame["access_priority_order"] = frame["city"].map(access_ranks).astype("Int64")
     return frame.sort_values(["strict_rankable", "strict_rank", "screening_order"], ascending=[False, True, True], na_position="last").reset_index(drop=True)
