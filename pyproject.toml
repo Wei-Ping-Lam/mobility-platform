@@ -1,3 +1,29 @@
+[project]
+name = "fifa-2026-mobility-platform"
+version = "0.3.0"
+description = "Evidence-first transportation decision platform for FIFA 2026 U.S. host cities"
+readme = "dashboard/README.md"
+requires-python = ">=3.11,<3.12"
+dependencies = [
+    "matplotlib>=3.8.0",
+    "numpy>=1.26.0",
+    "osmnx==2.1.0",
+    "pandas>=2.1.0,<3.0",
+    "plotly>=5.20.0",
+    "pyarrow>=14.0.0",
+    "requests>=2.31.0",
+    "streamlit>=1.35.0",
+]
+
+[dependency-groups]
+dev = [
+    "pytest>=8.0.0",
+    "ruff>=0.6.0",
+]
+
+[tool.uv]
+required-version = "==0.11.16"
+
 [tool.pytest.ini_options]
 testpaths = ["dashboard/tests"]
 pythonpath = ["."]

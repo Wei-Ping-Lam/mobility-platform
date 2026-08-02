@@ -11,6 +11,14 @@ Rice WC Hack/
 .worktrees/
 .tmp/
 
+# Project-owned Python and public-data build caches
+.venv/
+.python-cache/
+data/raw/
+data/osmnx-cache/
+data/snapshots/osm/raw/
+*.graphml
+
 # Keep the processed cache so the app runs on Streamlit Cloud without raw data
 !dashboard/cache/
 !dashboard/cache/*.parquet

@@ -4,17 +4,8 @@ from __future__ import annotations
 
 from dataclasses import asdict, dataclass, field
 from datetime import date
+from enum import StrEnum
 from typing import Any
-
-try:
-    from enum import StrEnum
-except ImportError:  # Python 3.8-3.10 preview compatibility
-    from enum import Enum
-
-    class StrEnum(str, Enum):
-        def __str__(self) -> str:
-            return self.value
-
 
 CONTRACT_VERSION = "0.3.0"
 
