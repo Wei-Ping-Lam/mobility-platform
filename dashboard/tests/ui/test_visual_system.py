@@ -1,8 +1,10 @@
+import json
 from pathlib import Path
 
 import pytest
 from streamlit.testing.v1 import AppTest
 
+from dashboard.mobility_platform.mappings import HOST_CITIES
 from dashboard.ui.theme import status_badge
 from dashboard.viz.style import STATUS_COLORS
 
@@ -65,3 +67,31 @@ def test_native_streamlit_theme_matches_the_visual_system():
     assert 'primaryColor = "#0B7169"' in config
     assert 'backgroundColor = "#F3F6F4"' in config
     assert 'textColor = "#16302F"' in config
+
+
+@pytest.mark.parametrize("city", sorted(HOST_CITIES))
+def test_every_city_and_match_renders_across_workspaces(city):
+    schedule_path = Path(__file__).parents[3] / "data" / "snapshots" / "fifa" / "fifa_2026_us_schedule.json"
+    events = json.loads(schedule_path.read_text(encoding="utf-8"))["events"]
+    match_ids = [event["match_id"] for event in events if event["city"] == city]
+
+    app = AppTest.from_file("dashboard/app.py")
+    app.run(timeout=30)
+    app.selectbox[0].set_value(city)
+    app.run(timeout=30)
+    assert not app.exception
+
+    app.radio[0].set_value("Explorer")
+    app.run(timeout=30)
+    for match_id in match_ids:
+        match_selector = next(widget for widget in app.selectbox if widget.label == "Match")
+        match_selector.set_value(match_id)
+        app.run(timeout=30)
+        assert not app.exception, f"{city} {match_id} failed Explorer AppTest"
+        assert len(app.tabs) == 4
+
+    workspace_selector = next(widget for widget in app.radio if widget.label == "Workspace")
+    workspace_selector.set_value("Methods & QA")
+    app.run(timeout=30)
+    assert not app.exception
+    assert len(app.tabs) == 4

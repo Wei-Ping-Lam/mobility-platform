@@ -96,7 +96,7 @@ def style_map(fig: go.Figure, height: int = 500, *, zoom: float, lat: float, lon
 
     fig.update_layout(
         template="plotly_white",
-        mapbox=dict(style="carto-positron", zoom=zoom, center={"lat": lat, "lon": lon}),
+        map=dict(style="carto-positron", zoom=zoom, center={"lat": lat, "lon": lon}),
         paper_bgcolor="rgba(0,0,0,0)",
         font=dict(family='Inter, Aptos, "Segoe UI", sans-serif', color=COLORS["ink"], size=12),
         hoverlabel=dict(bgcolor=COLORS["ink"], bordercolor=COLORS["ink"], font_color="#ffffff"),

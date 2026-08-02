@@ -11,6 +11,7 @@ import pandas as pd
 from dashboard.mobility_platform.artifacts import read_manifest, read_parquet
 from dashboard.mobility_platform.config import ProjectPaths
 from dashboard.mobility_platform.mappings import MARKET_TO_CITY, cities_for_market
+from dashboard.viz.state_centroids import STATE_CENTROIDS
 
 
 def _empty(name: str) -> pd.DataFrame:
@@ -154,6 +155,7 @@ def _load_public_supplements(paths: ProjectPaths) -> dict[str, Any]:
         bundle.setdefault("match_events", schedule.get("events", []))
         bundle.setdefault("source_references", [schedule.get("source", {})])
     if isinstance(factors, dict):
+        bundle["factor_snapshot"] = factors
         bundle.setdefault(
             "factor_registry",
             [{"factor": name, **value} for name, value in factors.get("factors", {}).items()],
@@ -165,6 +167,12 @@ def _load_public_supplements(paths: ProjectPaths) -> dict[str, Any]:
         bundle.setdefault("source_references", []).append(walking.get("source", {}))
     if isinstance(gtfs, dict):
         bundle["gtfs_snapshot"] = gtfs.get("cities", {})
+        for city, city_gtfs in gtfs.get("cities", {}).items():
+            if not isinstance(city_gtfs, dict):
+                continue
+            layers = bundle.setdefault("map_layers", {}).setdefault(city, {})
+            layers["gtfs"] = city_gtfs.get("stop_points_2mi", [])
+            layers["gtfs_routes"] = city_gtfs.get("route_shapes", [])
     return bundle
 
 
@@ -184,10 +192,51 @@ def _load_rice_spatial(paths: ProjectPaths) -> dict[str, Any]:
         city_origins = frames["origin_flows"][frames["origin_flows"]["city"] == city].copy()
         if not city_uhi.empty:
             city_uhi = city_uhi.rename(columns={"grid_lat": "lat", "grid_lon": "lon"})
+            source_total = len(city_uhi)
+            city_uhi["lat_bin"] = pd.to_numeric(city_uhi["lat"], errors="coerce").round(2)
+            city_uhi["lon_bin"] = pd.to_numeric(city_uhi["lon"], errors="coerce").round(2)
+            city_uhi = (
+                city_uhi.groupby(["lat_bin", "lon_bin"], dropna=True)
+                .agg(avg_uhi=("avg_uhi", "mean"), point_count=("point_count", "sum"))
+                .reset_index()
+                .rename(columns={"lat_bin": "lat", "lon_bin": "lon"})
+                .sort_values(["point_count", "lat", "lon"], ascending=[False, True, True])
+                .head(500)
+            )
+            city_uhi["name"] = city_uhi["avg_uhi"].map(lambda value: f"Rice UHI {value:.1f}")
+            city_uhi["source_total_records"] = source_total
         if not city_poi.empty:
             city_poi = city_poi.rename(columns={"point_lat": "lat", "point_lon": "lon"})
+            source_total = len(city_poi)
+            city_poi["lat_bin"] = pd.to_numeric(city_poi["lat"], errors="coerce").round(2)
+            city_poi["lon_bin"] = pd.to_numeric(city_poi["lon"], errors="coerce").round(2)
+            grouped = city_poi.groupby(["lat_bin", "lon_bin", "category"], dropna=True).size().rename("category_count").reset_index()
+            city_poi = (
+                grouped.sort_values(["lat_bin", "lon_bin", "category_count", "category"], ascending=[True, True, False, True])
+                .drop_duplicates(["lat_bin", "lon_bin"])
+                .rename(columns={"lat_bin": "lat", "lon_bin": "lon", "category": "top_category"})
+                .sort_values(["category_count", "lat", "lon"], ascending=[False, True, True])
+                .head(500)
+            )
+            city_poi["name"] = city_poi.apply(lambda row: f"{row['top_category']} ({int(row['category_count'])})", axis=1)
+            city_poi["source_total_records"] = source_total
         if not city_origins.empty:
-            city_origins = city_origins.rename(columns={"venue_lat": "lat", "venue_lon": "lon", "home_state": "name"})
+            city_origins = city_origins.rename(columns={"home_state": "name"})
+            source_total = len(city_origins)
+            origin_rows = []
+            for row in city_origins.sort_values(["state_rank", "name"], kind="stable").head(30).to_dict("records"):
+                centroid = STATE_CENTROIDS.get(str(row.get("name")))
+                if not centroid:
+                    continue
+                row["lat"], row["lon"] = centroid
+                row["coordinates"] = [
+                    [float(centroid[1]), float(centroid[0])],
+                    [float(row["venue_lon"]), float(row["venue_lat"])],
+                ]
+                row["name"] = f"{row['name']} spend-panel customers"
+                row["source_total_records"] = source_total
+                origin_rows.append(row)
+            city_origins = pd.DataFrame(origin_rows)
         map_layers[city] = {
             "uhi": city_uhi.to_dict("records"),
             "poi": city_poi.to_dict("records"),
@@ -232,6 +281,11 @@ def load_artifacts(paths: ProjectPaths) -> dict[str, Any]:
     artifacts.update(spatial)
     for city, network in artifacts.get("walking_networks", {}).items():
         walk_rows = []
+        route_geometry = network.get("route_geometry")
+        if isinstance(route_geometry, dict):
+            route_geometry = route_geometry.get("coordinates")
+        if isinstance(route_geometry, list) and route_geometry:
+            walk_rows.append({"coordinates": route_geometry, "name": "Network path to event-relevant stop", "status": network.get("status", "partial")})
         for isochrone in network.get("isochrones", []):
             geometry = isochrone.get("geometry", {})
             coordinates = geometry.get("coordinates", [])

@@ -516,6 +516,7 @@ def city_layer_records(artifacts: Mapping[str, Any], city: str, layer: str) -> l
 
     aliases = {
         "gtfs": ("gtfs_stops", "stops"),
+        "gtfs_routes": ("route_shapes", "gtfs_lines"),
         "walk": ("walk_layers", "walking_networks", "osm_layers"),
         "uhi": ("uhi_points", "uhi_layers"),
         "poi": ("poi_points", "poi_layers"),
@@ -536,5 +537,8 @@ def city_layer_records(artifacts: Mapping[str, Any], city: str, layer: str) -> l
             return selected
     if layer == "gtfs":
         raw_city = artifacts.get("gtfs", {}).get(city, {}) if isinstance(artifacts.get("gtfs", {}), Mapping) else {}
-        return records(raw_city.get("stop_points", [])) if isinstance(raw_city, Mapping) else []
+        return records(raw_city.get("stop_points_2mi", [])) if isinstance(raw_city, Mapping) else []
+    if layer == "gtfs_routes":
+        raw_city = artifacts.get("gtfs", {}).get(city, {}) if isinstance(artifacts.get("gtfs", {}), Mapping) else {}
+        return records(raw_city.get("route_shapes", [])) if isinstance(raw_city, Mapping) else []
     return []

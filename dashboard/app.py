@@ -98,7 +98,15 @@ metrics = build_city_metrics(
     artifacts["visits"], artifacts["weather"], artifacts["uhi"], artifacts["poi"], artifacts["gtfs"],
     weights=weights, include_estimates=include_estimates,
 )
-artifacts.update(build_transportation_bundle(metrics, artifacts))
+try:
+    artifacts.update(build_transportation_bundle(metrics, artifacts))
+except ValueError as exc:
+    st.error(
+        "The transportation evidence registry failed validation. "
+        "Rebuild the pinned factor artifact before using scenario results. "
+        f"Details: {exc}"
+    )
+    st.stop()
 
 if selected_city != "All cities" and selected_city in metrics["city"].values:
     selected_metrics = metrics[metrics["city"] == selected_city].copy()
