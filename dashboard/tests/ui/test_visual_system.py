@@ -13,6 +13,7 @@ from dashboard.viz.style import STATUS_COLORS
     ("mode", "expected_tabs"),
     [
         ("Executive", 0),
+        ("Compare Cities", 3),
         ("Explorer", 4),
         ("Methods & QA", 4),
     ],
@@ -21,7 +22,8 @@ def test_every_workspace_renders_without_exception(mode, expected_tabs):
     app = AppTest.from_file("dashboard/app.py")
     app.run(timeout=30)
     if mode != "Executive":
-        app.radio[0].set_value(mode)
+        workspace = next(widget for widget in app.radio if widget.label == "Workspace")
+        workspace.set_value(mode)
         app.run(timeout=30)
     assert not app.exception
     assert len(app.tabs) == expected_tabs
@@ -39,7 +41,16 @@ def test_ui_sources_have_no_mojibake_or_retired_dark_theme():
     root = Path(__file__).parents[2]
     source = "\n".join(
         (root / relative).read_text(encoding="utf-8")
-        for relative in ("app.py", "ui/theme.py", "ui/views.py", "ui/presentation.py", "viz/style.py")
+        for relative in (
+            "app.py",
+            "ui/theme.py",
+            "ui/views.py",
+            "ui/presentation.py",
+            "ui/judging.py",
+            "ui/pages/overview.py",
+            "ui/pages/compare.py",
+            "viz/style.py",
+        )
     )
     assert "Â" not in source
     assert "â€" not in source
@@ -77,11 +88,13 @@ def test_every_city_and_match_renders_across_workspaces(city):
 
     app = AppTest.from_file("dashboard/app.py")
     app.run(timeout=30)
-    app.selectbox[0].set_value(city)
+    city_selector = next(widget for widget in app.selectbox if widget.label == "City focus")
+    city_selector.set_value(city)
     app.run(timeout=30)
     assert not app.exception
 
-    app.radio[0].set_value("Explorer")
+    workspace_selector = next(widget for widget in app.radio if widget.label == "Workspace")
+    workspace_selector.set_value("Explorer")
     app.run(timeout=30)
     for match_id in match_ids:
         match_selector = next(widget for widget in app.selectbox if widget.label == "Match")

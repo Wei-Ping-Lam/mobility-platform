@@ -304,7 +304,11 @@ def _coordinates(row: Mapping[str, Any]) -> tuple[float, float] | None:
         return None
 
 
-def _layer_map(decision: CityDecisionView, artifacts: Mapping[str, Any]) -> tuple[go.Figure, pd.DataFrame]:
+def _layer_map(
+    decision: CityDecisionView,
+    artifacts: Mapping[str, Any],
+    selected_layers: tuple[str, ...] | list[str] | None = None,
+) -> tuple[go.Figure, pd.DataFrame]:
     figure = go.Figure()
     readiness: list[dict[str, str]] = []
     layers = (
@@ -315,8 +319,12 @@ def _layer_map(decision: CityDecisionView, artifacts: Mapping[str, Any]) -> tupl
         ("poi", "Venue-support places", COLORS["amber"]),
         ("origin", "Origin flows", COLORS["violet"]),
     )
+    enabled = set(selected_layers) if selected_layers is not None else {key for key, _, _ in layers}
     for key, label, color in layers:
         raw_rows = city_layer_records(artifacts, decision.city, key)
+        if key not in enabled:
+            readiness.append({"Layer": label, "Status": "Hidden", "Mapped records": "0", "Source records": str(len(raw_rows)), "Meaning": "Available to enable on the map"})
+            continue
         points = [(record, coordinate) for record in raw_rows if (coordinate := _coordinates(record))]
         if points:
             figure.add_trace(
@@ -336,7 +344,8 @@ def _layer_map(decision: CityDecisionView, artifacts: Mapping[str, Any]) -> tupl
             if isinstance(coordinates, list) and coordinates and isinstance(coordinates[0], (list, tuple)):
                 pairs = [(float(pair[1]), float(pair[0])) for pair in coordinates if len(pair) >= 2]
                 if pairs:
-                    figure.add_trace(go.Scattermap(lat=[pair[0] for pair in pairs], lon=[pair[1] for pair in pairs], mode="lines", line=dict(color=color, width=2), name=label, showlegend=line_count == 0))
+                    record_label = str(record.get("name") or (f"{record.get('minutes')}-minute isochrone" if record.get("minutes") else label))
+                    figure.add_trace(go.Scattermap(lat=[pair[0] for pair in pairs], lon=[pair[1] for pair in pairs], mode="lines", line=dict(color=color, width=3 if record.get("name") else 1.5), name=record_label, showlegend=True))
                     line_count += 1
         available = len(points) + line_count
         source_total = max((int(record.get("source_total_records", 0) or 0) for record in raw_rows), default=len(raw_rows))
@@ -440,8 +449,23 @@ def render_explorer(metrics: pd.DataFrame, artifacts: dict[str, Any], selected_c
         st.caption("Rice store visits describe commercial activity. They are not stadium attendance or ticket-holder behavior.")
 
     with map_tab:
-        section_header("Venue access evidence", "Toggle-ready layers share one venue-centered map. Unavailable layers remain listed rather than silently omitted.", "Place")
-        layer_figure, layer_table = _layer_map(decision, artifacts)
+        section_header("Venue access evidence", "Choose route, service, heat, venue-support, and origin-context layers. Unavailable layers remain listed rather than silently omitted.", "Place")
+        layer_options = {
+            "gtfs": "GTFS stops",
+            "gtfs_routes": "Event-valid GTFS routes",
+            "walk": "Walking route and isochrones",
+            "uhi": "Rice UHI context",
+            "poi": "Rice venue-support places",
+            "origin": "Rice customer-origin context",
+        }
+        selected_layers = st.multiselect(
+            "Map layers",
+            list(layer_options),
+            default=["gtfs", "gtfs_routes", "walk", "uhi"],
+            format_func=layer_options.get,
+            key=f"map_layers_{decision.city}_{match.match_id}",
+        )
+        layer_figure, layer_table = _layer_map(decision, artifacts, selected_layers)
         st.plotly_chart(layer_figure, width="stretch", config={"displayModeBar": False})
         unavailable = layer_table[layer_table["Status"] == "Unavailable"]["Layer"].tolist()
         if unavailable:

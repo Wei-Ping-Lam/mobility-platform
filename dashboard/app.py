@@ -19,8 +19,10 @@ from dashboard.mobility_platform.config import project_paths  # noqa: E402
 from dashboard.mobility_platform.mappings import HOST_CITIES  # noqa: E402
 from dashboard.mobility_platform.sources import RICE_COLLECTION  # noqa: E402
 from dashboard.ui.data import load_artifacts  # noqa: E402
+from dashboard.ui.pages.compare import render_compare_cities  # noqa: E402
+from dashboard.ui.pages.overview import render_decision_brief  # noqa: E402
 from dashboard.ui.theme import apply_theme, brand_block, sidebar_status  # noqa: E402
-from dashboard.ui.views import render_executive, render_explorer, render_methods  # noqa: E402
+from dashboard.ui.views import render_explorer, render_methods  # noqa: E402
 
 st.set_page_config(page_title="Mobility Readiness 2026", page_icon="🚇", layout="wide", initial_sidebar_state="expanded")
 apply_theme()
@@ -38,8 +40,9 @@ with st.sidebar:
     brand_block()
     st.markdown("<div class='sidebar-kicker'>Workspace</div>", unsafe_allow_html=True)
     mode_labels = {
-        "Executive": "City overview",
-        "Explorer": "City explorer",
+        "Executive": "Decision brief",
+        "Compare Cities": "Compare cities",
+        "Explorer": "City & match",
         "Methods & QA": "Methods & QA",
     }
     mode = st.radio(
@@ -62,7 +65,7 @@ with st.sidebar:
     profile = st.selectbox(
         "Weight profile",
         profile_options,
-        index=profile_options.index("rice_supplied_data"),
+        index=profile_options.index("balanced"),
         format_func=profile_labels.get,
     )
     weights = dict(DEFAULT_WEIGHTS[profile])
@@ -108,13 +111,15 @@ except ValueError as exc:
     )
     st.stop()
 
-if selected_city != "All cities" and selected_city in metrics["city"].values:
-    selected_metrics = metrics[metrics["city"] == selected_city].copy()
-else:
-    selected_metrics = metrics
-
 if mode == "Executive":
-    render_executive(selected_metrics, artifacts, supplied_data_lens=weights["transit"] == 0)
+    render_decision_brief(
+        metrics,
+        artifacts,
+        selected_city=selected_city if selected_city != "All cities" else None,
+        weights=weights,
+    )
+elif mode == "Compare Cities":
+    render_compare_cities(metrics, artifacts, weights)
 elif mode == "Explorer":
     render_explorer(metrics, artifacts, selected_city if selected_city != "All cities" else metrics.iloc[0]["city"], weights, include_estimates)
 else:
