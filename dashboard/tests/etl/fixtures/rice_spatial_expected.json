@@ -1,0 +1,18 @@
+{
+  "cities": [
+    "Atlanta",
+    "Boston",
+    "Dallas",
+    "Houston",
+    "Kansas City",
+    "Los Angeles",
+    "Miami",
+    "New York/NJ",
+    "Philadelphia",
+    "San Francisco",
+    "Seattle"
+  ],
+  "distance_bands": ["0-1 mi", "1-2 mi", "2-5 mi"],
+  "corridor_rows": 33,
+  "source_collection": "Rice WC Hack"
+}

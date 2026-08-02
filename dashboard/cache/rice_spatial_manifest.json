@@ -1,0 +1,41 @@
+{
+  "artifacts": {
+    "corridors": {
+      "path": "venue_corridor_summary.parquet",
+      "rows": 33,
+      "sha256": "5778a340ba4d56db1bb5036dc1e672fe45d0f95e3a1eaeb374a98018f697dd59"
+    },
+    "movement_context": {
+      "path": "rice_spatial_movement_context.parquet",
+      "rows": 100821,
+      "sha256": "8ca65e450ec5cecbb08e95f85edec3b0ac45fbf6e8d097efd0e1480bd39ac4b4"
+    },
+    "origin_flows": {
+      "path": "rice_spatial_origin_flows.parquet",
+      "rows": 580,
+      "sha256": "cef7b9a1eda727f466984b3c7d4c0e5f4b1b7aa5d9126bfb7a0f6128054830f3"
+    },
+    "poi_points": {
+      "path": "rice_spatial_poi_points.parquet",
+      "rows": 62683,
+      "sha256": "d89cbb9a7500b0a35098404d77027a3fcdac5f1f493a6c331d8154375931df9c"
+    },
+    "uhi_grid": {
+      "path": "rice_spatial_uhi_grid.parquet",
+      "rows": 21477,
+      "sha256": "ca7bd14ae464f5e2a78bc36199528737ce2a8c0b0b41bf4dedb77001ba28dc24"
+    }
+  },
+  "build_fingerprint": "7222bf1d677ce06a887d8403f89f4be9ff5722a016b332268fbc35cc1a50ae94",
+  "limitations": [
+    "Source coordinates may be spatially jittered or represent POI centroids; use for area-level planning, not entrance-level or pedestrian-network routing."
+  ],
+  "schema_version": "0.3.0",
+  "source_collection": "Rice WC Hack",
+  "source_hashes": {
+    "core-poi-geometry-rice": "65248fbf453029ddc5deeb3b049b161539bff4cefe8e93aa4329bff2a865add5",
+    "spend-patterns-rice": "5333ffb44102de2dc51077b77c312ea33cfd80b17f5f777c37894761b5d059e0",
+    "store-visits-rice": "f5b5c9a207e4c080a91118096e431c4533655d41a59ec3244094835081f75965",
+    "urban-heat-index-rice": "9c180b95de1dbe7e9921c25e8039b87af66b0a1037a9baaad1644ac9e8711e57"
+  }
+}
