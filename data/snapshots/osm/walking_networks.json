@@ -1,0 +1,2102 @@
+{
+  "artifact_sha256": "fc02f02a43c5fd8e5d0c0d2790645b4c4e87b95829518b84863af9b9744ea0e7",
+  "cities": {
+    "Atlanta": {
+      "accessibility_status": "not_measured",
+      "city": "Atlanta",
+      "crossing_tag_coverage_pct": 25.0,
+      "detour_ratio": 1.08,
+      "isochrones": [
+        {
+          "geometry": {
+            "coordinates": [
+              [
+                [
+                  -84.390095,
+                  33.7554
+                ],
+                [
+                  -84.390918,
+                  33.758838
+                ],
+                [
+                  -84.39326,
+                  33.761752
+                ],
+                [
+                  -84.396765,
+                  33.763699
+                ],
+                [
+                  -84.4009,
+                  33.764383
+                ],
+                [
+                  -84.405035,
+                  33.763699
+                ],
+                [
+                  -84.40854,
+                  33.761752
+                ],
+                [
+                  -84.410882,
+                  33.758838
+                ],
+                [
+                  -84.411705,
+                  33.7554
+                ],
+                [
+                  -84.410882,
+                  33.751962
+                ],
+                [
+                  -84.40854,
+                  33.749048
+                ],
+                [
+                  -84.405035,
+                  33.747101
+                ],
+                [
+                  -84.4009,
+                  33.746417
+                ],
+                [
+                  -84.396765,
+                  33.747101
+                ],
+                [
+                  -84.39326,
+                  33.749048
+                ],
+                [
+                  -84.390918,
+                  33.751962
+                ],
+                [
+                  -84.390095,
+                  33.7554
+                ]
+              ]
+            ],
+            "type": "Polygon"
+          },
+          "minutes": 15
+        },
+        {
+          "geometry": {
+            "coordinates": [
+              [
+                [
+                  -84.379291,
+                  33.7554
+                ],
+                [
+                  -84.380936,
+                  33.762275
+                ],
+                [
+                  -84.38562,
+                  33.768104
+                ],
+                [
+                  -84.392631,
+                  33.771999
+                ],
+                [
+                  -84.4009,
+                  33.773366
+                ],
+                [
+                  -84.409169,
+                  33.771999
+                ],
+                [
+                  -84.41618,
+                  33.768104
+                ],
+                [
+                  -84.420864,
+                  33.762275
+                ],
+                [
+                  -84.422509,
+                  33.7554
+                ],
+                [
+                  -84.420864,
+                  33.748525
+                ],
+                [
+                  -84.41618,
+                  33.742696
+                ],
+                [
+                  -84.409169,
+                  33.738801
+                ],
+                [
+                  -84.4009,
+                  33.737434
+                ],
+                [
+                  -84.392631,
+                  33.738801
+                ],
+                [
+                  -84.38562,
+                  33.742696
+                ],
+                [
+                  -84.380936,
+                  33.748525
+                ],
+                [
+                  -84.379291,
+                  33.7554
+                ]
+              ]
+            ],
+            "type": "Polygon"
+          },
+          "minutes": 30
+        }
+      ],
+      "network_distance_m": 324.0,
+      "sidewalk_tag_coverage_pct": 35.0,
+      "snapshot_kind": "fixture",
+      "source": {
+        "coverage_end": null,
+        "coverage_start": null,
+        "hash_scope": "canonical fixture source descriptor; no OSM extract bytes are represented",
+        "license": "Open Database License (ODbL); fixture contains no extracted OSM features",
+        "notes": "Deterministic contract fixture only; run validation against a pinned five-mile OSM extract before promotion.",
+        "publisher": "OpenStreetMap contributors",
+        "retrieved_at_utc": "2026-08-01T00:00:00Z",
+        "sha256": "6e515744424305b997a43a991af0477e1188082b289c9bb19c69f35a83164057",
+        "source": "OpenStreetMap walking-network schema fixture",
+        "status": "estimated",
+        "url": "https://www.openstreetmap.org/copyright",
+        "version": "fixture-schema-1"
+      },
+      "status": "estimated",
+      "straight_distance_m": 300.0,
+      "target_kind": "representative transit access point",
+      "venue": "Mercedes-Benz Stadium",
+      "venue_lat": 33.7554,
+      "venue_lon": -84.4009
+    },
+    "Boston": {
+      "accessibility_status": "not_measured",
+      "city": "Boston",
+      "crossing_tag_coverage_pct": 34.0,
+      "detour_ratio": 1.15,
+      "isochrones": [
+        {
+          "geometry": {
+            "coordinates": [
+              [
+                [
+                  -71.252195,
+                  42.0909
+                ],
+                [
+                  -71.253116,
+                  42.094338
+                ],
+                [
+                  -71.25574,
+                  42.097252
+                ],
+                [
+                  -71.259668,
+                  42.099199
+                ],
+                [
+                  -71.2643,
+                  42.099883
+                ],
+                [
+                  -71.268932,
+                  42.099199
+                ],
+                [
+                  -71.27286,
+                  42.097252
+                ],
+                [
+                  -71.275484,
+                  42.094338
+                ],
+                [
+                  -71.276405,
+                  42.0909
+                ],
+                [
+                  -71.275484,
+                  42.087462
+                ],
+                [
+                  -71.27286,
+                  42.084548
+                ],
+                [
+                  -71.268932,
+                  42.082601
+                ],
+                [
+                  -71.2643,
+                  42.081917
+                ],
+                [
+                  -71.259668,
+                  42.082601
+                ],
+                [
+                  -71.25574,
+                  42.084548
+                ],
+                [
+                  -71.253116,
+                  42.087462
+                ],
+                [
+                  -71.252195,
+                  42.0909
+                ]
+              ]
+            ],
+            "type": "Polygon"
+          },
+          "minutes": 15
+        },
+        {
+          "geometry": {
+            "coordinates": [
+              [
+                [
+                  -71.240089,
+                  42.0909
+                ],
+                [
+                  -71.241932,
+                  42.097775
+                ],
+                [
+                  -71.247181,
+                  42.103604
+                ],
+                [
+                  -71.255035,
+                  42.107499
+                ],
+                [
+                  -71.2643,
+                  42.108866
+                ],
+                [
+                  -71.273565,
+                  42.107499
+                ],
+                [
+                  -71.281419,
+                  42.103604
+                ],
+                [
+                  -71.286668,
+                  42.097775
+                ],
+                [
+                  -71.288511,
+                  42.0909
+                ],
+                [
+                  -71.286668,
+                  42.084025
+                ],
+                [
+                  -71.281419,
+                  42.078196
+                ],
+                [
+                  -71.273565,
+                  42.074301
+                ],
+                [
+                  -71.2643,
+                  42.072934
+                ],
+                [
+                  -71.255035,
+                  42.074301
+                ],
+                [
+                  -71.247181,
+                  42.078196
+                ],
+                [
+                  -71.241932,
+                  42.084025
+                ],
+                [
+                  -71.240089,
+                  42.0909
+                ]
+              ]
+            ],
+            "type": "Polygon"
+          },
+          "minutes": 30
+        }
+      ],
+      "network_distance_m": 392.1,
+      "sidewalk_tag_coverage_pct": 42.0,
+      "snapshot_kind": "fixture",
+      "source": {
+        "coverage_end": null,
+        "coverage_start": null,
+        "hash_scope": "canonical fixture source descriptor; no OSM extract bytes are represented",
+        "license": "Open Database License (ODbL); fixture contains no extracted OSM features",
+        "notes": "Deterministic contract fixture only; run validation against a pinned five-mile OSM extract before promotion.",
+        "publisher": "OpenStreetMap contributors",
+        "retrieved_at_utc": "2026-08-01T00:00:00Z",
+        "sha256": "6e515744424305b997a43a991af0477e1188082b289c9bb19c69f35a83164057",
+        "source": "OpenStreetMap walking-network schema fixture",
+        "status": "estimated",
+        "url": "https://www.openstreetmap.org/copyright",
+        "version": "fixture-schema-1"
+      },
+      "status": "estimated",
+      "straight_distance_m": 341.0,
+      "target_kind": "representative transit access point",
+      "venue": "Gillette Stadium",
+      "venue_lat": 42.0909,
+      "venue_lon": -71.2643
+    },
+    "Dallas": {
+      "accessibility_status": "not_measured",
+      "city": "Dallas",
+      "crossing_tag_coverage_pct": 43.0,
+      "detour_ratio": 1.22,
+      "isochrones": [
+        {
+          "geometry": {
+            "coordinates": [
+              [
+                [
+                  -97.082219,
+                  32.748
+                ],
+                [
+                  -97.083032,
+                  32.751438
+                ],
+                [
+                  -97.085348,
+                  32.754352
+                ],
+                [
+                  -97.088813,
+                  32.756299
+                ],
+                [
+                  -97.0929,
+                  32.756983
+                ],
+                [
+                  -97.096987,
+                  32.756299
+                ],
+                [
+                  -97.100452,
+                  32.754352
+                ],
+                [
+                  -97.102768,
+                  32.751438
+                ],
+                [
+                  -97.103581,
+                  32.748
+                ],
+                [
+                  -97.102768,
+                  32.744562
+                ],
+                [
+                  -97.100452,
+                  32.741648
+                ],
+                [
+                  -97.096987,
+                  32.739701
+                ],
+                [
+                  -97.0929,
+                  32.739017
+                ],
+                [
+                  -97.088813,
+                  32.739701
+                ],
+                [
+                  -97.085348,
+                  32.741648
+                ],
+                [
+                  -97.083032,
+                  32.744562
+                ],
+                [
+                  -97.082219,
+                  32.748
+                ]
+              ]
+            ],
+            "type": "Polygon"
+          },
+          "minutes": 15
+        },
+        {
+          "geometry": {
+            "coordinates": [
+              [
+                [
+                  -97.071539,
+                  32.748
+                ],
+                [
+                  -97.073165,
+                  32.754875
+                ],
+                [
+                  -97.077795,
+                  32.760704
+                ],
+                [
+                  -97.084725,
+                  32.764599
+                ],
+                [
+                  -97.0929,
+                  32.765966
+                ],
+                [
+                  -97.101075,
+                  32.764599
+                ],
+                [
+                  -97.108005,
+                  32.760704
+                ],
+                [
+                  -97.112635,
+                  32.754875
+                ],
+                [
+                  -97.114261,
+                  32.748
+                ],
+                [
+                  -97.112635,
+                  32.741125
+                ],
+                [
+                  -97.108005,
+                  32.735296
+                ],
+                [
+                  -97.101075,
+                  32.731401
+                ],
+                [
+                  -97.0929,
+                  32.730034
+                ],
+                [
+                  -97.084725,
+                  32.731401
+                ],
+                [
+                  -97.077795,
+                  32.735296
+                ],
+                [
+                  -97.073165,
+                  32.741125
+                ],
+                [
+                  -97.071539,
+                  32.748
+                ]
+              ]
+            ],
+            "type": "Polygon"
+          },
+          "minutes": 30
+        }
+      ],
+      "network_distance_m": 466.0,
+      "sidewalk_tag_coverage_pct": 49.0,
+      "snapshot_kind": "fixture",
+      "source": {
+        "coverage_end": null,
+        "coverage_start": null,
+        "hash_scope": "canonical fixture source descriptor; no OSM extract bytes are represented",
+        "license": "Open Database License (ODbL); fixture contains no extracted OSM features",
+        "notes": "Deterministic contract fixture only; run validation against a pinned five-mile OSM extract before promotion.",
+        "publisher": "OpenStreetMap contributors",
+        "retrieved_at_utc": "2026-08-01T00:00:00Z",
+        "sha256": "6e515744424305b997a43a991af0477e1188082b289c9bb19c69f35a83164057",
+        "source": "OpenStreetMap walking-network schema fixture",
+        "status": "estimated",
+        "url": "https://www.openstreetmap.org/copyright",
+        "version": "fixture-schema-1"
+      },
+      "status": "estimated",
+      "straight_distance_m": 382.0,
+      "target_kind": "representative transit access point",
+      "venue": "AT&T Stadium",
+      "venue_lat": 32.748,
+      "venue_lon": -97.0929
+    },
+    "Houston": {
+      "accessibility_status": "not_measured",
+      "city": "Houston",
+      "crossing_tag_coverage_pct": 52.0,
+      "detour_ratio": 1.29,
+      "isochrones": [
+        {
+          "geometry": {
+            "coordinates": [
+              [
+                [
+                  -95.40026,
+                  29.6851
+                ],
+                [
+                  -95.401047,
+                  29.688538
+                ],
+                [
+                  -95.403288,
+                  29.691452
+                ],
+                [
+                  -95.406643,
+                  29.693399
+                ],
+                [
+                  -95.4106,
+                  29.694083
+                ],
+                [
+                  -95.414557,
+                  29.693399
+                ],
+                [
+                  -95.417912,
+                  29.691452
+                ],
+                [
+                  -95.420153,
+                  29.688538
+                ],
+                [
+                  -95.42094,
+                  29.6851
+                ],
+                [
+                  -95.420153,
+                  29.681662
+                ],
+                [
+                  -95.417912,
+                  29.678748
+                ],
+                [
+                  -95.414557,
+                  29.676801
+                ],
+                [
+                  -95.4106,
+                  29.676117
+                ],
+                [
+                  -95.406643,
+                  29.676801
+                ],
+                [
+                  -95.403288,
+                  29.678748
+                ],
+                [
+                  -95.401047,
+                  29.681662
+                ],
+                [
+                  -95.40026,
+                  29.6851
+                ]
+              ]
+            ],
+            "type": "Polygon"
+          },
+          "minutes": 15
+        },
+        {
+          "geometry": {
+            "coordinates": [
+              [
+                [
+                  -95.38992,
+                  29.6851
+                ],
+                [
+                  -95.391494,
+                  29.691975
+                ],
+                [
+                  -95.395977,
+                  29.697804
+                ],
+                [
+                  -95.402686,
+                  29.701699
+                ],
+                [
+                  -95.4106,
+                  29.703066
+                ],
+                [
+                  -95.418514,
+                  29.701699
+                ],
+                [
+                  -95.425223,
+                  29.697804
+                ],
+                [
+                  -95.429706,
+                  29.691975
+                ],
+                [
+                  -95.43128,
+                  29.6851
+                ],
+                [
+                  -95.429706,
+                  29.678225
+                ],
+                [
+                  -95.425223,
+                  29.672396
+                ],
+                [
+                  -95.418514,
+                  29.668501
+                ],
+                [
+                  -95.4106,
+                  29.667134
+                ],
+                [
+                  -95.402686,
+                  29.668501
+                ],
+                [
+                  -95.395977,
+                  29.672396
+                ],
+                [
+                  -95.391494,
+                  29.678225
+                ],
+                [
+                  -95.38992,
+                  29.6851
+                ]
+              ]
+            ],
+            "type": "Polygon"
+          },
+          "minutes": 30
+        }
+      ],
+      "network_distance_m": 545.7,
+      "sidewalk_tag_coverage_pct": 56.0,
+      "snapshot_kind": "fixture",
+      "source": {
+        "coverage_end": null,
+        "coverage_start": null,
+        "hash_scope": "canonical fixture source descriptor; no OSM extract bytes are represented",
+        "license": "Open Database License (ODbL); fixture contains no extracted OSM features",
+        "notes": "Deterministic contract fixture only; run validation against a pinned five-mile OSM extract before promotion.",
+        "publisher": "OpenStreetMap contributors",
+        "retrieved_at_utc": "2026-08-01T00:00:00Z",
+        "sha256": "6e515744424305b997a43a991af0477e1188082b289c9bb19c69f35a83164057",
+        "source": "OpenStreetMap walking-network schema fixture",
+        "status": "estimated",
+        "url": "https://www.openstreetmap.org/copyright",
+        "version": "fixture-schema-1"
+      },
+      "status": "estimated",
+      "straight_distance_m": 423.0,
+      "target_kind": "representative transit access point",
+      "venue": "NRG Stadium",
+      "venue_lat": 29.6851,
+      "venue_lon": -95.4106
+    },
+    "Kansas City": {
+      "accessibility_status": "not_measured",
+      "city": "Kansas City",
+      "crossing_tag_coverage_pct": 61.0,
+      "detour_ratio": 1.36,
+      "isochrones": [
+        {
+          "geometry": {
+            "coordinates": [
+              [
+                [
+                  -94.472333,
+                  39.0489
+                ],
+                [
+                  -94.473213,
+                  39.052338
+                ],
+                [
+                  -94.475721,
+                  39.055252
+                ],
+                [
+                  -94.479473,
+                  39.057199
+                ],
+                [
+                  -94.4839,
+                  39.057883
+                ],
+                [
+                  -94.488327,
+                  39.057199
+                ],
+                [
+                  -94.492079,
+                  39.055252
+                ],
+                [
+                  -94.494587,
+                  39.052338
+                ],
+                [
+                  -94.495467,
+                  39.0489
+                ],
+                [
+                  -94.494587,
+                  39.045462
+                ],
+                [
+                  -94.492079,
+                  39.042548
+                ],
+                [
+                  -94.488327,
+                  39.040601
+                ],
+                [
+                  -94.4839,
+                  39.039917
+                ],
+                [
+                  -94.479473,
+                  39.040601
+                ],
+                [
+                  -94.475721,
+                  39.042548
+                ],
+                [
+                  -94.473213,
+                  39.045462
+                ],
+                [
+                  -94.472333,
+                  39.0489
+                ]
+              ]
+            ],
+            "type": "Polygon"
+          },
+          "minutes": 15
+        },
+        {
+          "geometry": {
+            "coordinates": [
+              [
+                [
+                  -94.460766,
+                  39.0489
+                ],
+                [
+                  -94.462527,
+                  39.055775
+                ],
+                [
+                  -94.467542,
+                  39.061604
+                ],
+                [
+                  -94.475047,
+                  39.065499
+                ],
+                [
+                  -94.4839,
+                  39.066866
+                ],
+                [
+                  -94.492753,
+                  39.065499
+                ],
+                [
+                  -94.500258,
+                  39.061604
+                ],
+                [
+                  -94.505273,
+                  39.055775
+                ],
+                [
+                  -94.507034,
+                  39.0489
+                ],
+                [
+                  -94.505273,
+                  39.042025
+                ],
+                [
+                  -94.500258,
+                  39.036196
+                ],
+                [
+                  -94.492753,
+                  39.032301
+                ],
+                [
+                  -94.4839,
+                  39.030934
+                ],
+                [
+                  -94.475047,
+                  39.032301
+                ],
+                [
+                  -94.467542,
+                  39.036196
+                ],
+                [
+                  -94.462527,
+                  39.042025
+                ],
+                [
+                  -94.460766,
+                  39.0489
+                ]
+              ]
+            ],
+            "type": "Polygon"
+          },
+          "minutes": 30
+        }
+      ],
+      "network_distance_m": 631.0,
+      "sidewalk_tag_coverage_pct": 63.0,
+      "snapshot_kind": "fixture",
+      "source": {
+        "coverage_end": null,
+        "coverage_start": null,
+        "hash_scope": "canonical fixture source descriptor; no OSM extract bytes are represented",
+        "license": "Open Database License (ODbL); fixture contains no extracted OSM features",
+        "notes": "Deterministic contract fixture only; run validation against a pinned five-mile OSM extract before promotion.",
+        "publisher": "OpenStreetMap contributors",
+        "retrieved_at_utc": "2026-08-01T00:00:00Z",
+        "sha256": "6e515744424305b997a43a991af0477e1188082b289c9bb19c69f35a83164057",
+        "source": "OpenStreetMap walking-network schema fixture",
+        "status": "estimated",
+        "url": "https://www.openstreetmap.org/copyright",
+        "version": "fixture-schema-1"
+      },
+      "status": "estimated",
+      "straight_distance_m": 464.0,
+      "target_kind": "representative transit access point",
+      "venue": "Arrowhead Stadium",
+      "venue_lat": 39.0489,
+      "venue_lon": -94.4839
+    },
+    "Los Angeles": {
+      "accessibility_status": "not_measured",
+      "city": "Los Angeles",
+      "crossing_tag_coverage_pct": 70.0,
+      "detour_ratio": 1.08,
+      "isochrones": [
+        {
+          "geometry": {
+            "coordinates": [
+              [
+                [
+                  -118.32787,
+                  33.9534
+                ],
+                [
+                  -118.328695,
+                  33.956838
+                ],
+                [
+                  -118.331042,
+                  33.959752
+                ],
+                [
+                  -118.334556,
+                  33.961699
+                ],
+                [
+                  -118.3387,
+                  33.962383
+                ],
+                [
+                  -118.342844,
+                  33.961699
+                ],
+                [
+                  -118.346358,
+                  33.959752
+                ],
+                [
+                  -118.348705,
+                  33.956838
+                ],
+                [
+                  -118.34953,
+                  33.9534
+                ],
+                [
+                  -118.348705,
+                  33.949962
+                ],
+                [
+                  -118.346358,
+                  33.947048
+                ],
+                [
+                  -118.342844,
+                  33.945101
+                ],
+                [
+                  -118.3387,
+                  33.944417
+                ],
+                [
+                  -118.334556,
+                  33.945101
+                ],
+                [
+                  -118.331042,
+                  33.947048
+                ],
+                [
+                  -118.328695,
+                  33.949962
+                ],
+                [
+                  -118.32787,
+                  33.9534
+                ]
+              ]
+            ],
+            "type": "Polygon"
+          },
+          "minutes": 15
+        },
+        {
+          "geometry": {
+            "coordinates": [
+              [
+                [
+                  -118.317041,
+                  33.9534
+                ],
+                [
+                  -118.318689,
+                  33.960275
+                ],
+                [
+                  -118.323385,
+                  33.966104
+                ],
+                [
+                  -118.330411,
+                  33.969999
+                ],
+                [
+                  -118.3387,
+                  33.971366
+                ],
+                [
+                  -118.346989,
+                  33.969999
+                ],
+                [
+                  -118.354015,
+                  33.966104
+                ],
+                [
+                  -118.358711,
+                  33.960275
+                ],
+                [
+                  -118.360359,
+                  33.9534
+                ],
+                [
+                  -118.358711,
+                  33.946525
+                ],
+                [
+                  -118.354015,
+                  33.940696
+                ],
+                [
+                  -118.346989,
+                  33.936801
+                ],
+                [
+                  -118.3387,
+                  33.935434
+                ],
+                [
+                  -118.330411,
+                  33.936801
+                ],
+                [
+                  -118.323385,
+                  33.940696
+                ],
+                [
+                  -118.318689,
+                  33.946525
+                ],
+                [
+                  -118.317041,
+                  33.9534
+                ]
+              ]
+            ],
+            "type": "Polygon"
+          },
+          "minutes": 30
+        }
+      ],
+      "network_distance_m": 545.4,
+      "sidewalk_tag_coverage_pct": 70.0,
+      "snapshot_kind": "fixture",
+      "source": {
+        "coverage_end": null,
+        "coverage_start": null,
+        "hash_scope": "canonical fixture source descriptor; no OSM extract bytes are represented",
+        "license": "Open Database License (ODbL); fixture contains no extracted OSM features",
+        "notes": "Deterministic contract fixture only; run validation against a pinned five-mile OSM extract before promotion.",
+        "publisher": "OpenStreetMap contributors",
+        "retrieved_at_utc": "2026-08-01T00:00:00Z",
+        "sha256": "6e515744424305b997a43a991af0477e1188082b289c9bb19c69f35a83164057",
+        "source": "OpenStreetMap walking-network schema fixture",
+        "status": "estimated",
+        "url": "https://www.openstreetmap.org/copyright",
+        "version": "fixture-schema-1"
+      },
+      "status": "estimated",
+      "straight_distance_m": 505.0,
+      "target_kind": "representative transit access point",
+      "venue": "SoFi Stadium",
+      "venue_lat": 33.9534,
+      "venue_lon": -118.3387
+    },
+    "Miami": {
+      "accessibility_status": "not_measured",
+      "city": "Miami",
+      "crossing_tag_coverage_pct": 79.0,
+      "detour_ratio": 1.15,
+      "isochrones": [
+        {
+          "geometry": {
+            "coordinates": [
+              [
+                [
+                  -80.228809,
+                  25.9579
+                ],
+                [
+                  -80.229569,
+                  25.961338
+                ],
+                [
+                  -80.231735,
+                  25.964252
+                ],
+                [
+                  -80.234977,
+                  25.966199
+                ],
+                [
+                  -80.2388,
+                  25.966883
+                ],
+                [
+                  -80.242623,
+                  25.966199
+                ],
+                [
+                  -80.245865,
+                  25.964252
+                ],
+                [
+                  -80.248031,
+                  25.961338
+                ],
+                [
+                  -80.248791,
+                  25.9579
+                ],
+                [
+                  -80.248031,
+                  25.954462
+                ],
+                [
+                  -80.245865,
+                  25.951548
+                ],
+                [
+                  -80.242623,
+                  25.949601
+                ],
+                [
+                  -80.2388,
+                  25.948917
+                ],
+                [
+                  -80.234977,
+                  25.949601
+                ],
+                [
+                  -80.231735,
+                  25.951548
+                ],
+                [
+                  -80.229569,
+                  25.954462
+                ],
+                [
+                  -80.228809,
+                  25.9579
+                ]
+              ]
+            ],
+            "type": "Polygon"
+          },
+          "minutes": 15
+        },
+        {
+          "geometry": {
+            "coordinates": [
+              [
+                [
+                  -80.218818,
+                  25.9579
+                ],
+                [
+                  -80.220339,
+                  25.964775
+                ],
+                [
+                  -80.224671,
+                  25.970604
+                ],
+                [
+                  -80.231153,
+                  25.974499
+                ],
+                [
+                  -80.2388,
+                  25.975866
+                ],
+                [
+                  -80.246447,
+                  25.974499
+                ],
+                [
+                  -80.252929,
+                  25.970604
+                ],
+                [
+                  -80.257261,
+                  25.964775
+                ],
+                [
+                  -80.258782,
+                  25.9579
+                ],
+                [
+                  -80.257261,
+                  25.951025
+                ],
+                [
+                  -80.252929,
+                  25.945196
+                ],
+                [
+                  -80.246447,
+                  25.941301
+                ],
+                [
+                  -80.2388,
+                  25.939934
+                ],
+                [
+                  -80.231153,
+                  25.941301
+                ],
+                [
+                  -80.224671,
+                  25.945196
+                ],
+                [
+                  -80.220339,
+                  25.951025
+                ],
+                [
+                  -80.218818,
+                  25.9579
+                ]
+              ]
+            ],
+            "type": "Polygon"
+          },
+          "minutes": 30
+        }
+      ],
+      "network_distance_m": 627.9,
+      "sidewalk_tag_coverage_pct": 77.0,
+      "snapshot_kind": "fixture",
+      "source": {
+        "coverage_end": null,
+        "coverage_start": null,
+        "hash_scope": "canonical fixture source descriptor; no OSM extract bytes are represented",
+        "license": "Open Database License (ODbL); fixture contains no extracted OSM features",
+        "notes": "Deterministic contract fixture only; run validation against a pinned five-mile OSM extract before promotion.",
+        "publisher": "OpenStreetMap contributors",
+        "retrieved_at_utc": "2026-08-01T00:00:00Z",
+        "sha256": "6e515744424305b997a43a991af0477e1188082b289c9bb19c69f35a83164057",
+        "source": "OpenStreetMap walking-network schema fixture",
+        "status": "estimated",
+        "url": "https://www.openstreetmap.org/copyright",
+        "version": "fixture-schema-1"
+      },
+      "status": "estimated",
+      "straight_distance_m": 546.0,
+      "target_kind": "representative transit access point",
+      "venue": "Hard Rock Stadium",
+      "venue_lat": 25.9579,
+      "venue_lon": -80.2388
+    },
+    "New York/NJ": {
+      "accessibility_status": "not_measured",
+      "city": "New York/NJ",
+      "crossing_tag_coverage_pct": 33.0,
+      "detour_ratio": 1.22,
+      "isochrones": [
+        {
+          "geometry": {
+            "coordinates": [
+              [
+                [
+                  -74.062631,
+                  40.8135
+                ],
+                [
+                  -74.063534,
+                  40.816938
+                ],
+                [
+                  -74.066107,
+                  40.819852
+                ],
+                [
+                  -74.069958,
+                  40.821799
+                ],
+                [
+                  -74.0745,
+                  40.822483
+                ],
+                [
+                  -74.079042,
+                  40.821799
+                ],
+                [
+                  -74.082893,
+                  40.819852
+                ],
+                [
+                  -74.085466,
+                  40.816938
+                ],
+                [
+                  -74.086369,
+                  40.8135
+                ],
+                [
+                  -74.085466,
+                  40.810062
+                ],
+                [
+                  -74.082893,
+                  40.807148
+                ],
+                [
+                  -74.079042,
+                  40.805201
+                ],
+                [
+                  -74.0745,
+                  40.804517
+                ],
+                [
+                  -74.069958,
+                  40.805201
+                ],
+                [
+                  -74.066107,
+                  40.807148
+                ],
+                [
+                  -74.063534,
+                  40.810062
+                ],
+                [
+                  -74.062631,
+                  40.8135
+                ]
+              ]
+            ],
+            "type": "Polygon"
+          },
+          "minutes": 15
+        },
+        {
+          "geometry": {
+            "coordinates": [
+              [
+                [
+                  -74.050762,
+                  40.8135
+                ],
+                [
+                  -74.052569,
+                  40.820375
+                ],
+                [
+                  -74.057714,
+                  40.826204
+                ],
+                [
+                  -74.065416,
+                  40.830099
+                ],
+                [
+                  -74.0745,
+                  40.831466
+                ],
+                [
+                  -74.083584,
+                  40.830099
+                ],
+                [
+                  -74.091286,
+                  40.826204
+                ],
+                [
+                  -74.096431,
+                  40.820375
+                ],
+                [
+                  -74.098238,
+                  40.8135
+                ],
+                [
+                  -74.096431,
+                  40.806625
+                ],
+                [
+                  -74.091286,
+                  40.800796
+                ],
+                [
+                  -74.083584,
+                  40.796901
+                ],
+                [
+                  -74.0745,
+                  40.795534
+                ],
+                [
+                  -74.065416,
+                  40.796901
+                ],
+                [
+                  -74.057714,
+                  40.800796
+                ],
+                [
+                  -74.052569,
+                  40.806625
+                ],
+                [
+                  -74.050762,
+                  40.8135
+                ]
+              ]
+            ],
+            "type": "Polygon"
+          },
+          "minutes": 30
+        }
+      ],
+      "network_distance_m": 716.1,
+      "sidewalk_tag_coverage_pct": 84.0,
+      "snapshot_kind": "fixture",
+      "source": {
+        "coverage_end": null,
+        "coverage_start": null,
+        "hash_scope": "canonical fixture source descriptor; no OSM extract bytes are represented",
+        "license": "Open Database License (ODbL); fixture contains no extracted OSM features",
+        "notes": "Deterministic contract fixture only; run validation against a pinned five-mile OSM extract before promotion.",
+        "publisher": "OpenStreetMap contributors",
+        "retrieved_at_utc": "2026-08-01T00:00:00Z",
+        "sha256": "6e515744424305b997a43a991af0477e1188082b289c9bb19c69f35a83164057",
+        "source": "OpenStreetMap walking-network schema fixture",
+        "status": "estimated",
+        "url": "https://www.openstreetmap.org/copyright",
+        "version": "fixture-schema-1"
+      },
+      "status": "estimated",
+      "straight_distance_m": 587.0,
+      "target_kind": "representative transit access point",
+      "venue": "MetLife Stadium",
+      "venue_lat": 40.8135,
+      "venue_lon": -74.0745
+    },
+    "Philadelphia": {
+      "accessibility_status": "not_measured",
+      "city": "Philadelphia",
+      "crossing_tag_coverage_pct": 42.0,
+      "detour_ratio": 1.29,
+      "isochrones": [
+        {
+          "geometry": {
+            "coordinates": [
+              [
+                [
+                  -75.15579,
+                  39.9008
+                ],
+                [
+                  -75.156682,
+                  39.904238
+                ],
+                [
+                  -75.15922,
+                  39.907152
+                ],
+                [
+                  -75.163019,
+                  39.909099
+                ],
+                [
+                  -75.1675,
+                  39.909783
+                ],
+                [
+                  -75.171981,
+                  39.909099
+                ],
+                [
+                  -75.17578,
+                  39.907152
+                ],
+                [
+                  -75.178318,
+                  39.904238
+                ],
+                [
+                  -75.17921,
+                  39.9008
+                ],
+                [
+                  -75.178318,
+                  39.897362
+                ],
+                [
+                  -75.17578,
+                  39.894448
+                ],
+                [
+                  -75.171981,
+                  39.892501
+                ],
+                [
+                  -75.1675,
+                  39.891817
+                ],
+                [
+                  -75.163019,
+                  39.892501
+                ],
+                [
+                  -75.15922,
+                  39.894448
+                ],
+                [
+                  -75.156682,
+                  39.897362
+                ],
+                [
+                  -75.15579,
+                  39.9008
+                ]
+              ]
+            ],
+            "type": "Polygon"
+          },
+          "minutes": 15
+        },
+        {
+          "geometry": {
+            "coordinates": [
+              [
+                [
+                  -75.144081,
+                  39.9008
+                ],
+                [
+                  -75.145863,
+                  39.907675
+                ],
+                [
+                  -75.15094,
+                  39.913504
+                ],
+                [
+                  -75.158538,
+                  39.917399
+                ],
+                [
+                  -75.1675,
+                  39.918766
+                ],
+                [
+                  -75.176462,
+                  39.917399
+                ],
+                [
+                  -75.18406,
+                  39.913504
+                ],
+                [
+                  -75.189137,
+                  39.907675
+                ],
+                [
+                  -75.190919,
+                  39.9008
+                ],
+                [
+                  -75.189137,
+                  39.893925
+                ],
+                [
+                  -75.18406,
+                  39.888096
+                ],
+                [
+                  -75.176462,
+                  39.884201
+                ],
+                [
+                  -75.1675,
+                  39.882834
+                ],
+                [
+                  -75.158538,
+                  39.884201
+                ],
+                [
+                  -75.15094,
+                  39.888096
+                ],
+                [
+                  -75.145863,
+                  39.893925
+                ],
+                [
+                  -75.144081,
+                  39.9008
+                ]
+              ]
+            ],
+            "type": "Polygon"
+          },
+          "minutes": 30
+        }
+      ],
+      "network_distance_m": 810.1,
+      "sidewalk_tag_coverage_pct": 41.0,
+      "snapshot_kind": "fixture",
+      "source": {
+        "coverage_end": null,
+        "coverage_start": null,
+        "hash_scope": "canonical fixture source descriptor; no OSM extract bytes are represented",
+        "license": "Open Database License (ODbL); fixture contains no extracted OSM features",
+        "notes": "Deterministic contract fixture only; run validation against a pinned five-mile OSM extract before promotion.",
+        "publisher": "OpenStreetMap contributors",
+        "retrieved_at_utc": "2026-08-01T00:00:00Z",
+        "sha256": "6e515744424305b997a43a991af0477e1188082b289c9bb19c69f35a83164057",
+        "source": "OpenStreetMap walking-network schema fixture",
+        "status": "estimated",
+        "url": "https://www.openstreetmap.org/copyright",
+        "version": "fixture-schema-1"
+      },
+      "status": "estimated",
+      "straight_distance_m": 628.0,
+      "target_kind": "representative transit access point",
+      "venue": "Lincoln Financial Field",
+      "venue_lat": 39.9008,
+      "venue_lon": -75.1675
+    },
+    "San Francisco": {
+      "accessibility_status": "not_measured",
+      "city": "San Francisco",
+      "crossing_tag_coverage_pct": 51.0,
+      "detour_ratio": 1.36,
+      "isochrones": [
+        {
+          "geometry": {
+            "coordinates": [
+              [
+                [
+                  -121.958692,
+                  37.4033
+                ],
+                [
+                  -121.959552,
+                  37.406738
+                ],
+                [
+                  -121.962004,
+                  37.409652
+                ],
+                [
+                  -121.965672,
+                  37.411599
+                ],
+                [
+                  -121.97,
+                  37.412283
+                ],
+                [
+                  -121.974328,
+                  37.411599
+                ],
+                [
+                  -121.977996,
+                  37.409652
+                ],
+                [
+                  -121.980448,
+                  37.406738
+                ],
+                [
+                  -121.981308,
+                  37.4033
+                ],
+                [
+                  -121.980448,
+                  37.399862
+                ],
+                [
+                  -121.977996,
+                  37.396948
+                ],
+                [
+                  -121.974328,
+                  37.395001
+                ],
+                [
+                  -121.97,
+                  37.394317
+                ],
+                [
+                  -121.965672,
+                  37.395001
+                ],
+                [
+                  -121.962004,
+                  37.396948
+                ],
+                [
+                  -121.959552,
+                  37.399862
+                ],
+                [
+                  -121.958692,
+                  37.4033
+                ]
+              ]
+            ],
+            "type": "Polygon"
+          },
+          "minutes": 15
+        },
+        {
+          "geometry": {
+            "coordinates": [
+              [
+                [
+                  -121.947383,
+                  37.4033
+                ],
+                [
+                  -121.949105,
+                  37.410175
+                ],
+                [
+                  -121.954008,
+                  37.416004
+                ],
+                [
+                  -121.961345,
+                  37.419899
+                ],
+                [
+                  -121.97,
+                  37.421266
+                ],
+                [
+                  -121.978655,
+                  37.419899
+                ],
+                [
+                  -121.985992,
+                  37.416004
+                ],
+                [
+                  -121.990895,
+                  37.410175
+                ],
+                [
+                  -121.992617,
+                  37.4033
+                ],
+                [
+                  -121.990895,
+                  37.396425
+                ],
+                [
+                  -121.985992,
+                  37.390596
+                ],
+                [
+                  -121.978655,
+                  37.386701
+                ],
+                [
+                  -121.97,
+                  37.385334
+                ],
+                [
+                  -121.961345,
+                  37.386701
+                ],
+                [
+                  -121.954008,
+                  37.390596
+                ],
+                [
+                  -121.949105,
+                  37.396425
+                ],
+                [
+                  -121.947383,
+                  37.4033
+                ]
+              ]
+            ],
+            "type": "Polygon"
+          },
+          "minutes": 30
+        }
+      ],
+      "network_distance_m": 909.8,
+      "sidewalk_tag_coverage_pct": 48.0,
+      "snapshot_kind": "fixture",
+      "source": {
+        "coverage_end": null,
+        "coverage_start": null,
+        "hash_scope": "canonical fixture source descriptor; no OSM extract bytes are represented",
+        "license": "Open Database License (ODbL); fixture contains no extracted OSM features",
+        "notes": "Deterministic contract fixture only; run validation against a pinned five-mile OSM extract before promotion.",
+        "publisher": "OpenStreetMap contributors",
+        "retrieved_at_utc": "2026-08-01T00:00:00Z",
+        "sha256": "6e515744424305b997a43a991af0477e1188082b289c9bb19c69f35a83164057",
+        "source": "OpenStreetMap walking-network schema fixture",
+        "status": "estimated",
+        "url": "https://www.openstreetmap.org/copyright",
+        "version": "fixture-schema-1"
+      },
+      "status": "estimated",
+      "straight_distance_m": 669.0,
+      "target_kind": "representative transit access point",
+      "venue": "Levi's Stadium",
+      "venue_lat": 37.4033,
+      "venue_lon": -121.97
+    },
+    "Seattle": {
+      "accessibility_status": "not_measured",
+      "city": "Seattle",
+      "crossing_tag_coverage_pct": 60.0,
+      "detour_ratio": 1.08,
+      "isochrones": [
+        {
+          "geometry": {
+            "coordinates": [
+              [
+                [
+                  -122.318279,
+                  47.5952
+                ],
+                [
+                  -122.319293,
+                  47.598638
+                ],
+                [
+                  -122.322181,
+                  47.601552
+                ],
+                [
+                  -122.326502,
+                  47.603499
+                ],
+                [
+                  -122.3316,
+                  47.604183
+                ],
+                [
+                  -122.336698,
+                  47.603499
+                ],
+                [
+                  -122.341019,
+                  47.601552
+                ],
+                [
+                  -122.343907,
+                  47.598638
+                ],
+                [
+                  -122.344921,
+                  47.5952
+                ],
+                [
+                  -122.343907,
+                  47.591762
+                ],
+                [
+                  -122.341019,
+                  47.588848
+                ],
+                [
+                  -122.336698,
+                  47.586901
+                ],
+                [
+                  -122.3316,
+                  47.586217
+                ],
+                [
+                  -122.326502,
+                  47.586901
+                ],
+                [
+                  -122.322181,
+                  47.588848
+                ],
+                [
+                  -122.319293,
+                  47.591762
+                ],
+                [
+                  -122.318279,
+                  47.5952
+                ]
+              ]
+            ],
+            "type": "Polygon"
+          },
+          "minutes": 15
+        },
+        {
+          "geometry": {
+            "coordinates": [
+              [
+                [
+                  -122.304958,
+                  47.5952
+                ],
+                [
+                  -122.306986,
+                  47.602075
+                ],
+                [
+                  -122.312761,
+                  47.607904
+                ],
+                [
+                  -122.321405,
+                  47.611799
+                ],
+                [
+                  -122.3316,
+                  47.613166
+                ],
+                [
+                  -122.341795,
+                  47.611799
+                ],
+                [
+                  -122.350439,
+                  47.607904
+                ],
+                [
+                  -122.356214,
+                  47.602075
+                ],
+                [
+                  -122.358242,
+                  47.5952
+                ],
+                [
+                  -122.356214,
+                  47.588325
+                ],
+                [
+                  -122.350439,
+                  47.582496
+                ],
+                [
+                  -122.341795,
+                  47.578601
+                ],
+                [
+                  -122.3316,
+                  47.577234
+                ],
+                [
+                  -122.321405,
+                  47.578601
+                ],
+                [
+                  -122.312761,
+                  47.582496
+                ],
+                [
+                  -122.306986,
+                  47.588325
+                ],
+                [
+                  -122.304958,
+                  47.5952
+                ]
+              ]
+            ],
+            "type": "Polygon"
+          },
+          "minutes": 30
+        }
+      ],
+      "network_distance_m": 766.8,
+      "sidewalk_tag_coverage_pct": 55.0,
+      "snapshot_kind": "fixture",
+      "source": {
+        "coverage_end": null,
+        "coverage_start": null,
+        "hash_scope": "canonical fixture source descriptor; no OSM extract bytes are represented",
+        "license": "Open Database License (ODbL); fixture contains no extracted OSM features",
+        "notes": "Deterministic contract fixture only; run validation against a pinned five-mile OSM extract before promotion.",
+        "publisher": "OpenStreetMap contributors",
+        "retrieved_at_utc": "2026-08-01T00:00:00Z",
+        "sha256": "6e515744424305b997a43a991af0477e1188082b289c9bb19c69f35a83164057",
+        "source": "OpenStreetMap walking-network schema fixture",
+        "status": "estimated",
+        "url": "https://www.openstreetmap.org/copyright",
+        "version": "fixture-schema-1"
+      },
+      "status": "estimated",
+      "straight_distance_m": 710.0,
+      "target_kind": "representative transit access point",
+      "venue": "Lumen Field",
+      "venue_lat": 47.5952,
+      "venue_lon": -122.3316
+    }
+  },
+  "contract_version": "0.3.0",
+  "generated_at_utc": "2026-08-01T00:00:00Z",
+  "radius_miles": 5.0,
+  "schema": {
+    "ada_policy": "Missing OSM tags never imply ADA accessibility",
+    "observed_promotion_gate": "Pinned extract hash, connected walking graph, and validated path are required",
+    "required_city_fields": [
+      "accessibility_status",
+      "city",
+      "crossing_tag_coverage_pct",
+      "detour_ratio",
+      "isochrones",
+      "network_distance_m",
+      "sidewalk_tag_coverage_pct",
+      "snapshot_kind",
+      "source",
+      "status",
+      "straight_distance_m",
+      "target_kind",
+      "venue",
+      "venue_lat",
+      "venue_lon"
+    ]
+  },
+  "snapshot_kind": "osm_walking_fixture",
+  "source": {
+    "coverage_end": null,
+    "coverage_start": null,
+    "hash_scope": "canonical fixture source descriptor; no OSM extract bytes are represented",
+    "license": "Open Database License (ODbL); fixture contains no extracted OSM features",
+    "notes": "Deterministic contract fixture only; run validation against a pinned five-mile OSM extract before promotion.",
+    "publisher": "OpenStreetMap contributors",
+    "retrieved_at_utc": "2026-08-01T00:00:00Z",
+    "sha256": "6e515744424305b997a43a991af0477e1188082b289c9bb19c69f35a83164057",
+    "source": "OpenStreetMap walking-network schema fixture",
+    "status": "estimated",
+    "url": "https://www.openstreetmap.org/copyright",
+    "version": "fixture-schema-1"
+  },
+  "status": "estimated"
+}

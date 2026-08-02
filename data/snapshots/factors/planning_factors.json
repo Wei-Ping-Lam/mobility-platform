@@ -1,0 +1,127 @@
+{
+  "artifact_sha256": "ecd00eced4fc979b7634fb445bac85d154b0461873eba6f6f21593dabecc8695",
+  "contract_version": "0.3.0",
+  "factors": {
+    "bus_operation_usd_per_vehicle_hour": {
+      "base": 180.0,
+      "basis": "Order-of-magnitude range; replace with agency NTD operating expense divided by vehicle revenue hours.",
+      "high": 300.0,
+      "low": 100.0,
+      "source_ids": [
+        "fta_ntd"
+      ],
+      "status": "estimated",
+      "unit": "2026 planning USD / vehicle-hour"
+    },
+    "diesel_shuttle_kg_co2_per_vehicle_mile": {
+      "base": 1.6967,
+      "basis": "EPA 10.180 kg CO2/gallon divided by 8/6/4 mpg sensitivity assumptions; excludes upstream emissions.",
+      "high": 2.545,
+      "low": 1.2725,
+      "source_ids": [
+        "epa"
+      ],
+      "status": "scenario",
+      "unit": "kg CO2 / vehicle-mile"
+    },
+    "passenger_vehicle_kg_co2e_per_vehicle_mile": {
+      "base": 0.393,
+      "basis": "EPA national typical gasoline vehicle is the base; low/high are planning sensitivity bounds.",
+      "high": 0.55,
+      "low": 0.25,
+      "source_ids": [
+        "epa"
+      ],
+      "status": "scenario",
+      "unit": "kg CO2e / vehicle-mile"
+    },
+    "raised_crosswalk_usd_each": {
+      "base": 6000.0,
+      "basis": "Midpoint calculated from FHWA's published $4,000-$8,000 typical range; excludes right-of-way.",
+      "high": 8000.0,
+      "low": 4000.0,
+      "source_ids": [
+        "fhwa"
+      ],
+      "status": "derived",
+      "unit": "published USD / installation"
+    },
+    "transit_priority_capital_usd_per_route_mile": {
+      "base": 5000000.0,
+      "basis": "Conceptual allowance only; local scope and Standard Cost Categories are required before investment use.",
+      "high": 15000000.0,
+      "low": 1000000.0,
+      "source_ids": [
+        "fta_ccd"
+      ],
+      "status": "estimated",
+      "unit": "2026 planning USD / route-mile"
+    }
+  },
+  "generated_at_utc": "2026-08-01T00:00:00Z",
+  "policy": {
+    "currency": "Values are not automatically escalated; registry version must state the planning year",
+    "range_order": "low <= base <= high",
+    "use": "Planning sensitivity only; not engineering estimates or a local emissions inventory"
+  },
+  "snapshot_kind": "planning_factor_registry",
+  "sources": {
+    "epa": {
+      "coverage_end": null,
+      "coverage_start": null,
+      "hash_scope": "canonical pinned citation descriptor; not remote page bytes",
+      "license": "U.S. federal government public information",
+      "notes": "EPA publishes 0.393 kg CO2e/mile for a typical gasoline passenger vehicle and 10.180 kg CO2/gallon diesel.",
+      "publisher": "U.S. Environmental Protection Agency",
+      "retrieved_at_utc": "2026-08-01T00:00:00Z",
+      "sha256": "547f13ab74c5be688cfe60c1427253a8d65988f6c5821b92a415cd2d0a37a95c",
+      "source": "EPA Greenhouse Gas Equivalencies Calculator methodology",
+      "status": "derived",
+      "url": "https://www.epa.gov/energy/greenhouse-gas-equivalencies-calculator-calculations-and-references",
+      "version": "2024-methodology"
+    },
+    "fhwa": {
+      "coverage_end": null,
+      "coverage_start": null,
+      "hash_scope": "canonical pinned citation descriptor; not remote page bytes",
+      "license": "U.S. Department of Transportation public information",
+      "notes": "Published ranges include $4,000-$8,000 per raised crosswalk and broader active-transport references.",
+      "publisher": "Federal Highway Administration",
+      "retrieved_at_utc": "2026-08-01T00:00:00Z",
+      "sha256": "a6bbb028781862297094ab8862cfbebb76f0cd2026da2b89e81b6ec3683d2532",
+      "source": "FHWA Traffic Calming ePrimer, Module 3",
+      "status": "derived",
+      "url": "https://highways.dot.gov/safety/speed-management/traffic-calming-eprimer/module-3-part-1",
+      "version": "accessed-2026-08-01"
+    },
+    "fta_ccd": {
+      "coverage_end": null,
+      "coverage_start": null,
+      "hash_scope": "canonical pinned citation descriptor; not remote page bytes",
+      "license": "U.S. Department of Transportation public data",
+      "notes": "FTA states that the database supports conceptual, order-of-magnitude estimates, not detailed estimates.",
+      "publisher": "Federal Transit Administration",
+      "retrieved_at_utc": "2026-08-01T00:00:00Z",
+      "sha256": "cebef2170250e56ba8e8fc8072252fedb0b1401cc4a5e990170330446cff28e6",
+      "source": "FTA Capital Cost Database",
+      "status": "derived",
+      "url": "https://www.transit.dot.gov/capital-cost-database",
+      "version": "2024-09-update"
+    },
+    "fta_ntd": {
+      "coverage_end": null,
+      "coverage_start": null,
+      "hash_scope": "canonical pinned citation descriptor; not remote page bytes",
+      "license": "U.S. Department of Transportation public data",
+      "notes": "Planning ranges must be calibrated against agency operating expense and vehicle revenue hour records.",
+      "publisher": "Federal Transit Administration",
+      "retrieved_at_utc": "2026-08-01T00:00:00Z",
+      "sha256": "33080b5952128fe033ead3d0ed2892fea15592ffc9165dfe78c0a9171ffb4619",
+      "source": "2024 National Transit Database annual data products",
+      "status": "derived",
+      "url": "https://www.transit.dot.gov/ntd",
+      "version": "report-year-2024"
+    }
+  },
+  "status": "scenario"
+}
