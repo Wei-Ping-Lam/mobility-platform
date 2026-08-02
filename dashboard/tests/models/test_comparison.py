@@ -1,0 +1,88 @@
+from __future__ import annotations
+
+import pandas as pd
+
+from dashboard.domain.comparison import build_city_comparison
+from dashboard.domain.scoring import DEFAULT_WEIGHTS
+
+
+def _metrics() -> pd.DataFrame:
+    return pd.DataFrame(
+        [
+            {
+                "city": "Complete",
+                "venue": "A",
+                "score": 70,
+                "rankable": True,
+                "transit_score": 80,
+                "transit_status": "observed",
+                "heat_score": 60,
+                "heat_status": "derived",
+                "uhi_score": 65,
+                "uhi_status": "derived",
+                "access_score": 70,
+                "access_status": "derived",
+            },
+            {
+                "city": "Partial",
+                "venue": "B",
+                "score": 75,
+                "rankable": False,
+                "transit_score": 90,
+                "transit_status": "partial",
+                "heat_score": 70,
+                "heat_status": "derived",
+                "uhi_score": 75,
+                "uhi_status": "derived",
+                "access_score": 80,
+                "access_status": "derived",
+            },
+            {
+                "city": "Missing",
+                "venue": "C",
+                "score": 50,
+                "rankable": False,
+                "transit_score": None,
+                "transit_status": "unavailable",
+                "heat_score": 50,
+                "heat_status": "derived",
+                "uhi_score": 50,
+                "uhi_status": "derived",
+                "access_score": 50,
+                "access_status": "derived",
+            },
+        ]
+    )
+
+
+def test_comparison_keeps_strict_ranking_separate_from_all_city_screening():
+    frame = build_city_comparison(_metrics(), [], [], weights=DEFAULT_WEIGHTS["balanced"])
+    assert len(frame) == 3
+    assert frame.loc[frame["city"] == "Complete", "strict_rank"].iloc[0] == 1
+    assert frame.loc[frame["city"] == "Partial", "strict_rank"].isna().all()
+    assert frame["screening_score"].notna().all()
+    assert set(frame["screening_order"].dropna().astype(int)) == {1, 2, 3}
+
+
+def test_partial_and_missing_components_create_honest_ranges_not_silent_zeroes():
+    frame = build_city_comparison(_metrics(), [], [], weights=DEFAULT_WEIGHTS["balanced"]).set_index("city")
+    assert frame.loc["Complete", "screening_low"] == frame.loc["Complete", "screening_high"]
+    assert frame.loc["Partial", "screening_low"] < frame.loc["Partial", "screening_high"]
+    assert frame.loc["Missing", "screening_low"] < frame.loc["Missing", "screening_high"]
+    assert frame.loc["Partial", "screening_confidence"] != "high"
+    assert "transit" in frame.loc["Missing", "strict_exclusion_reason"]
+
+
+def test_event_summary_uses_only_the_representative_match_recommendations():
+    access = [
+        {"city": "Complete", "match_id": "A-1", "status": "scenario", "peak_demand_per_hour": 1000, "residual_passengers": 500},
+        {"city": "Complete", "match_id": "A-2", "status": "scenario", "peak_demand_per_hour": 1400, "residual_passengers": 900},
+    ]
+    recommendations = [
+        {"city": "Complete", "match_id": "A-1", "intervention": "Wrong match", "gap_resolved_passengers": 500, "cost_per_passenger": 1},
+        {"city": "Complete", "match_id": "A-2", "intervention": "Right match", "gap_resolved_passengers": 700, "cost_per_passenger": 2},
+    ]
+    frame = build_city_comparison(_metrics().iloc[:1], access, recommendations).iloc[0]
+    assert frame["representative_match_id"] == "A-2"
+    assert frame["top_intervention"] == "Right match"
+    assert frame["qualified_matches"] == 2
