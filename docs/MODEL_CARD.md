@@ -1,66 +1,76 @@
-# Mobility Readiness Model Card
+# Transportation model card
+
+## Version and maturity
+
+- Contract: `0.3.0`
+- Intended release: competition-ready planning MVP
+- Current state: contracts and Rice evidence are implemented; the public-source
+  pipelines and contract-0.3 transportation models are pending integration
+- Decision authority: advisory only; agencies retain operational and engineering
+  responsibility
 
 ## Intended use
 
-The platform supports pre-event comparison and intervention discussion for FIFA
-host-city planners, transit agencies, venue operators, and residents. It is not
-a certified safety model, traffic forecast, or fan-origin model.
+Host-city planners, transit agencies, venue operators, and residents can compare
+match-specific access evidence and explore transportation packages. The model is
+appropriate for screening, scenario comparison, evidence-gap discovery, and
+order-of-magnitude planning.
 
-## Evidence dimensions
+It is not an operational traffic model, ridership forecast, accessibility or
+safety audit, certified emissions inventory, engineering cost estimate, or
+causal evaluation.
 
-| Dimension | Primary evidence | Interpretation |
-| --- | --- | --- |
-| Transit | Pinned GTFS venue snapshot | Stops, routes, scheduled service, calendar validity, event-window service, and venue distance |
-| Heat safety | Host-station weather | Event-window apparent heat and exposure |
-| UHI safety | UHI points near venue | Localized heat-island intensity |
-| Venue support | POI points near venue | Amenity-density proxy, not a sidewalk or accessibility audit |
+## Inputs and outputs
 
-## Score behavior
+| Layer | Inputs | Outputs | Evidence interpretation |
+| --- | --- | --- | --- |
+| Supplied context | Six `Rice WC Hack/` datasets | Activity, weather, UHI, POI, origin, and spending summaries | Noisy educational evidence; activity is not attendance |
+| Match | Pinned official FIFA schedule | Match, venue, local kickoff, stage, capacity | Official context after source gate passes |
+| Transit | Pinned official agency GTFS | Departures, service span, route/stop evidence, capacity range | Scheduled supply, not observed operations |
+| Walking | Pinned OSM network | Network distance, isochrones, detour, tag coverage | Planning network; missing tags remain unknown |
+| Factors | Pinned EPA/FTA/FHWA references | Emissions and cost ranges | National/order-of-magnitude assumptions |
+| Models | All eligible layers plus editable assumptions | Hourly movement, access gap, package outcomes, tradeoffs | Scenario evidence unless validation says otherwise |
 
-The headline score is a weighted average of the four dimensions. The dashboard
-defaults to the supplied-data lens: Heat 35%, UHI 25%, Venue Support 40%, and
-Transit 0%. This supports a comparison from the Rice collection while the UI
-states that transit has been excluded. The Balanced profile remains available:
-Transit 35%, Heat 20%, UHI 15%, Venue Support 30%.
+## Output semantics
 
-Observed and derived metrics participate in strict mode. Estimated metrics are
-only included after the user opts in. Missing data is never silently converted
-to an expert estimate. A partial weighted-available MRS remains visible for
-auditability, but the Executive `rankable` flag is false unless every
-non-zero-weight core dimension is evidence-eligible.
+- `MovementScenario` is low/base/high attendance and hourly flow with an explicit
+  uncertainty type.
+- `AccessGapResult` reports scenario demand, scheduled capacity range, residual
+  passengers, network walk distance, service span, and route heat exposure.
+- `InterventionOutcome` reports gap resolved, venue-area vehicle trips, net VMT,
+  net CO2e, heat exposure avoided, and costs as ranges where defined.
+- `InvestmentRecommendation` identifies a candidate intervention, rationale,
+  cost-effectiveness, lead-time band, responsible actor, dependencies, and
+  status. It is not an agency commitment.
+- MRS is a secondary sensitivity-tested index, not the primary decision result.
 
-## Demand model
+## Validation and uncertainty
 
-The demand baseline uses 2022-2023 seasonal and weekday behavior, with rolling
-2023 and 2024 holdouts compared with a 364-day seasonal-naive comparator where
-coverage permits. FIFA event bands are scenario ranges. They should not be
-described as calibrated confidence intervals unless the QA report demonstrates
-interval coverage.
+Planning ranges reflect assumptions and factor ranges; they are not confidence
+intervals unless empirical coverage is separately demonstrated. Baseline demand
+language becomes “validated” only after both annual holdouts beat the
+seasonal-naive comparator. Monotonic, reconciliation, physical-accounting,
+cross-city differentiation, source-integrity, and download-reproduction gates
+are defined in `VALIDATION.md`.
 
-## Traffic and emissions proxy
+## Current evidence limitations
 
-The intervention model converts user-selected shuttle and parking capacity into
-potentially shifted passenger trips. Vehicle occupancy, trip distance, bus
-capacity, uptake, and emissions factors are explicit editable assumptions. The
-model does not observe road congestion, queue lengths, signal performance, or
-actual fan mode choice.
+- Current GTFS values are unavailable for strict scoring until eligible pinned
+  snapshots are integrated.
+- The present event-demand band is generic and did not beat its comparator in
+  both validation years; it remains a planning scenario.
+- Boston lacks eligible two-mile Rice UHI coverage; Miami and New York/New
+  Jersey use weather stations beyond the current 30-mile evidence rule.
+- Dallas/Houston and Los Angeles/San Francisco have combined supplied markets
+  requiring visible partial allocation.
+- Spatial jitter in supplied data limits parcel- or route-level interpretation.
+- OSM tag presence cannot establish sidewalk condition, crossing safety, or ADA
+  compliance.
+- GTFS cannot establish actual service delivery, ridership, crowding, or delay.
+- National cost and emissions factors do not replace local fleet, procurement,
+  labor, design, or construction evidence.
 
-## Economic activity scenario
+## Responsible presentation
 
-The economic range uses the median observed daily commercial spend from
-2022-2024 and explicit 2%/5%/10% low/base/high uplift assumptions over the event
-window. It is a scenario for planning discussion, not causal attribution,
-stadium attendance, or a local-GDP forecast.
-
-## Known limitations
-
-- Combined source markets require partial allocation.
-- The supplied-data lens is not a complete transportation-readiness score
-  because it deliberately excludes transit service evidence.
-- `CUSTOMER_HOME_CITY` describes general consumer mobility, not ticketed fans.
-- GTFS availability and agency coverage vary by city.
-- POI density does not establish safe or accessible pedestrian routes.
-- The platform does not measure roadway congestion, ridership, parking occupancy,
-  signal performance, crashes, or pedestrian counts.
-- The supplied datasets are noisy educational data and should not be treated as
-  certified real-world assessments.
+Use the exact metric names and conditions in `EVIDENCE_TO_CLAIM_MATRIX.md`.
+Always disclose source status and at least one decision-relevant limitation.

@@ -1,138 +1,119 @@
-# FIFA 2026 Host City Mobility Readiness Platform
+# FIFA 2026 Host City Transportation Decision Platform
 
-## Track 1: Transportation & Access
+## Submission metadata — blocking before submission
 
-**Team:** [add team metadata]
-**Contact:** [add contact metadata]
-**Submission date:** 2026
+- **Team:** `[TEAM NAME REQUIRED]`
+- **Primary contact:** `[NAME AND EMAIL REQUIRED]`
+- **Submission date:** `[DATE REQUIRED]`
 
-### The decision problem
+These placeholders are an explicit release blocker. They must be supplied by
+the team; contributors must not invent names or contact details.
 
-FIFA 2026 host cities need a way to compare venue access and identify where
-first/last-mile investments, heat protections, and event transport capacity are
-most urgent. A useful tool must expose evidence quality as clearly as it shows
-the result: retail visits are not stadium attendance, a GTFS feed is not
-ridership, and a scenario is not a forecast.
+## Track 1 decision problem
 
-### The solution
+Host cities need to identify where match-day access demand may exceed modeled
+transport capacity and compare packages that could address the gap. The result
+must show physical quantities, cost, lead time, evidence quality, and tradeoffs
+without confusing commercial activity with match attendance or scheduled
+service with actual operations.
 
-The platform is an evidence-first Streamlit decision-support tool for the 11
-US host cities. It treats the six datasets in the local `Rice WC Hack/`
-collection as the canonical supplied evidence and can add a separately pinned
-GTFS snapshot and produces compact, reproducible artifacts through an offline
-ETL. Decision-makers can compare cities, inspect venue-centered evidence, test
-transport interventions, and download the exact metrics and assumptions shown
-on screen.
+## Proposed competition-ready solution
 
-The application has three modes:
+The platform is an evidence-backed Streamlit decision tool for all 11 US host
+cities. It keeps the six `Rice WC Hack/` datasets as canonical supplied context
+and uses separately pinned FIFA, GTFS, OpenStreetMap, EPA, FTA, and FHWA/PBIC
+sources for match, network, service, emissions, and planning-cost evidence.
 
-1. **Executive**: an evidence-gated city comparison, venue map, MRS table,
-   first/last-mile gap indicators, and priority evidence gaps.
-2. **Explorer**: historical commercial-activity demand proxies, low/base/high
-   event scenarios, transit and climate evidence, editable capacity controls,
-   pressure/emissions proxies, and a commercial-activity scenario range.
-3. **Methods & QA**: dataset coverage, source and artifact manifests, formula
-   definitions, validation metrics, assumptions, statuses, and downloads.
+For a selected match, the release design will:
 
-### Evidence and analytics
+1. create transparent low/base/high hourly arrival and departure scenarios;
+2. compare peak passengers with scheduled transit-capacity ranges;
+3. report network walking distance, service span, heat exposure, and residual
+   passenger gap;
+4. compare Baseline, Operational Package, and Capital Package outcomes; and
+5. show Pareto tradeoffs across gap resolved, cost per passenger, net CO2e,
+   lead time, and evidence quality.
 
-The headline Mobility Readiness Score (MRS) is a weighted average of four
-venue-centered components:
+MRS remains available as a secondary, sensitivity-tested policy index. Physical
+gaps and intervention outcomes—not rank—lead the decision.
 
-- transit access from the pinned GTFS snapshot;
-- heat safety from host-station weather and a NOAA heat-index calculation;
-- UHI safety from urban-heat points near the venue; and
-- venue-support density from POIs within one mile.
+## Current implementation versus release acceptance
 
-The default supplied-data profile is 35% heat, 25% UHI, and 40% venue support;
-transit has zero weight and the UI explicitly warns that this is not a complete
-transit-readiness comparison. The Balanced profile (35% transit, 20% heat, 15%
-UHI, and 30% venue support), other named profiles, and custom weights remain
-available once supplemental transit evidence is present. Weights are normalized
-and every component is clipped to the 0-100 scale.
+### Verified now
 
-An incomplete city keeps a weighted-available partial MRS for auditability, but
-its explicit `rankable` flag is false until every non-zero-weight core
-component is evidence-eligible. Estimated values require an explicit opt-in.
-No missing feed or metric silently becomes an expert score.
+- Contract `0.3.0` defines versioned source, match, movement, access-gap,
+  intervention, and recommendation records.
+- The offline Rice ETL produces compact artifacts with QA, coverage, status,
+  provenance, and hashes; the app does not scan raw data at startup.
+- Combined source markets, missing weather coverage, and unavailable transit
+  evidence remain visible rather than becoming silent estimates.
+- The current demand implementation is compared with seasonal-naive. It won all
+  11 city holdouts in 2024 and none in 2023, so it remains a planning scenario.
+- Methods & QA exposes current formulas, assumptions, validation, and downloads.
 
-The demand baseline uses 2022-2024 data with a 2022-2023 seasonal/weekday
-profile and a 2024 holdout report. The event range is a scenario band, not a
-confidence interval. Traffic results are labeled pressure proxies: capacity,
-potential mode shift, residual vehicle trips, vehicle-kilometers, and an
-emissions range. They do not claim to measure roadway congestion, queues, or
-actual fan mode choice.
+### Required before the competition-ready claim
 
-Economic activity is also a scenario. It uses observed 2022-2024 commercial
-spend as a baseline and explicit low/base/high uplift assumptions. It is not
-causal attribution, stadium attendance, or a forecast of local GDP.
+- Pin and validate the official match schedule for all US-hosted matches.
+- Pin event-valid GTFS feeds and five-mile OSM networks for all 11 cities.
+- Pin cited emissions and cost-factor registries.
+- Pass hourly reconciliation, access monotonicity, network, intervention
+  accounting, cross-city differentiation, UI, and download-reproduction gates.
+- Integrate city-specific recommendation and priority-corridor views.
+- Replace the team/contact placeholders above.
 
-### Why this creates impact
+Until those gates pass, match-specific access gaps, intervention benefits, and
+investment recommendations are capabilities under integration—not findings.
 
-The tool converts a broad sustainability question into actionable comparisons:
+## Data and analytical reasoning
 
-- agencies can see where venue transit evidence is weak or unavailable;
-- host-city teams can identify heat-exposed access gaps and test capacity;
-- residents can inspect the assumptions behind intervention benefits; and
-- planners can preserve the ETL, manifests, validation reports, and contracts
-  for post-tournament mobility and resilience work.
+Rice commercial visits and spending provide temporal and economic context;
+they are not match attendance or ticket-holder behavior. FIFA provides match
+context. Event-valid GTFS supplies scheduled departures and service span. OSM
+supports reproducible network distances and route coverage while leaving absent
+sidewalk/accessibility tags unknown. Rice weather/UHI supports heat context.
+EPA/FTA/FHWA references supply versioned planning ranges.
 
-The same workflow supports future event planning and ordinary high-demand
-days. Its explicit provenance, partial-market allocation, pinned feed hashes,
-and downloadable scenarios make follow-up measurement possible after 2026.
+The model reports scheduled capacity as a range because vehicle capacity and
+utilization are assumptions. It reconciles hourly flows to attendance scenarios
+and preserves uncertainty. The intervention ledger includes added service VMT
+and emissions, upstream park-and-ride travel, distance-limited bike uptake, and
+pedestrian/cooling effects only when a documented outcome changes. Arrival
+spreading shifts the peak without receiving an automatic emissions credit.
 
-### Data provenance
+## Impact, feasibility, and legacy
 
-The offline ETL processes all six datasets under `Rice WC Hack/`:
+The decision value is specificity: a city can see the gap, candidate actor,
+dependencies, order-of-magnitude cost, lead time, and modeled outcome range.
+Residents can inspect the same assumptions and evidence status. Operational and
+capital packages make near-term and longer-term choices comparable without
+claiming one universal optimum.
 
-| Dataset | Derived output | Use |
-| --- | --- | --- |
-| `store-visits-rice` | daily and category-level visits | demand proxy and validation |
-| `daily-weather-rice` | city-day weather | heat exposure |
-| `urban-heat-index-rice` | city and venue-buffer UHI | heat resilience |
-| `spend-patterns-rice` | visitor-origin and spend summaries | origin context |
-| `core-poi-geometry-rice` | venue-area POI counts | venue-support proxy |
-| `daily-spend-brand-and-state-rice` | city/state daily activity | economic scenario baseline |
+The contracts and offline source-refresh process are event-agnostic. Cities can
+reuse them for concerts, ordinary high-demand days, heat planning, service
+reviews, and post-event monitoring. Scenario estimates can later be compared
+with observed counts, but the platform does not perform causal attribution.
 
-The ETL records partition counts, row counts, hashes, dates, duplicate keys,
-invalid values, coordinate checks, nulls, and known weather sentinels. The
-documented missing weather partition is surfaced as partial coverage. Combined
-Dallas/Houston and Los Angeles/San Francisco source markets use explicit equal
-allocation and remain visibly partial rather than being assigned by substring.
+## Visualization and communication
 
-GTFS snapshots record URL, fetch time, content hash, agency, required files,
-calendar validity, service span, event-window departures, stop counts, route
-counts, venue coordinates, nearest-stop distance, and feed status. A valid
-zero-service score remains observed zero; a failed feed remains unavailable.
+The release Executive view answers where, why, what investment, what modeled
+outcome, at what cost/lead time, and with what confidence. Explorer combines
+hourly bands with routes, stops, network isochrones, UHI, POIs, and scenario
+tradeoffs. Methods & QA maps every headline metric to its contract field,
+source, hash, factor, assumptions, and test status. Major charts require table
+equivalents and exact downloads.
 
-### Demonstration script
+Use [DEMO_SCRIPT.md](docs/DEMO_SCRIPT.md) and
+[EVIDENCE_TO_CLAIM_MATRIX.md](docs/EVIDENCE_TO_CLAIM_MATRIX.md) for the final
+presentation. Current run-specific values must come from the integrated app and
+release evidence record, not this narrative.
 
-1. Open **Executive** and explain why gray/incomplete cities remain visible but
-   are not ranked.
-2. Select a city in **Explorer** and distinguish observed evidence from the
-   modeled event range.
-3. Set shuttle, park-and-ride, bike, and pedestrian controls to zero, then
-   increase them and show the nonnegative capacity, residual-pressure, and
-   emissions changes.
-4. Open **Methods & QA** and download the city metrics and manifest. Show that
-   the displayed data, statuses, formulas, and assumptions are reproducible.
+## Responsible limits
 
-### Limits and responsible interpretation
-
-- The supplied data are noisy, transformed educational data; results are
-  methodology demonstrations rather than certified city assessments.
-- Retail visits and commercial spend are not ticketed-fan observations.
-- GTFS describes scheduled service and stop proximity, not ridership,
-  reliability, accessibility, or congestion.
-- POI density does not establish a safe, shaded, or ADA-compliant route.
-- Equal allocation of combined markets is a transparent partial-evidence
-  assumption, not a city-specific measurement.
-- The platform does not include roadway network, signal, parking occupancy,
-  crash, emissions-monitor, or pedestrian-count data.
-
-The authoritative implementation references are
-[`dashboard/README.md`](dashboard/README.md),
-[`docs/MODEL_CARD.md`](docs/MODEL_CARD.md), and
-[`docs/VALIDATION.md`](docs/VALIDATION.md). The Methods & QA view is the
-source of current run-specific numbers; this narrative intentionally avoids
-hard-coded rankings and unsupported outcome claims.
+- The educational Rice datasets contain noise and spatial jitter.
+- The platform does not observe match attendance, fan origins, actual mode
+  choice, service reliability, queues, crashes, or roadway performance.
+- GTFS describes schedules; OSM tags do not certify route condition,
+  accessibility, or safety.
+- Emissions and costs are planning ranges, not a local fleet inventory,
+  engineering estimate, bid, or funding commitment.
+- Scenario differences are not observed outcomes or causal effects.

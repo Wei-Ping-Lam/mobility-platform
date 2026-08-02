@@ -17,6 +17,13 @@
 
 ## Current platform contract
 
+The shared interface version is `0.3.0`. It defines `SourceReference`,
+`MatchEvent`, `MovementScenario`, `AccessGapResult`, `InterventionPackage`,
+`InterventionOutcome`, and `InvestmentRecommendation`. Those definitions are
+release interfaces, not proof that supplemental sources or transportation
+results have been integrated. Current and target behavior are separated in
+`docs/VALIDATION.md`.
+
 The canonical supplied-data root is the repository-local `Rice WC Hack/`
 directory. It contains all six datasets below, remains read-only and untracked,
 and is the source named in derived metric provenance. GTFS is a separate,
@@ -39,6 +46,22 @@ authoritative over the approximate inventory figures below.
 
 The source data are noisy educational data. Store visits and commercial spend
 are mobility/economic proxies, not stadium attendance or ticketed-fan behavior.
+
+## Supplemental release evidence
+
+FIFA schedule, agency GTFS, OpenStreetMap networks, and EPA/FTA/FHWA factor
+references are not part of the Rice collection. They are eligible only after an
+offline pipeline records publisher, URL, retrieval time, version, license,
+coverage, evidence status, and SHA-256. Their intended uses and current
+integration status are listed in `docs/SOURCE_REGISTER.md`.
+
+- FIFA supplies match context, not attendance observations.
+- GTFS supplies scheduled service, not delivered service, ridership, crowding,
+  or reliability.
+- OSM supports network planning; missing tags stay unknown and do not establish
+  accessibility or route safety.
+- EPA/FTA/FHWA inputs are planning factors and conceptual costs, not local
+  inventories, engineering estimates, or bids.
 
 ## Overview
 

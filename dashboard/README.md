@@ -1,104 +1,97 @@
-# FIFA 2026 Host City Mobility Readiness Platform
+# FIFA 2026 Host City Transportation Decision Platform
 
-Evidence-first Streamlit dashboard for comparing venue access, heat exposure,
-transit evidence, demand pressure, and transparent intervention scenarios across
-the 11 U.S. FIFA 2026 host cities.
+Streamlit planning tool for the 11 US host cities. The competition-ready design
+compares match-specific access gaps and transportation packages while exposing
+source quality, assumptions, uncertainty, cost, and implementation constraints.
 
-## Run the dashboard
+## Implementation status
 
-The dashboard reads compact derived artifacts. It does not scan raw datasets at
-startup.
+Contract `0.3.0` is frozen. The current branch implements the Rice evidence
+pipeline, evidence-gated MRS, generic planning scenarios, and Methods & QA
+downloads. The following are **release targets pending workstream integration**:
+
+- pinned official FIFA match schedule;
+- event-valid agency GTFS snapshots;
+- pinned five-mile OSM walking networks;
+- cited EPA/FTA/FHWA factor registries;
+- match-specific hourly movement and physical access gaps;
+- city-specific intervention accounting and Pareto recommendations; and
+- priority-corridor and three-package comparison views.
+
+Do not demonstrate those targets as completed until `docs/VALIDATION.md` has a
+passing release evidence record.
+
+## Run locally
+
+The dashboard reads compact artifacts and makes no startup network request.
 
 ```powershell
 $env:MOBILITY_DATA_ROOT = "C:\path\to\Rice WC Hack"
 python -m dashboard.pipeline.etl.build --data-root $env:MOBILITY_DATA_ROOT
-python dashboard/fetch_gtfs.py --output data
 python -m streamlit run dashboard/app.py
 ```
 
-If the ETL has not been run, the app can display legacy checked-in cache data,
-but it will show compatibility warnings and strict rankings will be limited.
+Public-source refresh commands are owned by their pipelines and must run
+offline before dashboard launch. A URL or legacy GTFS score is not eligible
+evidence without the required version, coverage, license, timestamp, and hash.
 
-## Views
+## Current product behavior
 
-### Executive
+- **Executive:** venue map and evidence-gated Rice comparison. The default Rice
+  lens excludes transit and is not a complete transportation ranking.
+- **Explorer:** commercial-activity baseline, generic event planning band,
+  climate/transit statuses, and current pressure/cost proxies.
+- **Methods & QA:** coverage, formulas, assumptions, holdout validation,
+  manifests, statuses, and downloads.
 
-- Evidence-gated readiness map and ranking.
-- Actual stadium coordinates.
-- Priority city cards and gap summaries.
-- Observed, derived, partial, estimated, unavailable, and scenario badges.
+The current demand band is a planning scenario. Commercial visits are not match
+attendance. GTFS is scheduled-service evidence, not ridership or reliability.
+Current pressure outputs do not measure roadway congestion.
 
-### Explorer
+## Competition-ready behavior
 
-- City-level demand baseline and World Cup scenario range.
-- Venue-level transit and climate comparison.
-- Shuttle, bike-share, park-and-ride, and pedestrian scenario controls.
-- Potential mode shift, residual vehicle pressure, emissions proxy, and cost.
-- Downloadable scenario JSON.
+After all release gates pass:
 
-### Methods & QA
+- **Executive** leads with match, priority corridor, peak passenger gap,
+  candidate investment, modeled outcome range, planning cost, lead time, and
+  evidence quality. MRS is secondary.
+- **Explorer** shows hourly movement, GTFS routes/stops, OSM isochrones, Rice
+  heat/POI layers, and Baseline/Operational/Capital package comparisons.
+- **Methods & QA** traces every headline number to a contract field, formula,
+  source record, factor, validation result, and exact download.
 
-- Artifact manifest and freshness.
-- Dataset coverage by city.
-- Formula and assumption register.
-- Demand holdout validation.
-- City-metrics and manifest downloads.
+## Canonical supplied data
 
-## Offline ETL outputs
+All six supplied datasets are under local, read-only `Rice WC Hack/`:
 
-The canonical source root is the local, read-only `Rice WC Hack/` directory.
-The ETL consumes all six supplied datasets from that collection:
-
-| Artifact | Source |
+| Dataset | Platform use |
 | --- | --- |
-| `visits_daily.parquet` | `store-visits-rice` |
-| `visits_daily_category.parquet` | `store-visits-rice` |
-| `weather_city_daily.parquet` | `daily-weather-rice` |
-| `uhi_city_summary.parquet` | `urban-heat-index-rice` |
-| `spend_origins.parquet` | `spend-patterns-rice` |
-| `poi_venue_summary.parquet` | `core-poi-geometry-rice` |
-| `brand_spend_city_daily.parquet` | `daily-spend-brand-and-state-rice` |
-| `manifest.json` and `qa_report.json` | ETL provenance and QA |
+| `store-visits-rice` | Commercial-activity context and baseline validation |
+| `daily-weather-rice` | Heat context |
+| `urban-heat-index-rice` | Venue and route-area UHI context |
+| `spend-patterns-rice` | General customer-origin context |
+| `core-poi-geometry-rice` | Venue-area destinations and amenities |
+| `daily-spend-brand-and-state-rice` | Commercial-activity scenario context |
 
-Combined source markets are allocated equally across their constituent cities
-and are marked as partial evidence. No substring-based city matching is used.
+Combined markets and missing partitions remain visibly partial. Raw data are
+never committed. FIFA, GTFS, OSM, EPA, FTA, and FHWA/PBIC sources are explicitly
+supplemental; see [SOURCE_REGISTER.md](../docs/SOURCE_REGISTER.md).
 
-## GTFS policy
-
-GTFS is supplemental evidence, not part of the supplied `Rice WC Hack/`
-collection. The default Rice supplied-data lens excludes transit from its score
-while retaining an explicit unavailable/partial transit status. Transit-weighted
-profiles require pinned GTFS snapshots. Each snapshot records feed URLs, timestamps,
-SHA-256 hashes, required-file status, route counts, stops, scheduled departures,
-service hours, and venue distances.
-
-A valid zero-service result is observed evidence. A failed or unavailable feed
-has no score and is never silently replaced by an expert estimate.
-
-## Analytical honesty
-
-- Retail and commercial foot traffic is a mobility-demand proxy, not stadium attendance.
-- Event demand bands are scenarios unless holdout validation supports predictive language.
-- Traffic outputs estimate vehicle pressure and capacity displacement; they do not measure roadway congestion.
-- Estimated values require explicit opt-in and are excluded from the default strict ranking.
-- The default Rice supplied-data lens ranks only on supplied weather, UHI, and POI support; it is not labeled as complete mobility readiness without transit evidence.
-- All source coverage, assumptions, and statuses are visible in the Methods & QA view.
-
-## Tests and parallel work
-
-Run tests from the repository root:
+## Verification and presentation
 
 ```powershell
-pytest
-ruff check dashboard
+pytest dashboard/tests/integration
+ruff check dashboard/tests/integration
 git diff --check
 ```
 
-See [WORKSTREAMS.md](../WORKSTREAMS.md) for branch, worktree, ownership, and
-integration rules.
+- [Methodology](../docs/METHODOLOGY.md)
+- [Model card](../docs/MODEL_CARD.md)
+- [Validation gates](../docs/VALIDATION.md)
+- [Evidence-to-claim matrix](../docs/EVIDENCE_TO_CLAIM_MATRIX.md)
+- [Judging criteria](../docs/JUDGING_CRITERIA.md)
+- [Demo script](../docs/DEMO_SCRIPT.md)
 
-The end-to-end data lifecycle is diagrammed in
-[`docs/METHODOLOGY.md`](../docs/METHODOLOGY.md). Release validation and model
-limitations are maintained in [`docs/VALIDATION.md`](../docs/VALIDATION.md) and
-[`docs/MODEL_CARD.md`](../docs/MODEL_CARD.md).
-The editable assumption register is in [`docs/ASSUMPTIONS.md`](../docs/ASSUMPTIONS.md).
+Presentation guardrails: do not describe a scenario as observed, a commercial
+origin as a fan origin, an OSM path as an accessibility audit, scheduled service
+as actual operations. A pressure proxy does not measure roadway congestion.

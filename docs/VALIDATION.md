@@ -1,92 +1,94 @@
-# Validation and release gates
+# Validation and release acceptance
 
-## Data validation
+This file distinguishes checks supported by the current branch from gates that
+must pass after all workstreams integrate. A contract field or fixture is not a
+completed analytical result.
 
-- All six dataset directories are required for a full ETL run.
-- `Rice WC Hack/` is the canonical local source root. Raw files remain read-only
-  and untracked; generated artifacts identify the source collection and exact
-  dataset in their manifests and metric evidence.
-- The expected 4 x 8 partition grid is enumerated. The supplied missing
-  `daily-weather-rice_2_0_0.csv.gz` partition is surfaced as partial coverage.
-- Because that partition removes most documented primary host stations, the
-  ETL selects the nearest station actually present in the Rice files and records
-  its identifier and venue distance. Miami (34.0 mi) and New York/New Jersey
-  (50.9 mi) remain partial under the 30-mile rule. Station identity and location
-  were checked against the official NOAA ISD station history metadata:
-  <https://www.ncei.noaa.gov/pub/data/noaa/isd-history.csv>.
-- Required columns, duplicate keys, dates, numeric ranges, coordinates, nulls,
-  canonical market labels, and known weather sentinels are recorded per input
-  chunk without retaining raw rows.
-- Raw-to-derived row counts, coverage warnings, generation times, and SHA-256
-  artifact hashes are written to `manifest.json` and `qa_report.json`.
-- Combined source markets are tested against exact mappings; substring matching
-  is prohibited.
-- Both customer-origin JSON schemas present in `spend-patterns-rice` are tested:
-  direct location/count mappings and `key_value` lists. Valid alternate-schema
-  rows must not be reported as rejected values.
-- GTFS feeds record content hashes, required-file status, valid calendar span,
-  event-window departures, stop/route counts, venue coordinates, and
-  observed/partial/unavailable status.
+## Current verified foundation
 
-## Model validation
+- Contract version is `0.3.0`; its source, match, movement, access-gap,
+  intervention, and recommendation records are serializable.
+- The application shell reads compact artifacts rather than raw Rice files.
+- All six Rice datasets retain exact source names, QA reports, and artifact
+  hashes; raw data remain local and untracked.
+- Missing weather coverage, combined markets, alternate origin schemas, and
+  evidence statuses are surfaced.
+- Current score bounds, weight normalization, heat/UHI monotonicity, and
+  negative-input rejection have automated checks.
+- Current demand validation reports 22 holdouts: the candidate beats the
+  seasonal-naive comparator in 2024 for 11 cities and in 2023 for zero. It is
+  therefore a planning scenario, not a validated prediction.
+- Eligible GTFS evidence is currently unavailable for strict transportation
+  comparison. No legacy number becomes observed evidence.
 
-- Readiness values stay within 0-100 and weights normalize to one.
-- Transit improvements cannot reduce readiness.
-- Higher heat or UHI cannot improve the corresponding safety score.
-- Zero-intervention scenarios produce zero shifted trips, vehicle-km, and
-  emissions avoided.
-- Scenario costs, capacities, vehicle-km, and emissions are nonnegative.
-- A valid zero-service GTFS result remains observed zero; unavailable feeds have
-  no score and no expert fallback.
-- The demand baseline uses rolling 2023 and 2024 holdouts and reports MAE,
-  RMSE, WAPE, and comparison with a 364-day seasonal-naive comparator.
-- If the baseline does not consistently beat that comparator, the UI uses
-  scenario language rather than validated-prediction language.
-- Partial MRS values remain visible but have `rankable=false` until every
-  non-zero-weight core component is evidence-eligible.
-- The default supplied-data profile has zero transit weight and is explicitly
-  labeled as a Rice evidence lens, not a complete transit-readiness result.
+## Release data gates
 
-## UI validation
+- All 11 cities map to official matches, venues, GTFS agencies, and five-mile
+  OSM extracts.
+- Every supplemental artifact records URL, publisher, retrieval time, version,
+  license, coverage, status, and SHA-256.
+- FIFA local kickoff times and venue mappings are checked against the pinned
+  source; duplicate match IDs and invalid time zones fail release.
+- GTFS checks required files, event-date calendars/exceptions, stop times,
+  frequencies, shapes, transfers/pathways when present, and agency coverage.
+- OSM checks extract bounds/date, connected venue component, distance units,
+  edge geometry, detour ratios, tag coverage, and ODbL attribution.
+- Factor registries record exact source release/year, units, conversions,
+  inflation basis where relevant, low/base/high values, and hashes.
+- Cache-only startup performs no network or raw-data calls.
+- Missing feeds, incomplete networks, and absent accessibility tags remain
+  visible and cannot become estimates silently.
 
-- Cache-only startup works without raw-data scans; full-data startup works after
-  the offline ETL.
-- Missing data produces an actionable warning and remains visible in tables.
-- Evidence status is visible on every headline metric and important charts have
-  table equivalents.
-- Scenario downloads serialize the displayed assumptions and outputs.
-- Executive, Explorer, and Methods & QA views are designed for desktop and
-  narrow layouts.
-- Gray incomplete venues remain on the map without being assigned a readiness
-  color.
+## Release model gates
 
-## Automated checks
+- Hourly arrivals and departures reconcile to each attendance scenario; zero
+  matches create zero event demand.
+- Higher attendance cannot reduce peak demand or the access gap.
+- More eligible scheduled capacity cannot increase the transit gap.
+- Longer network distance or higher heat cannot improve access.
+- Network distance is not shorter than straight-line distance beyond documented
+  numerical tolerance.
+- Transit capacity is reported as a range and never presented as ridership.
+- Zero intervention reproduces baseline exactly.
+- Every displayed control changes its documented outcome.
+- Shuttle/additional-service VMT and emissions are included; park-and-ride
+  preserves upstream VMT; arrival spreading creates no direct emissions credit.
+- Costs, capacities, trips, and absolute VMT inputs remain physically valid;
+  net VMT and net CO2e may be negative when a package performs poorly.
+- Identical packages produce different outcomes for fixture cities with
+  different schedules, networks, service, heat, or demand.
+- Forecast language is blocked unless both holdout years beat seasonal-naive.
+- All named MRS profiles publish weight sensitivity and rank stability; missing
+  transit makes transportation-weighted profiles unrankable.
 
-The CI workflow runs `ruff check dashboard`, `pytest`, `git diff --check`, a raw
-data tracking check, and a cache-only application-shell check. Local execution
-is:
+## Release UI and presentation gates
+
+- Executive answers where, why, candidate investment, modeled outcome, cost,
+  lead time, and evidence quality without relying on MRS.
+- Explorer supports match selection and Baseline, Operational Package, and
+  Capital Package comparison with routes, stops, isochrones, UHI, POIs, and
+  origin-context layers.
+- Every major visualization has labels, provenance, status, uncertainty where
+  relevant, plain-language interpretation, and a table equivalent.
+- Scenario downloads reproduce displayed values exactly.
+- Missing GTFS/OSM layers show actionable warnings without breaking Rice views.
+- All 11 cities pass desktop, narrow-layout, and AppTest checks.
+- Presentation metric names map to contract fields, and static checks reject
+  prohibited positive claims about congestion, visitor prediction, ADA
+  compliance, causal effects, and observed mode shift.
+- Team/contact placeholders are replaced by the team before submission.
+
+## Release evidence record
+
+The integrator must append a dated report containing commit SHA, artifact
+manifest hashes, source-refresh timestamps, test commands/results, 11-city UI
+matrix, screenshots, known failures, and narrative reconciliation. Until that
+record exists, supplemental capabilities remain “pending integration.”
+
+Run W6-owned checks from the repository root:
 
 ```powershell
-pytest
-ruff check dashboard
+pytest dashboard/tests/integration
+ruff check dashboard/tests/integration
 git diff --check
 ```
-
-## Current unresolved evidence flags
-
-- The clean store-visit scan records 223,342,163 raw rows with zero invalid rows
-  and zero duplicate keys. Its dataset status remains partial only because two
-  supplied markets combine four host cities and require explicit allocation.
-- Boston has no supplied UHI points within the two-mile venue buffer and uses a
-  partial market-level fallback.
-- Dallas/Houston and Los Angeles/San Francisco store-visit markets are combined;
-  equal city allocations remain partial and are never called city observations.
-- GTFS is supplemental and currently unavailable in strict transit-weighted
-  scoring until a pinned, hashed snapshot is refreshed.
-- The current rolling demand audit reports 22 city/year holdouts. The candidate
-  baseline beats the 364-day seasonal-naive comparator for all 11 cities in
-  2024 and for none in 2023. It therefore remains labeled a scenario model,
-  not a validated prediction.
-- Under the supplied-data lens, 8 of 11 cities pass the strict evidence gate.
-  Boston is held out by the two-mile UHI gap; Miami and New York/New Jersey are
-  held out by weather-station distances above 30 miles.
