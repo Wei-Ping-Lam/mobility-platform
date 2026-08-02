@@ -54,15 +54,17 @@ def _match(raw: Mapping[str, Any]) -> MatchEvent:
     )
 
 
-def _event_service(city_gtfs: Mapping[str, Any]) -> list[dict[str, Any]]:
-    """Adapt an aggregate pinned GTFS record to the access-model input contract."""
+def _event_service(city_gtfs: Mapping[str, Any], match_id: str) -> list[dict[str, Any]]:
+    """Adapt one match in a pinned GTFS city record to the access-model contract."""
 
-    status = _status(city_gtfs.get("feed_status"))
-    departures = city_gtfs.get("event_window_departures")
+    matches = city_gtfs.get("matches", {})
+    match_service = matches.get(match_id, {}) if isinstance(matches, Mapping) else {}
+    status = _status(match_service.get("status"))
+    departures = match_service.get("event_window_departures")
     capacities = {
-        level: city_gtfs.get(f"event_capacity_{level}") for level in ("low", "base", "high")
+        level: match_service.get(f"event_capacity_{level}") for level in ("low", "base", "high")
     }
-    if status == EvidenceStatus.UNAVAILABLE or departures in (None, 0) or any(value is None for value in capacities.values()):
+    if status == EvidenceStatus.UNAVAILABLE or departures is None or any(value is None for value in capacities.values()):
         return [
             {
                 "departures_per_hour": 0,
@@ -72,15 +74,27 @@ def _event_service(city_gtfs: Mapping[str, Any]) -> list[dict[str, Any]]:
                 "status": EvidenceStatus.UNAVAILABLE.value,
             }
         ]
-    departures_per_hour = float(departures) / 4.0
+    if float(departures) == 0:
+        return [
+            {
+                "departures_per_hour": 0,
+                "vehicle_capacity_low": 0,
+                "vehicle_capacity_base": 0,
+                "vehicle_capacity_high": 0,
+                "status": status.value,
+                "service_span_after_match_min": match_service.get("service_span_after_match_min"),
+            }
+        ]
+    event_window_hours = float(match_service.get("event_window_hours") or 8.0)
+    departures_per_hour = float(departures) / event_window_hours
     return [
         {
             "departures_per_hour": departures_per_hour,
             "vehicle_capacity_low": float(capacities["low"]) / float(departures),
             "vehicle_capacity_base": float(capacities["base"]) / float(departures),
             "vehicle_capacity_high": float(capacities["high"]) / float(departures),
-            "status": EvidenceStatus.PARTIAL.value,
-            "service_span_after_match_min": city_gtfs.get("service_span_after_match_min"),
+            "status": status.value,
+            "service_span_after_match_min": match_service.get("service_span_after_match_min"),
         }
     ]
 
@@ -129,11 +143,12 @@ def build_transportation_bundle(metrics: pd.DataFrame, artifacts: Mapping[str, A
             "status": city_walk.get("status", EvidenceStatus.UNAVAILABLE.value),
         }
         city_gtfs = gtfs.get(match.city, {}) if isinstance(gtfs.get(match.city, {}), Mapping) else {}
+        match_service = city_gtfs.get("matches", {}).get(match.match_id, {}) if isinstance(city_gtfs.get("matches", {}), Mapping) else {}
         access = build_access_gap_result(
             movement,
-            _event_service(city_gtfs),
+            _event_service(city_gtfs, match.match_id),
             walk_metrics,
-            service_span_after_match_min=city_gtfs.get("service_span_after_match_min"),
+            service_span_after_match_min=match_service.get("service_span_after_match_min"),
             route_heat_exposure_c=route_heat,
         )
 

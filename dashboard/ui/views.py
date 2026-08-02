@@ -115,8 +115,19 @@ def _decision_rows(presentation: PlatformPresentation) -> pd.DataFrame:
     rows: list[dict[str, Any]] = []
     for city in sorted(presentation.cities):
         decision = presentation.cities[city]
-        match = decision.match()
-        access = decision.access(match.match_id)
+        eligible_matches = [
+            (match, decision.access(match.match_id))
+            for match in decision.matches
+            if decision.access(match.match_id).status != "unavailable"
+        ]
+        if eligible_matches:
+            match, access = max(
+                eligible_matches,
+                key=lambda item: float(item[1].residual_passengers or 0),
+            )
+        else:
+            match = decision.match()
+            access = decision.access(match.match_id)
         recommendations = decision.recommendation_set(match.match_id)
         recommendation = recommendations[0] if recommendations else _fallback_recommendation(decision, access)
         capacity_qualified = access.status != "unavailable"

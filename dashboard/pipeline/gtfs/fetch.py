@@ -28,6 +28,7 @@ EVENT_WINDOW_START = pd.Timestamp("2026-06-11")
 EVENT_WINDOW_END = pd.Timestamp("2026-07-19")
 REQUIRED_FILES = ("stops.txt", "routes.txt", "trips.txt", "stop_times.txt")
 VENUE_RADIUS_MILES = 2.0
+SERVICE_RADIUS_MILES = 0.5
 WINDOW_BEFORE_MIN = 240
 WINDOW_AFTER_MIN = 240
 ASSUMED_MATCH_MIN = 120
@@ -128,7 +129,11 @@ def _service_dates(zf: zipfile.ZipFile) -> tuple[dict[date, set[str]], dict[str,
     return services, details
 
 
-def _venue_stop_ids(stops: pd.DataFrame, venue: dict[str, Any]) -> tuple[set[str], pd.DataFrame]:
+def _venue_stop_ids(
+    stops: pd.DataFrame,
+    venue: dict[str, Any],
+    radius_miles: float = VENUE_RADIUS_MILES,
+) -> tuple[set[str], pd.DataFrame]:
     required = {"stop_id", "stop_lat", "stop_lon"}
     if stops.empty or not required.issubset(stops):
         return set(), pd.DataFrame(columns=["stop_id", "stop_lat", "stop_lon", "distance_mi"])
@@ -139,7 +144,7 @@ def _venue_stop_ids(stops: pd.DataFrame, venue: dict[str, Any]) -> tuple[set[str
     work["distance_mi"] = haversine_miles(
         float(venue["lat"]), float(venue["lon"]), work["stop_lat"].to_numpy(), work["stop_lon"].to_numpy()
     )
-    nearby = work[work["distance_mi"] <= VENUE_RADIUS_MILES].copy()
+    nearby = work[work["distance_mi"] <= radius_miles].copy()
     return set(nearby["stop_id"].astype(str)), nearby
 
 
@@ -211,17 +216,32 @@ def _event_departures(
         # A trip serving several nearby stops represents one vehicle departure.
         departure_types = sorted(set(departure_types))
         after_match = [seconds for seconds, _ in departure_types if seconds >= kickoff_seconds + ASSUMED_MATCH_MIN * 60]
-        for _, route_type in departure_types:
-            mode_counts[route_type] += 1
+        event_mode_counts: Counter[int] = Counter(route_type for _, route_type in departure_types)
+        mode_counts.update(event_mode_counts)
+        event_capacity = {
+            band: sum(
+                count * MODE_CAPACITY_RANGES.get(mode, MODE_CAPACITY_RANGES[3])[band]
+                for mode, count in event_mode_counts.items()
+            )
+            for band in ("low", "base", "high")
+        }
         results.append(
             {
                 "match_id": event["match_id"],
                 "kickoff_local": event["kickoff_local"],
+                "calendar_valid": bool(active),
                 "departures": len(departure_types),
                 "latest_departure_seconds": max((seconds for seconds, _ in departure_types), default=None),
                 "service_span_after_match_min": round(
                     (max(after_match) - kickoff_seconds - ASSUMED_MATCH_MIN * 60) / 60, 1
                 ) if after_match else 0.0,
+                "mode_departures": {
+                    MODE_CAPACITY_RANGES.get(mode, MODE_CAPACITY_RANGES[3])["mode"]: count
+                    for mode, count in sorted(event_mode_counts.items())
+                },
+                "capacity_low": event_capacity["low"],
+                "capacity_base": event_capacity["base"],
+                "capacity_high": event_capacity["high"],
             }
         )
     return results, mode_counts
@@ -264,7 +284,7 @@ def extract_feed(
                 calendar_starts.append(details["calendar_start"])
             if details["calendar_end"]:
                 calendar_ends.append(details["calendar_end"])
-            venue_ids, _ = _venue_stop_ids(stops, venue)
+            venue_ids, _ = _venue_stop_ids(stops, venue, SERVICE_RADIUS_MILES)
             rows, counts = _event_departures(
                 stop_times, trips, routes, optional["frequencies.txt"], services, venue_ids, events
             )
@@ -306,7 +326,10 @@ def extract_feed(
 def count_near_venue(stops: pd.DataFrame, venue: dict[str, Any]) -> dict[str, Any]:
     _, nearby = _venue_stop_ids(stops, venue)
     if stops.empty or not {"stop_lat", "stop_lon"}.issubset(stops):
-        return {f"stops_{label}": 0 for label in ("0_25mi", "0_5mi", "1mi", "2mi", "5mi")} | {"nearest_stop_mi": None}
+        return {
+            **{f"stops_{label}": 0 for label in ("0_25mi", "0_5mi", "1mi", "2mi", "5mi")},
+            "nearest_stop_mi": None,
+        }
     work = stops.copy()
     work["stop_lat"] = pd.to_numeric(work["stop_lat"], errors="coerce")
     work["stop_lon"] = pd.to_numeric(work["stop_lon"], errors="coerce")
@@ -336,6 +359,7 @@ def fetch_city(city: str, feeds: list[tuple[str, str]], events: list[dict[str, A
     calendars = []
     spans_after = []
     optional_presence: dict[str, bool] = defaultdict(bool)
+    match_evidence: dict[str, dict[str, Any]] = {}
     for agency, url in feeds:
         base = {"agency": agency, "url": url, "retrieved_at_utc": retrieved_at, "status": "unavailable", "sha256": None}
         try:
@@ -347,7 +371,8 @@ def fetch_city(city: str, feeds: list[tuple[str, str]], events: list[dict[str, A
             valid = extracted["calendar_validity"] == "valid"
             status = "observed" if complete and valid else "partial"
             feed_results.append(
-                base | {
+                {
+                    **base,
                     "status": status,
                     "sha256": hashlib.sha256(payload).hexdigest(),
                     "bytes": len(payload),
@@ -367,17 +392,45 @@ def fetch_city(city: str, feeds: list[tuple[str, str]], events: list[dict[str, A
             calendars.append(extracted["calendar_validity"])
             if extracted["service_span_after_match_min"] is not None:
                 spans_after.append(extracted["service_span_after_match_min"])
+            if valid:
+                for event_row in extracted["event_departures_by_match"]:
+                    if not event_row["calendar_valid"]:
+                        continue
+                    match_id = str(event_row["match_id"])
+                    current = match_evidence.setdefault(
+                        match_id,
+                        {
+                            "match_id": match_id,
+                            "kickoff_local": event_row["kickoff_local"],
+                            "event_window_departures": 0,
+                            "event_capacity_low": 0,
+                            "event_capacity_base": 0,
+                            "event_capacity_high": 0,
+                            "service_span_after_match_min": 0.0,
+                            "event_window_hours": (WINDOW_BEFORE_MIN + WINDOW_AFTER_MIN) / 60.0,
+                        },
+                    )
+                    current["event_window_departures"] += int(event_row["departures"])
+                    for level in ("low", "base", "high"):
+                        current[f"event_capacity_{level}"] += int(event_row[f"capacity_{level}"])
+                    current["service_span_after_match_min"] = max(
+                        float(current["service_span_after_match_min"]),
+                        float(event_row["service_span_after_match_min"]),
+                    )
             for name, present in extracted["optional_files"].items():
                 optional_presence[name] |= present
         except (requests.RequestException, zipfile.BadZipFile, OSError, ValueError) as exc:
-            feed_results.append(base | {"error": str(exc)[:500]})
+            feed_results.append({**base, "error": str(exc)[:500]})
     stops = pd.concat(all_stops, ignore_index=True).drop_duplicates("stop_id") if all_stops else pd.DataFrame()
     status = (
         "observed" if feed_results and all(feed["status"] == "observed" for feed in feed_results)
         else "partial" if any(feed["status"] in {"observed", "partial"} for feed in feed_results)
         else "unavailable"
     )
-    return count_near_venue(stops, venue) | {
+    for row in match_evidence.values():
+        row["status"] = "partial" if status == "partial" else "observed"
+    return {
+        **count_near_venue(stops, venue),
         "city": city,
         "venue": venue["venue"],
         "venue_lat": venue["lat"],
@@ -393,6 +446,7 @@ def fetch_city(city: str, feeds: list[tuple[str, str]], events: list[dict[str, A
         "event_capacity_low": capacities["low"],
         "event_capacity_base": capacities["base"],
         "event_capacity_high": capacities["high"],
+        "matches": match_evidence,
         "capacity_status": "scenario" if status != "unavailable" else "unavailable",
         "feed_status": status,
         "feeds": feed_results,
@@ -475,6 +529,7 @@ def write_snapshot(results: dict[str, dict[str, Any]], output: Path, generated_a
             "capacity_status": "scenario capacity range; not observed ridership",
             "event_window_minutes": {"before": WINDOW_BEFORE_MIN, "after": WINDOW_AFTER_MIN},
             "venue_radius_miles": VENUE_RADIUS_MILES,
+            "service_capacity_radius_miles": SERVICE_RADIUS_MILES,
         },
     }
     snapshot["artifact_sha256"] = artifact_hash(snapshot)

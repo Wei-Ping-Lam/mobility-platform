@@ -33,17 +33,25 @@ def test_nested_public_and_rice_artifacts_load_for_all_host_cities():
     assert not artifacts["origin_flows"].empty
 
 
-def test_compact_evidence_composes_match_decisions_without_promoting_missing_gtfs():
+def test_compact_evidence_composes_match_decisions_without_promoting_failed_gtfs():
     artifacts, metrics = _loaded()
     bundle = build_transportation_bundle(metrics, artifacts)
     assert len(bundle["movement_scenarios"]) == 78
     assert len(bundle["access_gaps"]) == 78
     assert len(bundle["intervention_outcomes"]) == 78 * 3
     assert bundle["investment_recommendations"]
-    assert {row["status"] for row in bundle["access_gaps"]} == {"unavailable"}
-    assert {row["status"] for row in bundle["investment_recommendations"]} == {"partial"}
+    access_by_city = {row["city"]: row for row in bundle["access_gaps"]}
+    assert access_by_city["Kansas City"]["status"] == "unavailable"
+    assert access_by_city["Philadelphia"]["status"] == "unavailable"
+    assert access_by_city["Atlanta"]["status"] == "scenario"
+    assert access_by_city["Miami"]["transit_capacity_base"] == 0
+    assert access_by_city["Miami"]["status"] == "scenario"
+    recommendation_statuses = {row["city"]: row["status"] for row in bundle["investment_recommendations"]}
+    assert recommendation_statuses["Kansas City"] == "partial"
+    assert recommendation_statuses["Philadelphia"] == "partial"
     assert all(row["peak_demand_per_hour"] > 0 for row in bundle["access_gaps"])
-    assert all(row["residual_passengers"] > 0 for row in bundle["access_gaps"])
+    assert all(row["residual_passengers"] >= 0 for row in bundle["access_gaps"])
+    assert any(row["residual_passengers"] > 0 for row in bundle["access_gaps"])
 
 
 def test_same_package_responds_to_city_evidence():

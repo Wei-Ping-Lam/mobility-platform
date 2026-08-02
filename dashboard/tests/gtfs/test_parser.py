@@ -1,7 +1,10 @@
 import io
 import zipfile
 
-from dashboard.pipeline.gtfs.fetch import extract_feed, score_results, unavailable_fixture
+import pandas as pd
+import requests
+
+from dashboard.pipeline.gtfs.fetch import count_near_venue, extract_feed, fetch_city, score_results, unavailable_fixture
 from dashboard.pipeline.public.loaders import load_gtfs_snapshot
 
 
@@ -38,6 +41,10 @@ def test_parser_covers_calendar_exceptions_frequency_and_optional_files():
         "pathways.txt": True,
     }
     assert result["capacity"]["low"] <= result["capacity"]["base"] <= result["capacity"]["high"]
+    match = result["event_departures_by_match"][0]
+    assert match["calendar_valid"] is True
+    assert match["departures"] > 0
+    assert match["capacity_low"] <= match["capacity_base"] <= match["capacity_high"]
     assert result["mode_departures"]["bus"] > 0
 
 
@@ -60,8 +67,27 @@ def test_hash_policy_and_feed_failure_never_fall_back():
     assert result["score_status"] == "unavailable"
 
 
-def test_checked_gtfs_fixture_is_explicitly_unavailable():
+def test_checked_gtfs_snapshot_preserves_evidence_gates():
     snapshot = load_gtfs_snapshot("data/snapshots/gtfs/gtfs_venue_access.json")
-    assert snapshot["fixture"] is True
-    assert snapshot["status"] == "unavailable"
-    assert all(city["score_status"] == "unavailable" for city in snapshot["cities"].values())
+    if snapshot["fixture"]:
+        assert snapshot["status"] == "unavailable"
+    for city in snapshot["cities"].values():
+        if city["score_status"] == "observed":
+            assert city["calendar_validity"] == "valid"
+            assert all(len(feed["sha256"]) == 64 for feed in city["feeds"])
+        if city["feed_status"] == "unavailable":
+            assert city["gtfs_transit_score"] is None
+
+
+def test_python_38_refresh_paths_do_not_require_dictionary_union(monkeypatch):
+    empty = count_near_venue(pd.DataFrame(), {"lat": 0.0, "lon": 0.0})
+    assert empty["nearest_stop_mi"] is None
+    assert empty["stops_5mi"] == 0
+
+    def fail_request(*args, **kwargs):
+        raise requests.RequestException("fixture failure")
+
+    monkeypatch.setattr(requests, "get", fail_request)
+    result = fetch_city("Atlanta", [("Fixture", "https://example.invalid/feed.zip")], [])
+    assert result["feed_status"] == "unavailable"
+    assert result["feeds"][0]["sha256"] is None
