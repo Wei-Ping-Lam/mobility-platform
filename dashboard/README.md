@@ -12,14 +12,13 @@ physical access contracts, six intervention types, match-scoped Pareto recommend
 four decision workspaces, and exact Methods & QA downloads. Cited factor ranges are
 integrated as scenario/estimated evidence.
 
-Transportation evidence remains incomplete after the explicit GTFS refresh:
-50 matches across eight cities have event-valid service evidence; six cities are
-observed and five are partial. Pinned event-period archives repaired Kansas City
-and Philadelphia without promoting a legacy score. Five-mile OSM walking graphs
-provide isochrones for all 11 venues and event-relevant stop routes for seven.
-The UI suppresses capacity-qualified gaps wherever required evidence remains unavailable.
-Twenty-nine match access results currently pass the complete capacity-and-network
-qualification gate; 21 remain partial and 28 unavailable.
+The explicit GTFS refresh now supplies hash-checked event-window calendar
+evidence for all 78 matches across all 11 cities. It also finds 29 matches with
+zero scheduled capacity in the half-mile venue catchment; this is a visible
+planning red flag, not a missing-value fallback. Five-mile OSM walking graphs
+provide isochrones for every venue and event-relevant stop routes for eight.
+All 78 transit gaps are capacity-qualified; 23 match results in Boston, Dallas,
+and Miami remain partial for stop-route and route-heat evidence.
 
 ## Run locally
 

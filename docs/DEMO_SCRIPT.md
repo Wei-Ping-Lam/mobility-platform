@@ -36,7 +36,7 @@ use Boston, Dallas, or New York/NJ to demonstrate honest unavailable evidence.
 4. Change the time horizon.
    - Explain one-time capital, recurring operations, included matches, and omissions.
 5. Open **Compare Cities**.
-   - Distinguish strict rank from all-city screening and read one exclusion reason.
+   - Distinguish the 11-city physical access priority from strict MRS and read one exclusion reason.
 6. Open **City & Match**.
    - Show hourly uncertainty, selected map layers, and the exact scenario download.
 7. Open **Methods & QA**.

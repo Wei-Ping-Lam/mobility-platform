@@ -55,9 +55,9 @@ are defined in `VALIDATION.md`.
 
 ## Current evidence limitations
 
-- GTFS is observed for six cities and partial for five. Pinned event-period
-  archives repaired Kansas City and Philadelphia; 28 matches still lack
-  event-valid service evidence and remain evidence-gated.
+- GTFS feed evidence is observed for all 11 cities and event-valid for all 78
+  matches. Twenty-nine matches have observed zero scheduled half-mile capacity;
+  published GTFS does not establish whether special-event overlays will run.
 - The present event-demand band is generic and did not beat its comparator in
   both validation years; it remains a planning scenario.
 - Boston lacks eligible two-mile Rice UHI coverage; Miami and New York/New
@@ -68,7 +68,7 @@ are defined in `VALIDATION.md`.
 - OSM tag presence cannot establish sidewalk condition, crossing safety, or ADA
   compliance.
 - Five-mile OSM isochrones cover all venues, but event-relevant stop paths are
-  withheld where GTFS eligibility is absent; tag completeness varies by city.
+  unavailable for Boston, Dallas, and Miami; tag completeness varies by city.
 - GTFS cannot establish actual service delivery, ridership, crowding, or delay.
 - National cost and emissions factors do not replace local fleet, procurement,
   labor, design, or construction evidence.

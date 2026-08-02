@@ -18,10 +18,11 @@ completed analytical result.
 - Current demand validation reports 22 holdouts: the candidate beats the
   seasonal-naive comparator in 2024 for 11 cities and in 2023 for zero. It is
   therefore a planning scenario, not a validated prediction.
-- The 2026-08-02 GTFS refresh produced six observed cities and two usable partial
-  multi-agency cities. Three cities remain outside the event window. Pinned,
-  hash-checked archives repaired Kansas City and Philadelphia; no legacy number
-  became observed.
+- The 2026-08-02 GTFS refresh produced event-valid, hash-checked calendar
+  evidence for all 78 matches and observed feed status for all 11 cities. A
+  valid feed is not proof of service at the venue: 29 matches have observed zero
+  scheduled capacity within the half-mile catchment. No legacy score became
+  observed without source, hash, and event-window evidence.
 
 ## Release data gates
 
@@ -86,17 +87,21 @@ completed analytical result.
 
 - Environment: uv 0.11.16, CPython 3.11, committed lockfile, and project `.venv`;
   no machine-specific preview runtime is referenced.
-- Automated suite: `168 passed`; Ruff passes. Whitespace is checked separately.
+- Automated suite: `172 passed`; Ruff, `uv lock --check`, public snapshot
+  validation, and `git diff --check` pass.
 - Public cache validator: 78 schedule events, 20 planning factors, 11 GTFS city
   records, and 11 graph-derived walking records; validator passed.
-- GTFS artifact SHA-256:
-  `d58a87de35e7f3572c8aee59b204945b51b3be7488fdf2071860375ae3667e50`.
-  It contains 50 event-valid matches, 2,698 venue-area stops, and 138 bounded
-  route shapes across six observed and five partial cities.
-- OSM artifact SHA-256:
-  `8a5ed024ecc9826778bf136aeedf6309820924768befab44c0266ce9e446b1f9`.
-  All 11 venues have five-mile graph-derived isochrones; seven have a network
-  path to an event-relevant GTFS stop.
+- GTFS content artifact SHA-256:
+  `c407473a29db9e71a2278fa73f7cc8fa2dcf72316ef6e84270c4b91e4c3f78d1`.
+  It contains 78 event-valid match records, 2,694 venue-area stops, and 520
+  bounded route shapes across 15 pinned agency feeds and 11 observed cities.
+  Boston (7 matches), Dallas (9), Miami (7), and six New York/New Jersey
+  matches have observed zero scheduled capacity in the half-mile catchment.
+- OSM content artifact SHA-256:
+  `ec8aa95baa28a93b10d919dba408131d0cd27c36a256f8b10057b4f71a46992e`.
+  All 11 venues have five-mile graph-derived isochrones; eight have a network
+  path to an event-relevant GTFS stop. Boston, Dallas, and Miami remain partial
+  for stop-route and route-heat evidence rather than receiving invented paths.
 - Factor artifact SHA-256:
   `f36cba57ede7b6c7dfb720c492ee584545b46912e0cac7da4d7337c5bdb1bbd6`.
   Production composition fails on missing/incomplete factors and every outcome
@@ -104,10 +109,16 @@ completed analytical result.
 - Streamlit AppTest: Decision Brief, Compare Cities, City & Match, and Methods & QA
   render without an exception. All 78 movement timelines and before/after tables
   pass nonempty, reconciliation, and peak-reduction checks.
-- Recommendation identity: all 231 Pareto records retain an exact `match_id`;
-  each match renders only its own two or three nondominated options.
-- All-city comparison: five cities are strictly rankable under the default
-  balanced profile; all 11 remain visible in the bounded screening view.
+- Recommendation identity: all 226 Pareto records retain an exact `match_id`;
+  each match renders only its own nondominated options. The set contains 78
+  added-frequency, 78 shuttle, and 70 arrival-spreading options.
+- Access evidence: all 78 gaps are capacity-qualified; 55 have scenario status
+  with complete modeled route/heat components and 23 are partial for those
+  components. Zero scheduled capacity remains a qualified observed result.
+- All-city comparison: eight cities are strictly rankable under the default
+  balanced MRS profile. All 11 receive a separate physical access-priority
+  order; Boston is excluded from strict MRS by venue UHI coverage, while Miami
+  and New York/New Jersey are excluded by distant supplied weather stations.
 - Portfolio accounting: match, city-tournament, and U.S.-tournament tests verify
   one-time capital per city, recurring event operations, and default exclusion
   of partial/unavailable access results.
@@ -115,10 +126,11 @@ completed analytical result.
   `http://127.0.0.1:8504` after the Decision Brief and Compare Cities integration.
 - Screenshot record: failed because the in-app browser sandbox-policy handshake
   blocked localhost control. No desktop/narrow screenshot claim is made.
-- Known release failures: 28 matches still lack event-valid service evidence;
-  another 21 access results remain partial after service/network composition;
-  team/contact metadata and final
-  desktop/narrow screenshot review remain outstanding.
+- Known release limitations: published GTFS does not include confirmed FIFA
+  special-event overlays; 29 match records show zero scheduled half-mile
+  capacity, 23 lack a stop-route/route-heat path, and three cities fail strict
+  MRS Rice venue-coverage gates. Team/contact metadata and final desktop/narrow
+  screenshot review remain outstanding.
 
 This is a competition MVP validation record, not certification for operational
 traffic management.

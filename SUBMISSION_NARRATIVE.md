@@ -55,13 +55,16 @@ gaps and intervention outcomes—not rank—lead the decision.
 - Hourly movement, physical access, intervention accounting, city differentiation,
   exact match-scoped Pareto screening, and all four UI workspaces are implemented and tested.
 - EPA/FTA/FHWA inputs are pinned as scenario/estimated planning ranges.
-- The GTFS refresh produced event-valid evidence for 50 matches across eight cities.
-  Pinned, hash-checked event archives repaired Kansas City and Philadelphia;
-  three cities remain wholly outside the event window.
+- The GTFS refresh produced hash-checked, event-valid calendar evidence for all
+  78 matches and all 11 cities. It also exposes a substantive red flag: 29
+  matches have zero scheduled capacity in the half-mile venue catchment. This
+  does not include unconfirmed special-event overlays.
 - Five-mile OSM walking graphs and hashes cover all 11 venues; all venues retain
-  isochrones, while event-relevant stop routes remain partial where GTFS is ineligible.
-- Compare Cities keeps all 11 cities visible in an evidence-bounded screening
-  view while limiting strict transportation ranks to eligible evidence.
+  isochrones and eight have paths to event-relevant stops. Boston, Dallas, and
+  Miami remain partial for stop-route and route-heat evidence.
+- Compare Cities gives all 11 cities a physical access-gap priority while
+  limiting the secondary strict MRS rank to eight cities with complete required
+  evidence. The two rankings are never presented as interchangeable.
 - Decision Brief exposes every judging criterion and required deliverable as a
   visible proof record with a limitation; it does not award the project points.
 - Match, city-tournament, and U.S.-tournament ledgers count capital once per
@@ -69,14 +72,16 @@ gaps and intervention outcomes—not rank—lead the decision.
 
 ### Required before the competition-ready claim
 
-- Repair the remaining outside-window feeds and match gaps so every city can
-  support a capacity-qualified match access result.
+- Obtain agency/event-operator confirmation of special-event service, fleet,
+  crowd-control, and ridership plans—especially for the 29 zero-capacity match
+  records—and collect route evidence for Boston, Dallas, and Miami.
 - Run the final full-data, narrow-screen, and screenshot release record against the integrated branch.
 - Replace the team/contact placeholders above.
 
-Until those gates pass, movement and intervention values are planning scenarios,
-capacity-qualified access gaps are withheld, and investment recommendations remain
-partial screening options—not operational findings.
+Until those gates pass, movement and intervention values remain planning
+scenarios and investment recommendations remain screening options—not approved
+operational findings. The physical access-gap comparison is available for all
+78 matches; partial route and heat components remain visibly qualified.
 
 ## Data and analytical reasoning
 
@@ -110,8 +115,9 @@ with observed counts, but the platform does not perform causal attribution.
 ## Visualization and communication
 
 The Decision Brief answers where, why, what investment, what modeled outcome,
-at what cost/lead time, and with what confidence. Compare Cities separates strict
-rank from all-city screening. City & Match combines hourly bands with selectable
+at what cost/lead time, and with what confidence. Compare Cities separates the
+all-city physical access priority from strict secondary MRS and score screening.
+City & Match combines hourly bands with selectable
 routes, stops, network isochrones, UHI, POIs, and scenario
 tradeoffs. Methods & QA maps every headline metric to its contract field,
 source, hash, factor, assumptions, and test status. Major charts require table
