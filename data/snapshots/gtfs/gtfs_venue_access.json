@@ -1,0 +1,378 @@
+{
+  "artifact_sha256": "138cea53945356770eb8a4853024fa19351bf614c557254a694bb2cc88e38018",
+  "cities": {
+    "Atlanta": {
+      "capacity_status": "unavailable",
+      "city": "Atlanta",
+      "event_capacity_base": null,
+      "event_capacity_high": null,
+      "event_capacity_low": null,
+      "event_window_departures": null,
+      "feed_status": "unavailable",
+      "feeds": [
+        {
+          "agency": "MARTA",
+          "retrieved_at_utc": null,
+          "sha256": null,
+          "status": "unavailable",
+          "url": "https://www.itsmarta.com/google_transit_feed/google_transit.zip"
+        }
+      ],
+      "gtfs_transit_score": null,
+      "score_status": "unavailable",
+      "service_span_after_match_min": null,
+      "venue": "Mercedes-Benz Stadium",
+      "venue_lat": 33.7554,
+      "venue_lon": -84.4009,
+      "warning": "Fixture only. Run the explicit refresh command before transportation ranking."
+    },
+    "Boston": {
+      "capacity_status": "unavailable",
+      "city": "Boston",
+      "event_capacity_base": null,
+      "event_capacity_high": null,
+      "event_capacity_low": null,
+      "event_window_departures": null,
+      "feed_status": "unavailable",
+      "feeds": [
+        {
+          "agency": "MBTA",
+          "retrieved_at_utc": null,
+          "sha256": null,
+          "status": "unavailable",
+          "url": "https://cdn.mbta.com/MBTA_GTFS.zip"
+        }
+      ],
+      "gtfs_transit_score": null,
+      "score_status": "unavailable",
+      "service_span_after_match_min": null,
+      "venue": "Gillette Stadium",
+      "venue_lat": 42.0909,
+      "venue_lon": -71.2643,
+      "warning": "Fixture only. Run the explicit refresh command before transportation ranking."
+    },
+    "Dallas": {
+      "capacity_status": "unavailable",
+      "city": "Dallas",
+      "event_capacity_base": null,
+      "event_capacity_high": null,
+      "event_capacity_low": null,
+      "event_window_departures": null,
+      "feed_status": "unavailable",
+      "feeds": [
+        {
+          "agency": "DART",
+          "retrieved_at_utc": null,
+          "sha256": null,
+          "status": "unavailable",
+          "url": "https://www.dart.org/transitdata/latest/google_transit.zip"
+        }
+      ],
+      "gtfs_transit_score": null,
+      "score_status": "unavailable",
+      "service_span_after_match_min": null,
+      "venue": "AT&T Stadium",
+      "venue_lat": 32.748,
+      "venue_lon": -97.0929,
+      "warning": "Fixture only. Run the explicit refresh command before transportation ranking."
+    },
+    "Houston": {
+      "capacity_status": "unavailable",
+      "city": "Houston",
+      "event_capacity_base": null,
+      "event_capacity_high": null,
+      "event_capacity_low": null,
+      "event_window_departures": null,
+      "feed_status": "unavailable",
+      "feeds": [
+        {
+          "agency": "METRO Houston",
+          "retrieved_at_utc": null,
+          "sha256": null,
+          "status": "unavailable",
+          "url": "https://metro.resourcespace.com/pages/download.php?ref=4835&ext=zip"
+        }
+      ],
+      "gtfs_transit_score": null,
+      "score_status": "unavailable",
+      "service_span_after_match_min": null,
+      "venue": "NRG Stadium",
+      "venue_lat": 29.6851,
+      "venue_lon": -95.4106,
+      "warning": "Fixture only. Run the explicit refresh command before transportation ranking."
+    },
+    "Kansas City": {
+      "capacity_status": "unavailable",
+      "city": "Kansas City",
+      "event_capacity_base": null,
+      "event_capacity_high": null,
+      "event_capacity_low": null,
+      "event_window_departures": null,
+      "feed_status": "unavailable",
+      "feeds": [
+        {
+          "agency": "RideKC/KCATA",
+          "retrieved_at_utc": null,
+          "sha256": null,
+          "status": "unavailable",
+          "url": "https://ridekc.org/assets/uploads/gtfs/google_transit.zip"
+        }
+      ],
+      "gtfs_transit_score": null,
+      "score_status": "unavailable",
+      "service_span_after_match_min": null,
+      "venue": "Arrowhead Stadium",
+      "venue_lat": 39.0489,
+      "venue_lon": -94.4839,
+      "warning": "Fixture only. Run the explicit refresh command before transportation ranking."
+    },
+    "Los Angeles": {
+      "capacity_status": "unavailable",
+      "city": "Los Angeles",
+      "event_capacity_base": null,
+      "event_capacity_high": null,
+      "event_capacity_low": null,
+      "event_window_departures": null,
+      "feed_status": "unavailable",
+      "feeds": [
+        {
+          "agency": "LA Metro Rail",
+          "retrieved_at_utc": null,
+          "sha256": null,
+          "status": "unavailable",
+          "url": "https://gitlab.com/LACMTA/gtfs_rail/raw/master/gtfs_rail.zip"
+        },
+        {
+          "agency": "LA Metro Bus",
+          "retrieved_at_utc": null,
+          "sha256": null,
+          "status": "unavailable",
+          "url": "https://gitlab.com/LACMTA/gtfs_bus/-/raw/master/gtfs_bus.zip"
+        }
+      ],
+      "gtfs_transit_score": null,
+      "score_status": "unavailable",
+      "service_span_after_match_min": null,
+      "venue": "SoFi Stadium",
+      "venue_lat": 33.9534,
+      "venue_lon": -118.3387,
+      "warning": "Fixture only. Run the explicit refresh command before transportation ranking."
+    },
+    "Miami": {
+      "capacity_status": "unavailable",
+      "city": "Miami",
+      "event_capacity_base": null,
+      "event_capacity_high": null,
+      "event_capacity_low": null,
+      "event_window_departures": null,
+      "feed_status": "unavailable",
+      "feeds": [
+        {
+          "agency": "Miami-Dade Transit",
+          "retrieved_at_utc": null,
+          "sha256": null,
+          "status": "unavailable",
+          "url": "https://www.miamidade.gov/transit/googletransit/current/google_transit.zip"
+        }
+      ],
+      "gtfs_transit_score": null,
+      "score_status": "unavailable",
+      "service_span_after_match_min": null,
+      "venue": "Hard Rock Stadium",
+      "venue_lat": 25.9579,
+      "venue_lon": -80.2388,
+      "warning": "Fixture only. Run the explicit refresh command before transportation ranking."
+    },
+    "New York/NJ": {
+      "capacity_status": "unavailable",
+      "city": "New York/NJ",
+      "event_capacity_base": null,
+      "event_capacity_high": null,
+      "event_capacity_low": null,
+      "event_window_departures": null,
+      "feed_status": "unavailable",
+      "feeds": [
+        {
+          "agency": "NJ Transit Rail",
+          "retrieved_at_utc": null,
+          "sha256": null,
+          "status": "unavailable",
+          "url": "https://www.njtransit.com/rail_data.zip"
+        }
+      ],
+      "gtfs_transit_score": null,
+      "score_status": "unavailable",
+      "service_span_after_match_min": null,
+      "venue": "MetLife Stadium",
+      "venue_lat": 40.8135,
+      "venue_lon": -74.0745,
+      "warning": "Fixture only. Run the explicit refresh command before transportation ranking."
+    },
+    "Philadelphia": {
+      "capacity_status": "unavailable",
+      "city": "Philadelphia",
+      "event_capacity_base": null,
+      "event_capacity_high": null,
+      "event_capacity_low": null,
+      "event_window_departures": null,
+      "feed_status": "unavailable",
+      "feeds": [
+        {
+          "agency": "SEPTA Rail",
+          "retrieved_at_utc": null,
+          "sha256": null,
+          "status": "unavailable",
+          "url": "https://github.com/septadev/GTFS/releases/latest/download/google_rail.zip"
+        },
+        {
+          "agency": "SEPTA Bus",
+          "retrieved_at_utc": null,
+          "sha256": null,
+          "status": "unavailable",
+          "url": "https://github.com/septadev/GTFS/releases/latest/download/google_bus.zip"
+        }
+      ],
+      "gtfs_transit_score": null,
+      "score_status": "unavailable",
+      "service_span_after_match_min": null,
+      "venue": "Lincoln Financial Field",
+      "venue_lat": 39.9008,
+      "venue_lon": -75.1675,
+      "warning": "Fixture only. Run the explicit refresh command before transportation ranking."
+    },
+    "San Francisco": {
+      "capacity_status": "unavailable",
+      "city": "San Francisco",
+      "event_capacity_base": null,
+      "event_capacity_high": null,
+      "event_capacity_low": null,
+      "event_window_departures": null,
+      "feed_status": "unavailable",
+      "feeds": [
+        {
+          "agency": "VTA",
+          "retrieved_at_utc": null,
+          "sha256": null,
+          "status": "unavailable",
+          "url": "https://gtfs.vta.org/gtfs_vta.zip"
+        }
+      ],
+      "gtfs_transit_score": null,
+      "score_status": "unavailable",
+      "service_span_after_match_min": null,
+      "venue": "Levi's Stadium",
+      "venue_lat": 37.4033,
+      "venue_lon": -121.97,
+      "warning": "Fixture only. Run the explicit refresh command before transportation ranking."
+    },
+    "Seattle": {
+      "capacity_status": "unavailable",
+      "city": "Seattle",
+      "event_capacity_base": null,
+      "event_capacity_high": null,
+      "event_capacity_low": null,
+      "event_window_departures": null,
+      "feed_status": "unavailable",
+      "feeds": [
+        {
+          "agency": "Sound Transit",
+          "retrieved_at_utc": null,
+          "sha256": null,
+          "status": "unavailable",
+          "url": "https://gtfs.sound.obaweb.org/prod/40_gtfs.zip"
+        },
+        {
+          "agency": "King County Metro",
+          "retrieved_at_utc": null,
+          "sha256": null,
+          "status": "unavailable",
+          "url": "https://metro.kingcounty.gov/GTFS/google_transit.zip"
+        }
+      ],
+      "gtfs_transit_score": null,
+      "score_status": "unavailable",
+      "service_span_after_match_min": null,
+      "venue": "Lumen Field",
+      "venue_lat": 47.5952,
+      "venue_lon": -122.3316,
+      "warning": "Fixture only. Run the explicit refresh command before transportation ranking."
+    }
+  },
+  "contract_version": "0.3.0",
+  "fixture": true,
+  "generated_at_utc": "2026-08-01T00:00:00Z",
+  "mode_capacity_ranges": {
+    "0": {
+      "base": 180,
+      "high": 250,
+      "low": 120,
+      "mode": "tram_light_rail"
+    },
+    "1": {
+      "base": 900,
+      "high": 1200,
+      "low": 600,
+      "mode": "subway_metro"
+    },
+    "11": {
+      "base": 55,
+      "high": 80,
+      "low": 40,
+      "mode": "trolleybus"
+    },
+    "12": {
+      "base": 250,
+      "high": 400,
+      "low": 150,
+      "mode": "monorail"
+    },
+    "2": {
+      "base": 800,
+      "high": 1200,
+      "low": 500,
+      "mode": "rail"
+    },
+    "3": {
+      "base": 55,
+      "high": 80,
+      "low": 40,
+      "mode": "bus"
+    },
+    "4": {
+      "base": 300,
+      "high": 600,
+      "low": 150,
+      "mode": "ferry"
+    },
+    "5": {
+      "base": 70,
+      "high": 100,
+      "low": 40,
+      "mode": "cable_tram"
+    },
+    "6": {
+      "base": 40,
+      "high": 80,
+      "low": 20,
+      "mode": "aerial_lift"
+    },
+    "7": {
+      "base": 100,
+      "high": 180,
+      "low": 60,
+      "mode": "funicular"
+    }
+  },
+  "policy": {
+    "capacity_status": "scenario capacity range; not observed ridership",
+    "event_window_minutes": {
+      "after": 240,
+      "before": 240
+    },
+    "legacy_cache": "never loaded or promoted",
+    "observed_gate": "required files, event-valid calendar, retrieval timestamp, and feed SHA-256",
+    "venue_radius_miles": 2.0
+  },
+  "snapshot_kind": "gtfs_venue_access",
+  "status": "unavailable"
+}
