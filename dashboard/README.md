@@ -6,20 +6,17 @@ source quality, assumptions, uncertainty, cost, and implementation constraints.
 
 ## Implementation status
 
-Contract `0.3.0` is frozen. The current branch implements the Rice evidence
-pipeline, evidence-gated MRS, generic planning scenarios, and Methods & QA
-downloads. The following are **release targets pending workstream integration**:
+Contract `0.3.0` is frozen. The current branch implements Rice enrichment,
+the 78-match official schedule snapshot, match-specific movement scenarios,
+physical access contracts, six intervention types, Pareto recommendations,
+three decision workspaces, and Methods & QA downloads. Cited factor ranges are
+integrated as scenario/estimated evidence.
 
-- pinned official FIFA match schedule;
-- event-valid agency GTFS snapshots;
-- pinned five-mile OSM walking networks;
-- cited EPA/FTA/FHWA factor registries;
-- match-specific hourly movement and physical access gaps;
-- city-specific intervention accounting and Pareto recommendations; and
-- priority-corridor and three-package comparison views.
-
-Do not demonstrate those targets as completed until `docs/VALIDATION.md` has a
-passing release evidence record.
+Two transportation evidence gaps remain release blockers: all GTFS city records
+are unavailable until the explicit feed refresh succeeds, and the displayed OSM
+geometry is an estimated contract fixture rather than a pinned five-mile extract.
+The UI suppresses capacity-qualified gaps and marks recommendations partial while
+those inputs remain unavailable.
 
 ## Run locally
 
@@ -37,12 +34,12 @@ evidence without the required version, coverage, license, timestamp, and hash.
 
 ## Current product behavior
 
-- **Executive:** venue map and evidence-gated Rice comparison. The default Rice
-  lens excludes transit and is not a complete transportation ranking.
-- **Explorer:** commercial-activity baseline, generic event planning band,
-  climate/transit statuses, and current pressure/cost proxies.
-- **Methods & QA:** coverage, formulas, assumptions, holdout validation,
-  manifests, statuses, and downloads.
+- **Executive:** match demand, capacity-qualified gaps where eligible, partial
+  investment screening, cost ranges, lead times, and evidence status. MRS is secondary.
+- **Explorer:** official match selection, hourly movement, available Rice/OSM
+  layers, three packages, before/after timelines, tradeoffs, and exact downloads.
+- **Methods & QA:** source hashes, factors, network status, formulas, assumptions,
+  holdout validation, rank sensitivity, manifests, and downloads.
 
 The current demand band is a planning scenario. Commercial visits are not match
 attendance. GTFS is scheduled-service evidence, not ridership or reliability.
@@ -50,7 +47,7 @@ Current pressure outputs do not measure roadway congestion.
 
 ## Competition-ready behavior
 
-After all release gates pass:
+The implemented product behavior is:
 
 - **Executive** leads with match, priority corridor, peak passenger gap,
   candidate investment, modeled outcome range, planning cost, lead time, and

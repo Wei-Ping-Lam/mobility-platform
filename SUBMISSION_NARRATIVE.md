@@ -24,7 +24,7 @@ cities. It keeps the six `Rice WC Hack/` datasets as canonical supplied context
 and uses separately pinned FIFA, GTFS, OpenStreetMap, EPA, FTA, and FHWA/PBIC
 sources for match, network, service, emissions, and planning-cost evidence.
 
-For a selected match, the release design will:
+For a selected match, the current design:
 
 1. create transparent low/base/high hourly arrival and departure scenarios;
 2. compare peak passengers with scheduled transit-capacity ranges;
@@ -50,19 +50,22 @@ gaps and intervention outcomes—not rank—lead the decision.
 - The current demand implementation is compared with seasonal-naive. It won all
   11 city holdouts in 2024 and none in 2023, so it remains a planning scenario.
 - Methods & QA exposes current formulas, assumptions, validation, and downloads.
+- The official schedule snapshot maps 78 US-hosted matches to all 11 cities with
+  local kickoff times and source hashes.
+- Hourly movement, physical access, intervention accounting, city differentiation,
+  Pareto screening, and all three UI workspaces are implemented and tested.
+- EPA/FTA/FHWA inputs are pinned as scenario/estimated planning ranges.
 
 ### Required before the competition-ready claim
 
-- Pin and validate the official match schedule for all US-hosted matches.
 - Pin event-valid GTFS feeds and five-mile OSM networks for all 11 cities.
-- Pin cited emissions and cost-factor registries.
-- Pass hourly reconciliation, access monotonicity, network, intervention
-  accounting, cross-city differentiation, UI, and download-reproduction gates.
-- Integrate city-specific recommendation and priority-corridor views.
+- Replace the estimated walking fixture with validated network extracts and route geometry.
+- Run the final full-data, narrow-screen, and screenshot release record against the integrated branch.
 - Replace the team/contact placeholders above.
 
-Until those gates pass, match-specific access gaps, intervention benefits, and
-investment recommendations are capabilities under integration—not findings.
+Until those gates pass, movement and intervention values are planning scenarios,
+capacity-qualified access gaps are withheld, and investment recommendations remain
+partial screening options—not operational findings.
 
 ## Data and analytical reasoning
 

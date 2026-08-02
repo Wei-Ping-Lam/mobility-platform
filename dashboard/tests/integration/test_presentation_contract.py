@@ -75,7 +75,7 @@ def test_matrix_covers_decision_headline_metrics():
     assert all(reference in text for reference in required)
 
 
-def test_supplemental_source_register_is_complete_and_not_marked_integrated():
+def test_supplemental_source_register_is_complete_and_statuses_are_honest():
     text = SOURCE_REGISTER.read_text(encoding="utf-8")
     required_families = {
         "FIFA",
@@ -88,7 +88,10 @@ def test_supplemental_source_register_is_complete_and_not_marked_integrated():
         "FHWA/PBIC",
     }
     assert all(family in text for family in required_families)
-    assert text.count("Pending integration") >= len(required_families)
+    assert "78 US match events, observed" in text
+    assert "all 11 city records unavailable" in text
+    assert "actual five-mile extracts pending" in text
+    assert "not a local MOVES inventory" in text
     assert "SHA-256" in text
 
 

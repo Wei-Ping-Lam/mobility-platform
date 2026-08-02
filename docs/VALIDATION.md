@@ -78,12 +78,29 @@ completed analytical result.
   compliance, causal effects, and observed mode shift.
 - Team/contact placeholders are replaced by the team before submission.
 
-## Release evidence record
+## Release evidence record — 2026-08-01
 
-The integrator must append a dated report containing commit SHA, artifact
-manifest hashes, source-refresh timestamps, test commands/results, 11-city UI
-matrix, screenshots, known failures, and narrative reconciliation. Until that
-record exists, supplemental capabilities remain “pending integration.”
+- Integration commit: `b008af7` (transportation bundle wiring; documentation
+  reconciliation follows in a separate commit).
+- Automated suite: `138 passed`.
+- Ruff: passed for `dashboard`.
+- Whitespace: `git diff --check` passed.
+- Public cache validator: 78 schedule events, 11 walking city fixtures, 11 GTFS
+  city records, five factor families; validator passed.
+- Streamlit AppTest: Executive, Explorer, and Methods & QA rendered without an
+  exception; all 11 cities and named scenarios passed adapter checks.
+- Local cache-only preview: HTTP 200 at `http://127.0.0.1:8502`.
+- Screenshot record: not completed because the in-app browser policy blocked the
+  visual connection. No screenshot claim is made.
+- Known release failures: GTFS feeds remain unavailable; walking layers are
+  estimated schema fixtures rather than pinned OSM extracts; team/contact metadata
+  is missing; final desktop/narrow screenshot review remains outstanding.
+- Narrative reconciliation: completed against the current evidence-to-claim and
+  supplemental-source registers. Capacity-qualified access gaps are withheld while
+  GTFS is unavailable.
+
+This is a competition MVP validation record, not certification for operational
+traffic management.
 
 Run W6-owned checks from the repository root:
 

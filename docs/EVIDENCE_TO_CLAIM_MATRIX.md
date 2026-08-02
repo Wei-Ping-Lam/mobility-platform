@@ -6,24 +6,24 @@ evidence. Presenters must also check its status, source record, and release gate
 
 | Presentation metric | Contract fields | Permitted claim after release gate | Current integration status |
 | --- | --- | --- | --- |
-| Match and local kickoff | `MatchEvent.match_id`, `MatchEvent.kickoff_local`, `MatchEvent.venue` | Official schedule context from a pinned FIFA source | Contract ready; pinned schedule artifact pending integration |
-| Attendance planning range | `MovementScenario.attendance_low`, `MovementScenario.attendance_base`, `MovementScenario.attendance_high` | Editable attendance scenario, not observed attendance | Contract ready; match-specific model pending integration |
-| Hourly arrivals and departures | `MovementScenario.hourly_rows`, `MovementScenario.uncertainty_type` | Planning range by hour; “validated baseline” only after both holdouts pass | Contract ready; hourly model pending integration |
-| Peak passenger demand | `AccessGapResult.peak_demand_per_hour` | Scenario peak passengers per hour | Contract ready; transportation calculation pending integration |
-| Scheduled transit capacity | `AccessGapResult.transit_capacity_low`, `AccessGapResult.transit_capacity_base`, `AccessGapResult.transit_capacity_high` | Capacity range inferred from pinned schedules and explicit vehicle assumptions, not ridership | Contract ready; eligible GTFS evidence pending integration |
-| Residual passenger gap | `AccessGapResult.residual_passengers` | Scenario passengers not covered by modeled scheduled capacity | Contract ready; access-gap model pending integration |
-| Network walk distance | `AccessGapResult.network_walk_distance_m` | OSM-derived network distance with stated coverage | Contract ready; pinned network extracts pending integration |
-| Post-match service span | `AccessGapResult.service_span_after_match_min` | Scheduled minutes of service after a match | Contract ready; GTFS event-window calculation pending integration |
-| Route heat exposure | `AccessGapResult.route_heat_exposure_c` | Heat-exposure proxy along modeled access routes | Contract ready; route overlay pending integration |
-| Gap resolved | `InterventionOutcome.gap_resolved_passengers` | Scenario passengers served by the package | Contract ready; intervention model pending integration |
-| Venue-area vehicle trips | `InterventionOutcome.venue_vehicle_trips_low`, `InterventionOutcome.venue_vehicle_trips_base`, `InterventionOutcome.venue_vehicle_trips_high` | Scenario venue-area trip range, not measured traffic | Contract ready; intervention model pending integration |
-| Net VMT | `InterventionOutcome.net_vmt_low`, `InterventionOutcome.net_vmt_base`, `InterventionOutcome.net_vmt_high` | Modeled VMT difference including added service and upstream park-and-ride travel | Contract ready; intervention model pending integration |
-| Net emissions | `InterventionOutcome.net_co2e_kg_low`, `InterventionOutcome.net_co2e_kg_base`, `InterventionOutcome.net_co2e_kg_high` | Planning-range net CO2e using a pinned factor registry | Contract ready; factor registry and model pending integration |
-| Heat exposure avoided | `InterventionOutcome.heat_exposure_person_hours_avoided` | Modeled person-hours of exposure avoided under stated uptake assumptions | Contract ready; pedestrian/cooling response pending integration |
-| Package cost | `InterventionOutcome.cost_low`, `InterventionOutcome.cost_base`, `InterventionOutcome.cost_high` | Order-of-magnitude planning cost range | Contract ready; cited factors pending integration |
-| Cost per passenger | `InvestmentRecommendation.cost_per_passenger` | Scenario cost per passenger served, shown with evidence quality | Contract ready; recommendation model pending integration |
-| Implementation lead time | `InvestmentRecommendation.lead_time_band` | Planning lead-time band, not an agency commitment | Contract ready; recommendation model pending integration |
-| Responsible actor | `InvestmentRecommendation.responsible_actor`, `InvestmentRecommendation.dependencies` | Candidate owner and dependencies for coordination | Contract ready; city-specific recommendations pending integration |
+| Match and local kickoff | `MatchEvent.match_id`, `MatchEvent.kickoff_local`, `MatchEvent.venue` | Official schedule context from a pinned FIFA source | Integrated: 78 observed US match records |
+| Attendance planning range | `MovementScenario.attendance_low`, `MovementScenario.attendance_base`, `MovementScenario.attendance_high` | Editable attendance scenario, not observed attendance | Integrated as scenario evidence for every match |
+| Hourly arrivals and departures | `MovementScenario.hourly_rows`, `MovementScenario.uncertainty_type` | Planning range by hour; “validated baseline” only after both holdouts pass | Integrated as planning scenario; both-year validation gate fails |
+| Peak passenger demand | `AccessGapResult.peak_demand_per_hour` | Scenario peak passengers per hour | Integrated and visible for all 11 cities |
+| Scheduled transit capacity | `AccessGapResult.transit_capacity_low`, `AccessGapResult.transit_capacity_base`, `AccessGapResult.transit_capacity_high` | Capacity range inferred from pinned schedules and explicit vehicle assumptions, not ridership | Parser integrated; all current city feeds unavailable |
+| Residual passenger gap | `AccessGapResult.residual_passengers` | Scenario passengers not covered by modeled scheduled capacity | Model integrated; UI withholds capacity-qualified gap while GTFS is unavailable |
+| Network walk distance | `AccessGapResult.network_walk_distance_m` | OSM-derived network distance with stated coverage | Estimated fixture visible; actual network extract pending |
+| Post-match service span | `AccessGapResult.service_span_after_match_min` | Scheduled minutes of service after a match | Unavailable pending event-valid GTFS refresh |
+| Route heat exposure | `AccessGapResult.route_heat_exposure_c` | Heat-exposure proxy along modeled access routes | Rice heat proxy integrated; network route overlay pending |
+| Gap resolved | `InterventionOutcome.gap_resolved_passengers` | Scenario passengers served by the package | Integrated scenario model; recommendations remain partial without GTFS |
+| Venue-area vehicle trips | `InterventionOutcome.venue_vehicle_trips_low`, `InterventionOutcome.venue_vehicle_trips_base`, `InterventionOutcome.venue_vehicle_trips_high` | Scenario venue-area trip range, not measured traffic | Integrated scenario range |
+| Net VMT | `InterventionOutcome.net_vmt_low`, `InterventionOutcome.net_vmt_base`, `InterventionOutcome.net_vmt_high` | Modeled VMT difference including added service and upstream park-and-ride travel | Integrated with negative outcomes retained |
+| Net emissions | `InterventionOutcome.net_co2e_kg_low`, `InterventionOutcome.net_co2e_kg_base`, `InterventionOutcome.net_co2e_kg_high` | Planning-range net CO2e using a pinned factor registry | Integrated as scenario/estimated planning range |
+| Heat exposure avoided | `InterventionOutcome.heat_exposure_person_hours_avoided` | Modeled person-hours of exposure avoided under stated uptake assumptions | Integrated only when cooling changes the documented response |
+| Package cost | `InterventionOutcome.cost_low`, `InterventionOutcome.cost_base`, `InterventionOutcome.cost_high` | Order-of-magnitude planning cost range | Integrated with cited scenario/estimated factors |
+| Cost per passenger | `InvestmentRecommendation.cost_per_passenger` | Scenario cost per passenger served, shown with evidence quality | Integrated on Pareto screening options; status partial |
+| Implementation lead time | `InvestmentRecommendation.lead_time_band` | Planning lead-time band, not an agency commitment | Integrated as planning band |
+| Responsible actor | `InvestmentRecommendation.responsible_actor`, `InvestmentRecommendation.dependencies` | Candidate owner and dependencies for coordination | Integrated as candidate actor, not an assignment |
 
 ## Current claims that remain valid
 
