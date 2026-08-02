@@ -13,14 +13,14 @@ items are presenter prompts, not values to read aloud.
    observed match attendance, and the current model has not passed both annual
    holdout gates.”
 4. Show the transit status. “Strict transit comparison is available only where
-   the pinned feed is event-valid. Kansas City and Philadelphia remain
-   unavailable, and we never substitute an expert score.”
+   the pinned feed is event-valid. Kansas City and Philadelphia now use pinned,
+   hash-checked event archives; we never substitute an expert score.”
 5. Show the OSM route and isochrones. “All venues have pinned five-mile network
    context; a route to transit appears only when an event-relevant stop passes
    the GTFS gate. Missing tags do not certify accessibility.”
 
-Continue with a city whose selected match has eligible service; use Methods & QA
-to demonstrate unavailable evidence for the others.
+Continue with Kansas City or Philadelphia to show the repaired event-period
+service evidence; use Methods & QA to demonstrate unavailable evidence elsewhere.
 
 ## Release demonstration after all gates pass
 

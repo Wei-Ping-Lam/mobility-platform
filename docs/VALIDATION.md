@@ -18,9 +18,10 @@ completed analytical result.
 - Current demand validation reports 22 holdouts: the candidate beats the
   seasonal-naive comparator in 2024 for 11 cities and in 2023 for zero. It is
   therefore a planning scenario, not a validated prediction.
-- The 2026-08-02 GTFS refresh produced four observed cities and two usable partial
-  multi-agency cities. Three cities are outside the event window and Kansas City
-  and Philadelphia failed; they remain unavailable. No legacy number became observed.
+- The 2026-08-02 GTFS refresh produced six observed cities and two usable partial
+  multi-agency cities. Three cities remain outside the event window. Pinned,
+  hash-checked archives repaired Kansas City and Philadelphia; no legacy number
+  became observed.
 
 ## Release data gates
 
@@ -83,17 +84,17 @@ completed analytical result.
 
 - Environment: uv 0.11.16, CPython 3.11, committed lockfile, and project `.venv`;
   no machine-specific preview runtime is referenced.
-- Automated suite: `155 passed`; Ruff and whitespace checks pass.
+- Automated suite: `157 passed`; Ruff and whitespace checks pass.
 - Public cache validator: 78 schedule events, 20 planning factors, 11 GTFS city
   records, and 11 graph-derived walking records; validator passed.
 - GTFS artifact SHA-256:
-  `34cc6428c1542b5c375d83ce890d1a1cd7762fa09ac8e920b039710f63e642a8`.
-  It contains 38 event-valid matches, 2,157 venue-area stops, and 108 bounded
-  route shapes across four observed, five partial, and two unavailable cities.
+  `d58a87de35e7f3572c8aee59b204945b51b3be7488fdf2071860375ae3667e50`.
+  It contains 50 event-valid matches, 2,698 venue-area stops, and 138 bounded
+  route shapes across six observed and five partial cities.
 - OSM artifact SHA-256:
-  `c3c6007536a06720f23500dfead188125937753952c32e2505d3915a66ee7c5e`.
-  All 11 venues have five-mile graph-derived isochrones; stop paths are partial
-  where event-relevant GTFS evidence is unavailable.
+  `8a5ed024ecc9826778bf136aeedf6309820924768befab44c0266ce9e446b1f9`.
+  All 11 venues have five-mile graph-derived isochrones; seven have a network
+  path to an event-relevant GTFS stop.
 - Factor artifact SHA-256:
   `f36cba57ede7b6c7dfb720c492ee584545b46912e0cac7da4d7337c5bdb1bbd6`.
   Production composition fails on missing/incomplete factors and every outcome
@@ -105,9 +106,9 @@ completed analytical result.
   `http://127.0.0.1:8503`; the stale port-8501 preview process was stopped.
 - Screenshot record: failed because the in-app browser sandbox-policy handshake
   blocked localhost control. No desktop/narrow screenshot claim is made.
-- Known release failures: Kansas City and Philadelphia lack eligible event-window
-  transit; several other feeds/routes remain partial; team/contact metadata and
-  final desktop/narrow screenshot review remain outstanding.
+- Known release failures: 28 matches still lack event-valid service evidence;
+  several feeds/routes remain partial; team/contact metadata and final
+  desktop/narrow screenshot review remain outstanding.
 
 This is a competition MVP validation record, not certification for operational
 traffic management.

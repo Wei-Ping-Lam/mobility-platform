@@ -19,7 +19,7 @@ import requests
 
 from dashboard.mobility_platform.contracts import CONTRACT_VERSION
 from dashboard.mobility_platform.mappings import HOST_CITIES
-from dashboard.pipeline.gtfs.config import GTFS_FEEDS, MODE_CAPACITY_RANGES
+from dashboard.pipeline.gtfs.config import GTFS_FEEDS, MODE_CAPACITY_RANGES, GtfsFeedSource
 from dashboard.pipeline.public.common import artifact_hash, write_json
 from dashboard.pipeline.public.loaders import load_schedule_snapshot
 
@@ -56,7 +56,15 @@ def _nested_zips(zf: zipfile.ZipFile) -> list[zipfile.ZipFile]:
 
 
 def _find_member(zf: zipfile.ZipFile, filename: str) -> str | None:
-    return next((name for name in zf.namelist() if name.lower().endswith(filename)), None)
+    expected = filename.lower()
+    return next(
+        (
+            name
+            for name in zf.namelist()
+            if name.replace("\\", "/").rsplit("/", 1)[-1].lower() == expected
+        ),
+        None,
+    )
 
 
 def _read_table(zf: zipfile.ZipFile, filename: str) -> pd.DataFrame:
@@ -403,6 +411,7 @@ def extract_feed(
         event_departures = sum(row["departures"] for row in event_rows) if "valid" in validities else None
     return {
         "stops": stops,
+        "route_ids": sorted(route_ids),
         "route_count": len(route_ids),
         "scheduled_departures": scheduled_departures,
         "event_window_departures": event_departures,
@@ -461,38 +470,80 @@ def count_near_venue(stops: pd.DataFrame, venue: dict[str, Any]) -> dict[str, An
     }
 
 
-def fetch_city(city: str, feeds: list[tuple[str, str]], events: list[dict[str, Any]]) -> dict[str, Any]:
+def _source_events(source: GtfsFeedSource, events: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    start = date.fromisoformat(source.valid_from) if source.valid_from else None
+    end = date.fromisoformat(source.valid_to) if source.valid_to else None
+    selected = []
+    for event in events:
+        event_date = datetime.fromisoformat(str(event["kickoff_local"])).date()
+        if start and event_date < start:
+            continue
+        if end and event_date > end:
+            continue
+        selected.append(event)
+    return selected
+
+
+def fetch_city(city: str, feeds: list[GtfsFeedSource], events: list[dict[str, Any]]) -> dict[str, Any]:
     venue = HOST_CITIES[city]
     retrieved_at = datetime.now(timezone.utc).isoformat().replace("+00:00", "Z")
     feed_results = []
     all_stops = []
     totals: Counter[str] = Counter()
+    route_keys: set[tuple[str, str]] = set()
+    scheduled_by_agency: dict[str, int] = {}
     capacities: Counter[str] = Counter()
     calendars = []
     spans_after = []
     optional_presence: dict[str, bool] = defaultdict(bool)
     match_evidence: dict[str, dict[str, Any]] = {}
     route_shapes: list[dict[str, Any]] = []
-    for agency, url in feeds:
-        base = {"agency": agency, "url": url, "retrieved_at_utc": retrieved_at, "status": "unavailable", "sha256": None}
+    for source in feeds:
+        agency = source.agency
+        url = source.url
+        assigned_events = _source_events(source, events)
+        base = {
+            "agency": agency,
+            "url": url,
+            "publisher_url": source.publisher_url,
+            "archive_provider": source.archive_provider,
+            "valid_from": source.valid_from,
+            "valid_to": source.valid_to,
+            "retrieved_at_utc": retrieved_at,
+            "status": "unavailable",
+            "sha256": None,
+        }
         try:
             response = requests.get(url, headers=HEADERS, timeout=120)
             response.raise_for_status()
             payload = response.content
-            extracted = extract_feed(payload, venue, events)
+            digest = hashlib.sha256(payload).hexdigest()
+            if source.expected_sha256 and digest != source.expected_sha256:
+                raise ValueError(
+                    f"Pinned GTFS hash mismatch for {agency}: expected {source.expected_sha256}, found {digest}"
+                )
+            extracted = extract_feed(payload, venue, assigned_events)
             complete = all(extracted["required_files"].values())
-            valid = extracted["calendar_validity"] == "valid"
+            assigned_match_ids = {str(event["match_id"]) for event in assigned_events}
+            valid_match_ids = {
+                str(row["match_id"])
+                for row in extracted["event_departures_by_match"]
+                if row["calendar_valid"]
+            }
+            valid = bool(assigned_match_ids) and assigned_match_ids.issubset(valid_match_ids)
             status = "observed" if complete and valid else "partial"
             feed_results.append(
                 {
                     **base,
                     "status": status,
-                    "sha256": hashlib.sha256(payload).hexdigest(),
+                    "sha256": digest,
                     "bytes": len(payload),
                     "required_files": extracted["required_files"],
                     "optional_files": extracted["optional_files"],
                     "calendar_validity": extracted["calendar_validity"],
                     "service_span": extracted["service_span"],
+                    "assigned_match_ids": sorted(assigned_match_ids),
+                    "event_valid_match_ids": sorted(assigned_match_ids & valid_match_ids),
                 }
             )
             feed_stops = extracted["stops"].copy()
@@ -503,11 +554,11 @@ def fetch_city(city: str, feeds: list[tuple[str, str]], events: list[dict[str, A
                 )
             all_stops.append(feed_stops)
             route_shapes.extend({**shape, "agency": agency} for shape in extracted["route_shapes"])
-            totals.update(
-                route_count=extracted["route_count"],
-                scheduled_departures=extracted["scheduled_departures"],
-                event_window_departures=extracted["event_window_departures"] or 0,
+            route_keys.update((agency, str(route_id)) for route_id in extracted["route_ids"])
+            scheduled_by_agency[agency] = max(
+                scheduled_by_agency.get(agency, 0), int(extracted["scheduled_departures"])
             )
+            totals.update(event_window_departures=extracted["event_window_departures"] or 0)
             capacities.update(extracted["capacity"])
             calendars.append(extracted["calendar_validity"])
             if extracted["service_span_after_match_min"] is not None:
@@ -562,10 +613,10 @@ def fetch_city(city: str, feeds: list[tuple[str, str]], events: list[dict[str, A
         "venue": venue["venue"],
         "venue_lat": venue["lat"],
         "venue_lon": venue["lon"],
-        "agencies": [agency for agency, _ in feeds],
+        "agencies": list(dict.fromkeys(source.agency for source in feeds)),
         "total_agency_stops": len(stops),
-        "route_count": totals["route_count"],
-        "scheduled_departures": totals["scheduled_departures"],
+        "route_count": len(route_keys),
+        "scheduled_departures": sum(scheduled_by_agency.values()),
         "event_window_departures": totals["event_window_departures"] if status != "unavailable" else None,
         "service_span_after_match_min": max(spans_after) if spans_after else None,
         "calendar_validity": "valid" if "valid" in calendars else "unavailable",
@@ -630,8 +681,18 @@ def unavailable_fixture() -> dict[str, dict[str, Any]]:
             "event_capacity_high": None,
             "capacity_status": "unavailable",
             "feeds": [
-                {"agency": agency, "url": url, "status": "unavailable", "sha256": None, "retrieved_at_utc": None}
-                for agency, url in GTFS_FEEDS[city]
+                {
+                    "agency": source.agency,
+                    "url": source.url,
+                    "publisher_url": source.publisher_url,
+                    "archive_provider": source.archive_provider,
+                    "valid_from": source.valid_from,
+                    "valid_to": source.valid_to,
+                    "status": "unavailable",
+                    "sha256": None,
+                    "retrieved_at_utc": None,
+                }
+                for source in GTFS_FEEDS[city]
             ],
             "warning": "Fixture only. Run the explicit refresh command before transportation ranking.",
         }
@@ -672,6 +733,12 @@ def main() -> None:
     mode.add_argument("--fixture", action="store_true", help="Write a deterministic unavailable fixture without network")
     parser.add_argument("--schedule", type=Path, default=Path("data/snapshots/fifa/fifa_2026_us_schedule.json"))
     parser.add_argument("--output", type=Path, default=Path("data/snapshots/gtfs/gtfs_venue_access.json"))
+    parser.add_argument(
+        "--city",
+        action="append",
+        choices=tuple(HOST_CITIES),
+        help="Refresh only the selected city and preserve other cities from the current snapshot",
+    )
     args = parser.parse_args()
     generated_at = datetime.now(timezone.utc).isoformat().replace("+00:00", "Z") if args.refresh else "2026-08-01T00:00:00Z"
     if args.fixture:
@@ -679,7 +746,20 @@ def main() -> None:
     else:
         schedule = load_schedule_snapshot(args.schedule)
         by_city = {city: [event for event in schedule["events"] if event["city"] == city] for city in HOST_CITIES}
-        results = score_results({city: fetch_city(city, feeds, by_city[city]) for city, feeds in GTFS_FEEDS.items()})
+        selected = tuple(dict.fromkeys(args.city or GTFS_FEEDS))
+        if args.city and args.output.exists():
+            from dashboard.pipeline.public.loaders import load_gtfs_snapshot
+
+            results = dict(load_gtfs_snapshot(args.output)["cities"])
+        else:
+            results = unavailable_fixture()
+        results.update(
+            {
+                city: fetch_city(city, GTFS_FEEDS[city], by_city[city])
+                for city in selected
+            }
+        )
+        results = score_results(results)
     digest = write_snapshot(results, args.output, generated_at, fixture=args.fixture)
     print(json.dumps({"output": str(args.output), "status": "fixture" if args.fixture else "refreshed", "file_sha256": digest}))
 

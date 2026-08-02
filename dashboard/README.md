@@ -13,11 +13,11 @@ three decision workspaces, and Methods & QA downloads. Cited factor ranges are
 integrated as scenario/estimated evidence.
 
 Transportation evidence remains incomplete after the explicit GTFS refresh:
-38 matches have event-valid service evidence; four cities are observed, five are
-partial, and Kansas City/Philadelphia remain unavailable. Pinned five-mile OSM
-walking graphs now provide isochrones for all 11 venues and event-relevant stop
-routes where GTFS eligibility permits. The UI suppresses capacity-qualified gaps
-and marks recommendations partial wherever required evidence remains unavailable.
+50 matches across eight cities have event-valid service evidence; six cities are
+observed and five are partial. Pinned event-period archives repaired Kansas City
+and Philadelphia without promoting a legacy score. Five-mile OSM walking graphs
+provide isochrones for all 11 venues and event-relevant stop routes for seven.
+The UI suppresses capacity-qualified gaps wherever required evidence remains unavailable.
 
 ## Run locally
 

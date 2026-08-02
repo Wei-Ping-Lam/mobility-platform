@@ -1,5 +1,5 @@
 {
-  "artifact_sha256": "c3c6007536a06720f23500dfead188125937753952c32e2505d3915a66ee7c5e",
+  "artifact_sha256": "8a5ed024ecc9826778bf136aeedf6309820924768befab44c0266ce9e446b1f9",
   "cities": {
     "Atlanta": {
       "accessibility_status": "not_measured",
@@ -795,7 +795,7 @@
         "license": "Open Database License (ODbL)",
         "notes": "Network planning evidence; sidewalk/crossing tags are incomplete and do not certify accessibility.",
         "publisher": "OpenStreetMap contributors",
-        "retrieved_at_utc": "2026-08-02T02:31:20.541097Z",
+        "retrieved_at_utc": "2026-08-02T03:53:11.835754Z",
         "sha256": "68ede57510666c6c736fd3450ff0861ac250d62cd603e2861a65fffe45175f3e",
         "source": "OpenStreetMap five-mile walking-network extract",
         "status": "derived",
@@ -1492,7 +1492,7 @@
         "license": "Open Database License (ODbL)",
         "notes": "Network planning evidence; sidewalk/crossing tags are incomplete and do not certify accessibility.",
         "publisher": "OpenStreetMap contributors",
-        "retrieved_at_utc": "2026-08-02T02:31:20.541097Z",
+        "retrieved_at_utc": "2026-08-02T03:53:11.835754Z",
         "sha256": "e676cd30a5cf42afd3ad5d4b4457242f6f29a82c94210a0fda9de8469c96be5b",
         "source": "OpenStreetMap five-mile walking-network extract",
         "status": "derived",
@@ -2233,7 +2233,7 @@
         "license": "Open Database License (ODbL)",
         "notes": "Network planning evidence; sidewalk/crossing tags are incomplete and do not certify accessibility.",
         "publisher": "OpenStreetMap contributors",
-        "retrieved_at_utc": "2026-08-02T02:31:20.541097Z",
+        "retrieved_at_utc": "2026-08-02T03:53:11.835754Z",
         "sha256": "389d98bc9682834a6c9de87746118a6f941fc5d978a191060cd16438b863aeb6",
         "source": "OpenStreetMap five-mile walking-network extract",
         "status": "derived",
@@ -2998,7 +2998,7 @@
         "license": "Open Database License (ODbL)",
         "notes": "Network planning evidence; sidewalk/crossing tags are incomplete and do not certify accessibility.",
         "publisher": "OpenStreetMap contributors",
-        "retrieved_at_utc": "2026-08-02T02:31:20.541097Z",
+        "retrieved_at_utc": "2026-08-02T03:53:11.835754Z",
         "sha256": "26877b02e23d7db18618a73e0ad257cb7e728dcca03f4336ca514795a1c89db1",
         "source": "OpenStreetMap five-mile walking-network extract",
         "status": "derived",
@@ -3026,7 +3026,7 @@
       "city": "Kansas City",
       "connected_component_nodes": 53491,
       "crossing_tag_coverage_pct": 17.01,
-      "detour_ratio": null,
+      "detour_ratio": 1.396,
       "graph_edges": 161754,
       "graph_nodes": 53491,
       "isochrones": [
@@ -3669,7 +3669,7 @@
           "walking_speed_mps": 1.34
         }
       ],
-      "network_distance_m": null,
+      "network_distance_m": 1013.0,
       "query": {
         "center": [
           39.0489,
@@ -3678,9 +3678,133 @@
         "distance_m": 8046.72,
         "network_type": "walk"
       },
-      "route_geometry": null,
-      "route_heat_exposure_c": null,
-      "route_uhi_c_above_rural": null,
+      "route_geometry": {
+        "coordinates": [
+          [
+            -94.483029,
+            39.049648
+          ],
+          [
+            -94.482768,
+            39.049835
+          ],
+          [
+            -94.482642,
+            39.04992
+          ],
+          [
+            -94.481889,
+            39.050462
+          ],
+          [
+            -94.481747,
+            39.050341
+          ],
+          [
+            -94.4816,
+            39.050229
+          ],
+          [
+            -94.48153,
+            39.050176
+          ],
+          [
+            -94.481448,
+            39.050117
+          ],
+          [
+            -94.481296,
+            39.050008
+          ],
+          [
+            -94.481256,
+            39.049981
+          ],
+          [
+            -94.481135,
+            39.049899
+          ],
+          [
+            -94.480966,
+            39.049781
+          ],
+          [
+            -94.480595,
+            39.049815
+          ],
+          [
+            -94.480307,
+            39.049949
+          ],
+          [
+            -94.480106,
+            39.050061
+          ],
+          [
+            -94.479904,
+            39.050173
+          ],
+          [
+            -94.47959,
+            39.050352
+          ],
+          [
+            -94.479405,
+            39.050484
+          ],
+          [
+            -94.479266,
+            39.050583
+          ],
+          [
+            -94.479131,
+            39.05068
+          ],
+          [
+            -94.479072,
+            39.050722
+          ],
+          [
+            -94.478928,
+            39.050825
+          ],
+          [
+            -94.478914,
+            39.050835
+          ],
+          [
+            -94.478795,
+            39.050828
+          ],
+          [
+            -94.478676,
+            39.050803
+          ],
+          [
+            -94.477857,
+            39.051398
+          ],
+          [
+            -94.475898,
+            39.050271
+          ],
+          [
+            -94.475808,
+            39.049863
+          ],
+          [
+            -94.475563,
+            39.049899
+          ],
+          [
+            -94.475616,
+            39.049587
+          ]
+        ],
+        "type": "LineString"
+      },
+      "route_heat_exposure_c": 44.12,
+      "route_uhi_c_above_rural": 8.02,
       "schema_version": "1.0.0",
       "sidewalk_tag_coverage_pct": 0.0,
       "snapshot_kind": "osm_walking_network",
@@ -3691,17 +3815,25 @@
         "license": "Open Database License (ODbL)",
         "notes": "Network planning evidence; sidewalk/crossing tags are incomplete and do not certify accessibility.",
         "publisher": "OpenStreetMap contributors",
-        "retrieved_at_utc": "2026-08-02T02:31:20.541097Z",
+        "retrieved_at_utc": "2026-08-02T03:53:11.835754Z",
         "sha256": "53246e13128e2478f75d55c287d8c27e8ae652905c57692bc075852d57149ace",
         "source": "OpenStreetMap five-mile walking-network extract",
         "status": "derived",
         "url": "https://www.openstreetmap.org/copyright",
         "version": "OSMnx 2.1.0"
       },
-      "status": "partial",
-      "straight_distance_m": null,
-      "target_kind": "unavailable without event-relevant GTFS stop",
-      "target_stop": null,
+      "status": "derived",
+      "straight_distance_m": 725.7,
+      "target_kind": "nearest event-relevant GTFS stop",
+      "target_stop": {
+        "agency": "RideKC/KCATA",
+        "lat": 39.049498,
+        "lon": -94.475532,
+        "name": "ON BLUE RIDGE CUTOFF AT 40TH TERR NB",
+        "route": "47",
+        "status": "observed",
+        "stop_id": "4707"
+      },
       "venue": "Arrowhead Stadium",
       "venue_lat": 39.0489,
       "venue_lon": -94.4839
@@ -4516,7 +4648,7 @@
         "license": "Open Database License (ODbL)",
         "notes": "Network planning evidence; sidewalk/crossing tags are incomplete and do not certify accessibility.",
         "publisher": "OpenStreetMap contributors",
-        "retrieved_at_utc": "2026-08-02T02:31:20.541097Z",
+        "retrieved_at_utc": "2026-08-02T03:53:11.835754Z",
         "sha256": "1f3be144b9ce826277f0ba0297b1563341cd49eb6781469d00e200669fcfe3c7",
         "source": "OpenStreetMap five-mile walking-network extract",
         "status": "derived",
@@ -5245,7 +5377,7 @@
         "license": "Open Database License (ODbL)",
         "notes": "Network planning evidence; sidewalk/crossing tags are incomplete and do not certify accessibility.",
         "publisher": "OpenStreetMap contributors",
-        "retrieved_at_utc": "2026-08-02T02:31:20.541097Z",
+        "retrieved_at_utc": "2026-08-02T03:53:11.835754Z",
         "sha256": "ffff4382149765a4cf792c8e363e0f4d602511bc40cc7a1cf01066118aae22e5",
         "source": "OpenStreetMap five-mile walking-network extract",
         "status": "derived",
@@ -5914,7 +6046,7 @@
         "license": "Open Database License (ODbL)",
         "notes": "Network planning evidence; sidewalk/crossing tags are incomplete and do not certify accessibility.",
         "publisher": "OpenStreetMap contributors",
-        "retrieved_at_utc": "2026-08-02T02:31:20.541097Z",
+        "retrieved_at_utc": "2026-08-02T03:53:11.835754Z",
         "sha256": "b19e12e0737c5dba19369876d2c3ea78889e888091a2d87359020582e3435868",
         "source": "OpenStreetMap five-mile walking-network extract",
         "status": "derived",
@@ -5934,7 +6066,7 @@
       "city": "Philadelphia",
       "connected_component_nodes": 59969,
       "crossing_tag_coverage_pct": 13.66,
-      "detour_ratio": null,
+      "detour_ratio": 1.73,
       "graph_edges": 179514,
       "graph_nodes": 59969,
       "isochrones": [
@@ -6629,7 +6761,7 @@
           "walking_speed_mps": 1.34
         }
       ],
-      "network_distance_m": null,
+      "network_distance_m": 410.4,
       "query": {
         "center": [
           39.9008,
@@ -6638,9 +6770,89 @@
         "distance_m": 8046.72,
         "network_type": "walk"
       },
-      "route_geometry": null,
-      "route_heat_exposure_c": null,
-      "route_uhi_c_above_rural": null,
+      "route_geometry": {
+        "coordinates": [
+          [
+            -75.166365,
+            39.901622
+          ],
+          [
+            -75.166369,
+            39.90178
+          ],
+          [
+            -75.166336,
+            39.901937
+          ],
+          [
+            -75.166301,
+            39.902104
+          ],
+          [
+            -75.166275,
+            39.902233
+          ],
+          [
+            -75.166356,
+            39.902317
+          ],
+          [
+            -75.166761,
+            39.902372
+          ],
+          [
+            -75.166859,
+            39.902386
+          ],
+          [
+            -75.166991,
+            39.902406
+          ],
+          [
+            -75.167133,
+            39.902451
+          ],
+          [
+            -75.168025,
+            39.902734
+          ],
+          [
+            -75.168325,
+            39.902933
+          ],
+          [
+            -75.1683,
+            39.903054
+          ],
+          [
+            -75.168656,
+            39.903101
+          ],
+          [
+            -75.168894,
+            39.903132
+          ],
+          [
+            -75.169095,
+            39.903158
+          ],
+          [
+            -75.169109,
+            39.90309
+          ],
+          [
+            -75.169219,
+            39.903091
+          ],
+          [
+            -75.169244,
+            39.902972
+          ]
+        ],
+        "type": "LineString"
+      },
+      "route_heat_exposure_c": 44.87,
+      "route_uhi_c_above_rural": 9.97,
       "schema_version": "1.0.0",
       "sidewalk_tag_coverage_pct": 0.0,
       "snapshot_kind": "osm_walking_network",
@@ -6651,17 +6863,25 @@
         "license": "Open Database License (ODbL)",
         "notes": "Network planning evidence; sidewalk/crossing tags are incomplete and do not certify accessibility.",
         "publisher": "OpenStreetMap contributors",
-        "retrieved_at_utc": "2026-08-02T02:31:20.541097Z",
+        "retrieved_at_utc": "2026-08-02T03:53:11.835754Z",
         "sha256": "fe2cc07a4b6283c475e40dc537ed30a456a556c81863df6da559adeb15d145c4",
         "source": "OpenStreetMap five-mile walking-network extract",
         "status": "derived",
         "url": "https://www.openstreetmap.org/copyright",
         "version": "OSMnx 2.1.0"
       },
-      "status": "partial",
-      "straight_distance_m": null,
-      "target_kind": "unavailable without event-relevant GTFS stop",
-      "target_stop": null,
+      "status": "derived",
+      "straight_distance_m": 237.3,
+      "target_kind": "nearest event-relevant GTFS stop",
+      "target_stop": {
+        "agency": "SEPTA",
+        "lat": 39.902549,
+        "lon": -75.169094,
+        "name": "11th St & Zinkoff Blvd - FS",
+        "route": "17",
+        "status": "observed",
+        "stop_id": "21349"
+      },
       "venue": "Lincoln Financial Field",
       "venue_lat": 39.9008,
       "venue_lon": -75.1675
@@ -7480,7 +7700,7 @@
         "license": "Open Database License (ODbL)",
         "notes": "Network planning evidence; sidewalk/crossing tags are incomplete and do not certify accessibility.",
         "publisher": "OpenStreetMap contributors",
-        "retrieved_at_utc": "2026-08-02T02:31:20.541097Z",
+        "retrieved_at_utc": "2026-08-02T03:53:11.835754Z",
         "sha256": "bb5f5895d7420a1093c485ec47860ab40f884fc2eb44e5e5a1448175d7004da5",
         "source": "OpenStreetMap five-mile walking-network extract",
         "status": "derived",
@@ -8325,7 +8545,7 @@
         "license": "Open Database License (ODbL)",
         "notes": "Network planning evidence; sidewalk/crossing tags are incomplete and do not certify accessibility.",
         "publisher": "OpenStreetMap contributors",
-        "retrieved_at_utc": "2026-08-02T02:31:20.541097Z",
+        "retrieved_at_utc": "2026-08-02T03:53:11.835754Z",
         "sha256": "e1ef1e263e3da07816526b17f173163a7df090c112d3a3d934ca9f35b6ea286f",
         "source": "OpenStreetMap five-mile walking-network extract",
         "status": "derived",
@@ -8350,7 +8570,7 @@
     }
   },
   "contract_version": "0.3.0",
-  "generated_at_utc": "2026-08-02T02:31:20.541097Z",
+  "generated_at_utc": "2026-08-02T03:53:11.835754Z",
   "policy": {
     "ada": "Missing OSM tags remain unknown and never imply ADA compliance",
     "distance": "Network paths are planning evidence and include a straight-line lower-bound guard",
@@ -8363,7 +8583,7 @@
     "license": "Open Database License (ODbL)",
     "notes": "Hashes identify local GraphML extracts; compact derived geometry is tracked.",
     "publisher": "OpenStreetMap contributors",
-    "retrieved_at_utc": "2026-08-02T02:31:20.541097Z",
+    "retrieved_at_utc": "2026-08-02T03:53:11.835754Z",
     "sha256": "5274c8f9c2f818e09b88410ae276e47f2e7349c28e65bbbe803cd0e7bc8a784b",
     "source": "OpenStreetMap five-mile walking-network extracts",
     "status": "derived",

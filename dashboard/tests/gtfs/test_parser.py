@@ -4,6 +4,7 @@ import zipfile
 import pandas as pd
 import requests
 
+from dashboard.pipeline.gtfs.config import GtfsFeedSource
 from dashboard.pipeline.gtfs.fetch import count_near_venue, extract_feed, fetch_city, score_results, unavailable_fixture
 from dashboard.pipeline.public.loaders import load_gtfs_snapshot
 
@@ -48,6 +49,64 @@ def test_parser_covers_calendar_exceptions_frequency_and_optional_files():
     assert result["mode_departures"]["bus"] > 0
 
 
+def test_nested_archive_uses_exact_stops_member_and_not_route_stops():
+    inner = _feed(
+        {
+            "route_stops.txt": "route_id,direction_id,stop_id,route_stop_sort_order\nR1,0,S1,1\n",
+            "stops.txt": "stop_id,stop_name,stop_lat,stop_lon\nS1,Venue stop,33.7554,-84.4009\n",
+            "routes.txt": "route_id,route_type\nR1,3\n",
+            "trips.txt": "route_id,service_id,trip_id\nR1,WK,T1\n",
+            "stop_times.txt": "trip_id,arrival_time,departure_time,stop_id,stop_sequence\nT1,18:00:00,18:00:00,S1,1\n",
+            "calendar.txt": "service_id,monday,tuesday,wednesday,thursday,friday,saturday,sunday,start_date,end_date\nWK,1,1,1,1,1,1,1,20260101,20261231\n",
+        }
+    )
+    payload = _feed({"google_bus.zip": inner})
+    event = {"match_id": "M004", "kickoff_local": "2026-06-12T18:00:00-04:00"}
+
+    result = extract_feed(payload, {"lat": 33.7554, "lon": -84.4009}, [event])
+
+    assert {"stop_id", "stop_lat", "stop_lon"}.issubset(result["stops"].columns)
+    assert result["venue_stop_count"] == 1
+    assert result["event_departures_by_match"][0]["departures"] == 1
+
+
+def test_pinned_sources_assign_non_overlapping_event_windows(monkeypatch):
+    payload = _feed(
+        {
+            "stops.txt": "stop_id,stop_lat,stop_lon\nS1,33.7554,-84.4009\n",
+            "routes.txt": "route_id,route_type\nR1,3\n",
+            "trips.txt": "route_id,service_id,trip_id\nR1,WK,T1\n",
+            "stop_times.txt": "trip_id,arrival_time,departure_time,stop_id,stop_sequence\nT1,18:00:00,18:00:00,S1,1\n",
+            "calendar.txt": "service_id,monday,tuesday,wednesday,thursday,friday,saturday,sunday,start_date,end_date\nWK,1,1,1,1,1,1,1,20260101,20261231\n",
+        }
+    )
+
+    class Response:
+        content = payload
+
+        @staticmethod
+        def raise_for_status():
+            return None
+
+    monkeypatch.setattr(requests, "get", lambda *args, **kwargs: Response())
+    digest = __import__("hashlib").sha256(payload).hexdigest()
+    feeds = [
+        GtfsFeedSource("Fixture", "https://example.invalid/first.zip", expected_sha256=digest, valid_to="2026-06-12"),
+        GtfsFeedSource("Fixture", "https://example.invalid/second.zip", expected_sha256=digest, valid_from="2026-06-13"),
+    ]
+    events = [
+        {"match_id": "M1", "kickoff_local": "2026-06-12T18:00:00-04:00"},
+        {"match_id": "M2", "kickoff_local": "2026-06-13T18:00:00-04:00"},
+    ]
+
+    result = fetch_city("Atlanta", feeds, events)
+
+    assert result["feed_status"] == "observed"
+    assert result["matches"]["M1"]["event_window_departures"] == 1
+    assert result["matches"]["M2"]["event_window_departures"] == 1
+    assert [feed["assigned_match_ids"] for feed in result["feeds"]] == [["M1"], ["M2"]]
+
+
 def test_hash_policy_and_feed_failure_never_fall_back():
     fixture = unavailable_fixture()
     assert len(fixture) == 11
@@ -88,6 +147,6 @@ def test_python_38_refresh_paths_do_not_require_dictionary_union(monkeypatch):
         raise requests.RequestException("fixture failure")
 
     monkeypatch.setattr(requests, "get", fail_request)
-    result = fetch_city("Atlanta", [("Fixture", "https://example.invalid/feed.zip")], [])
+    result = fetch_city("Atlanta", [GtfsFeedSource("Fixture", "https://example.invalid/feed.zip")], [])
     assert result["feed_status"] == "unavailable"
     assert result["feeds"][0]["sha256"] is None

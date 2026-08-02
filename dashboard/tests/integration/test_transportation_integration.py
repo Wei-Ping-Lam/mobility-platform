@@ -40,7 +40,7 @@ def test_nested_public_and_rice_artifacts_load_for_all_host_cities():
     assert not artifacts["origin_flows"].empty
 
 
-def test_compact_evidence_composes_match_decisions_without_promoting_failed_gtfs():
+def test_compact_evidence_composes_match_decisions_with_repaired_event_gtfs():
     artifacts, metrics = _loaded()
     bundle = build_transportation_bundle(metrics, artifacts)
     assert len(bundle["movement_scenarios"]) == 78
@@ -48,14 +48,21 @@ def test_compact_evidence_composes_match_decisions_without_promoting_failed_gtfs
     assert len(bundle["intervention_outcomes"]) == 78 * 3
     assert bundle["investment_recommendations"]
     access_by_city = {row["city"]: row for row in bundle["access_gaps"]}
-    assert access_by_city["Kansas City"]["status"] == "unavailable"
-    assert access_by_city["Philadelphia"]["status"] == "unavailable"
+    for city in ("Kansas City", "Philadelphia"):
+        city_access = [row for row in bundle["access_gaps"] if row["city"] == city]
+        assert city_access
+        assert all(row["status"] == "scenario" for row in city_access)
+        assert all(row["transit_capacity_base"] > 0 for row in city_access)
+        assert artifacts["gtfs"][city]["feed_status"] == "observed"
+        assert len(artifacts["gtfs"][city]["matches"]) == 6
+        assert all(feed["status"] == "observed" for feed in artifacts["gtfs"][city]["feeds"])
+        assert artifacts["walking_networks"][city]["network_distance_m"] is not None
     assert access_by_city["Atlanta"]["status"] == "scenario"
     assert access_by_city["Miami"]["transit_capacity_base"] == 0
     assert access_by_city["Miami"]["status"] == "partial"
     recommendation_statuses = {row["city"]: row["status"] for row in bundle["investment_recommendations"]}
-    assert recommendation_statuses["Kansas City"] == "partial"
-    assert recommendation_statuses["Philadelphia"] == "partial"
+    assert recommendation_statuses["Kansas City"] == "scenario"
+    assert recommendation_statuses["Philadelphia"] == "scenario"
     assert all(row["peak_demand_per_hour"] > 0 for row in bundle["access_gaps"])
     assert all(row["residual_passengers"] >= 0 for row in bundle["access_gaps"])
     assert any(row["residual_passengers"] > 0 for row in bundle["access_gaps"])

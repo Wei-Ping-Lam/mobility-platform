@@ -1,25 +1,75 @@
 """Pinned GTFS feed registry and scenario capacity assumptions."""
 
+from __future__ import annotations
+
+from dataclasses import dataclass
+
+
+@dataclass(frozen=True)
+class GtfsFeedSource:
+    """One agency feed or immutable archive assigned to an event-date window."""
+
+    agency: str
+    url: str
+    publisher_url: str | None = None
+    archive_provider: str | None = None
+    expected_sha256: str | None = None
+    valid_from: str | None = None
+    valid_to: str | None = None
+
+
+def _live(agency: str, url: str) -> GtfsFeedSource:
+    return GtfsFeedSource(agency=agency, url=url, publisher_url=url)
+
 GTFS_FEEDS = {
-    "Atlanta": [("MARTA", "https://www.itsmarta.com/google_transit_feed/google_transit.zip")],
-    "Boston": [("MBTA", "https://cdn.mbta.com/MBTA_GTFS.zip")],
-    "Dallas": [("DART", "https://www.dart.org/transitdata/latest/google_transit.zip")],
-    "Houston": [("METRO Houston", "https://metro.resourcespace.com/pages/download.php?ref=4835&ext=zip")],
-    "Kansas City": [("RideKC/KCATA", "https://ridekc.org/assets/uploads/gtfs/google_transit.zip")],
+    "Atlanta": [_live("MARTA", "https://www.itsmarta.com/google_transit_feed/google_transit.zip")],
+    "Boston": [_live("MBTA", "https://cdn.mbta.com/MBTA_GTFS.zip")],
+    "Dallas": [_live("DART", "https://www.dart.org/transitdata/latest/google_transit.zip")],
+    "Houston": [_live("METRO Houston", "https://metro.resourcespace.com/pages/download.php?ref=4835&ext=zip")],
+    "Kansas City": [
+        GtfsFeedSource(
+            agency="RideKC/KCATA",
+            url=(
+                "https://files.mobilitydatabase.org/mdb-187/"
+                "mdb-187-202607020106/mdb-187-202607020106.zip"
+            ),
+            publisher_url="https://www.kcata.org/transit_data/access_gtdf",
+            archive_provider="MobilityDatabase",
+            expected_sha256="2a49be56567391508e8ac456d09e165564ccf46ddc3cb0ffb38c06f0d1ec13e7",
+            valid_from="2026-06-07",
+            valid_to="2026-07-11",
+        )
+    ],
     "Los Angeles": [
-        ("LA Metro Rail", "https://gitlab.com/LACMTA/gtfs_rail/raw/master/gtfs_rail.zip"),
-        ("LA Metro Bus", "https://gitlab.com/LACMTA/gtfs_bus/-/raw/master/gtfs_bus.zip"),
+        _live("LA Metro Rail", "https://gitlab.com/LACMTA/gtfs_rail/raw/master/gtfs_rail.zip"),
+        _live("LA Metro Bus", "https://gitlab.com/LACMTA/gtfs_bus/-/raw/master/gtfs_bus.zip"),
     ],
-    "Miami": [("Miami-Dade Transit", "https://www.miamidade.gov/transit/googletransit/current/google_transit.zip")],
-    "New York/NJ": [("NJ Transit Rail", "https://www.njtransit.com/rail_data.zip")],
+    "Miami": [_live("Miami-Dade Transit", "https://www.miamidade.gov/transit/googletransit/current/google_transit.zip")],
+    "New York/NJ": [_live("NJ Transit Rail", "https://www.njtransit.com/rail_data.zip")],
     "Philadelphia": [
-        ("SEPTA Rail", "https://github.com/septadev/GTFS/releases/latest/download/google_rail.zip"),
-        ("SEPTA Bus", "https://github.com/septadev/GTFS/releases/latest/download/google_bus.zip"),
+        GtfsFeedSource(
+            agency="SEPTA",
+            url="https://github.com/septadev/GTFS/releases/download/v202606141/gtfs_public.zip",
+            publisher_url="https://www3.septa.org/developer/",
+            archive_provider="SEPTA GitHub releases",
+            expected_sha256="aea11dbc7a53ed534658f2d7147b1e1569aaf900f7c523e43d327af5ae694078",
+            valid_from="2026-06-14",
+            valid_to="2026-06-27",
+        ),
+        GtfsFeedSource(
+            agency="SEPTA",
+            url="https://github.com/septadev/GTFS/releases/download/v202606282/gtfs_public.zip",
+            publisher_url="https://www3.septa.org/developer/",
+            archive_provider="SEPTA GitHub releases",
+            expected_sha256="c343b768a50670ebf9dab965df30fcc88aa8cf7069f3ed5aa103d21623ad8a64",
+            valid_from="2026-06-28",
+            valid_to="2026-07-19",
+        ),
     ],
-    "San Francisco": [("VTA", "https://gtfs.vta.org/gtfs_vta.zip")],
+    "San Francisco": [_live("VTA", "https://gtfs.vta.org/gtfs_vta.zip")],
     "Seattle": [
-        ("Sound Transit", "https://gtfs.sound.obaweb.org/prod/40_gtfs.zip"),
-        ("King County Metro", "https://metro.kingcounty.gov/GTFS/google_transit.zip"),
+        _live("Sound Transit", "https://gtfs.sound.obaweb.org/prod/40_gtfs.zip"),
+        _live("King County Metro", "https://metro.kingcounty.gov/GTFS/google_transit.zip"),
     ],
 }
 

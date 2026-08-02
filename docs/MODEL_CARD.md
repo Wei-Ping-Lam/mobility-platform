@@ -55,8 +55,9 @@ are defined in `VALIDATION.md`.
 
 ## Current evidence limitations
 
-- GTFS is observed for four cities, partial for five, and unavailable for Kansas
-  City and Philadelphia; strict transportation results remain evidence-gated.
+- GTFS is observed for six cities and partial for five. Pinned event-period
+  archives repaired Kansas City and Philadelphia; 28 matches still lack
+  event-valid service evidence and remain evidence-gated.
 - The present event-demand band is generic and did not beat its comparator in
   both validation years; it remains a planning scenario.
 - Boston lacks eligible two-mile Rice UHI coverage; Miami and New York/New

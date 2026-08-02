@@ -55,16 +55,16 @@ gaps and intervention outcomes—not rank—lead the decision.
 - Hourly movement, physical access, intervention accounting, city differentiation,
   Pareto screening, and all three UI workspaces are implemented and tested.
 - EPA/FTA/FHWA inputs are pinned as scenario/estimated planning ranges.
-- The GTFS refresh produced event-valid evidence for 38 matches across six cities;
-  three downloaded feeds are outside the event window and Kansas City/Philadelphia
-  remain unavailable.
+- The GTFS refresh produced event-valid evidence for 50 matches across eight cities.
+  Pinned, hash-checked event archives repaired Kansas City and Philadelphia;
+  three cities remain wholly outside the event window.
 - Five-mile OSM walking graphs and hashes cover all 11 venues; all venues retain
   isochrones, while event-relevant stop routes remain partial where GTFS is ineligible.
 
 ### Required before the competition-ready claim
 
-- Repair or replace failed/out-of-window GTFS feeds so every city can support a
-  capacity-qualified match access result.
+- Repair the remaining outside-window feeds and match gaps so every city can
+  support a capacity-qualified match access result.
 - Run the final full-data, narrow-screen, and screenshot release record against the integrated branch.
 - Replace the team/contact placeholders above.
 
