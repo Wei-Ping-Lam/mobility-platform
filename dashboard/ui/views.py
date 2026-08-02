@@ -119,6 +119,7 @@ def _decision_rows(presentation: PlatformPresentation) -> pd.DataFrame:
         access = decision.access(match.match_id)
         recommendations = decision.recommendation_set(match.match_id)
         recommendation = recommendations[0] if recommendations else _fallback_recommendation(decision, access)
+        capacity_qualified = access.status != "unavailable"
         rows.append(
             {
                 "city": city,
@@ -126,7 +127,7 @@ def _decision_rows(presentation: PlatformPresentation) -> pd.DataFrame:
                 "lat": decision.lat,
                 "lon": decision.lon,
                 "match_id": match.match_id,
-                "peak_gap": access.residual_passengers,
+                "peak_gap": access.residual_passengers if capacity_qualified else None,
                 "peak_demand": access.peak_demand_per_hour,
                 "investment": recommendation.intervention,
                 "cost_range": _money_range(recommendation.cost_low, recommendation.cost_high, recommendation.cost_base),
@@ -150,7 +151,9 @@ def _priority_map(rows: pd.DataFrame) -> go.Figure:
         subset = valid[valid["evidence"] == status]
         if subset.empty:
             continue
-        sizes = pd.to_numeric(subset["peak_gap"], errors="coerce").fillna(0)
+        sizes = pd.to_numeric(subset["peak_gap"], errors="coerce").fillna(
+            pd.to_numeric(subset["peak_demand"], errors="coerce").fillna(0)
+        )
         sizes = 13 + 18 * (sizes / max(float(sizes.max()), 1))
         figure.add_trace(
             go.Scattermapbox(
@@ -159,10 +162,11 @@ def _priority_map(rows: pd.DataFrame) -> go.Figure:
                 mode="markers",
                 marker=dict(size=sizes, color=STATUS_COLORS[status], opacity=.86),
                 name=status.title(),
-                customdata=subset[["city", "peak_gap", "investment", "cost_range", "lead_time"]],
+                customdata=subset[["city", "peak_demand", "peak_gap", "investment", "cost_range", "lead_time"]],
                 hovertemplate=(
-                    "<b>%{customdata[0]}</b><br>Peak gap: %{customdata[1]:,.0f} passengers/hour"
-                    "<br>Priority: %{customdata[2]}<br>Cost: %{customdata[3]}<br>Lead time: %{customdata[4]}<extra></extra>"
+                    "<b>%{customdata[0]}</b><br>Peak demand scenario: %{customdata[1]:,.0f} passengers/hour"
+                    "<br>Capacity-qualified gap: %{customdata[2]:,.0f} passengers/hour"
+                    "<br>Priority: %{customdata[3]}<br>Cost: %{customdata[4]}<br>Lead time: %{customdata[5]}<extra></extra>"
                 ),
             )
         )
@@ -173,6 +177,7 @@ def render_executive(metrics: pd.DataFrame, artifacts: dict[str, Any], *, suppli
     presentation = build_presentation(metrics, artifacts)
     rows = _decision_rows(presentation)
     known_gaps = rows["peak_gap"].notna().sum() if not rows.empty else 0
+    known_demands = rows["peak_demand"].notna().sum() if not rows.empty else 0
     page_header(
         "Executive decision view",
         "Where mobility investment matters most",
@@ -182,7 +187,7 @@ def render_executive(metrics: pd.DataFrame, artifacts: dict[str, Any], *, suppli
     _metric_grid(
         [
             (str(len(rows)), "Cities in scope", None, "Current selection", "teal"),
-            (str(int(known_gaps)), "Cities with quantified peak gaps", "derived" if known_gaps else "unavailable", "Passengers per hour", "blue"),
+            (str(int(known_demands)), "Cities with match demand scenarios", "scenario" if known_demands else "unavailable", "Passengers per hour", "blue"),
             (_safe(rows["peak_gap"].max() if known_gaps else None, " pph", 0), "Peak access gap — largest", "scenario" if known_gaps else "unavailable", "Not a roadway measure", "coral"),
             (str(rows["investment"].ne("Complete the access evidence").sum()), "Cities with investment guidance", "scenario", "Evidence-qualified actions", "amber"),
         ]
@@ -196,13 +201,13 @@ def render_executive(metrics: pd.DataFrame, artifacts: dict[str, Any], *, suppli
     if known_gaps < len(rows):
         callout(
             "warning",
-            f"{len(rows) - known_gaps} cities do not yet have a quantified passenger gap",
-            "They remain visible with an evidence-completion action. Missing transit or walking evidence is never replaced with an expert score.",
+            f"{len(rows) - known_gaps} cities do not yet have a capacity-qualified passenger gap",
+            "Match demand remains visible, but a missing transit feed is not treated as zero observed service. Missing transit or walking evidence is never replaced with an expert score.",
         )
 
     section_header(
         "Priority city map",
-        "Marker size reflects the documented peak passenger gap. Written evidence labels and the table provide alternatives to color.",
+        "Marker size reflects the capacity-qualified gap where available, otherwise the match demand scenario. Written labels and the table provide alternatives to color.",
         "Where",
     )
     map_column, table_column = st.columns([1.35, 1], gap="large")
@@ -210,10 +215,15 @@ def render_executive(metrics: pd.DataFrame, artifacts: dict[str, Any], *, suppli
         st.plotly_chart(_priority_map(rows), use_container_width=True, config={"displayModeBar": False})
         st.caption("Venue points are not corridor boundaries. Open Explorer for route-ready layers and missing-data warnings.")
     with table_column:
-        display = rows[["city", "peak_gap", "investment", "cost_range", "lead_time", "evidence"]].copy()
+        display = rows[["city", "peak_demand", "peak_gap", "investment", "cost_range", "lead_time", "evidence"]].copy()
+        display["peak_demand"] = pd.to_numeric(display["peak_demand"], errors="coerce").round(0)
         display["peak_gap"] = pd.to_numeric(display["peak_gap"], errors="coerce").round(0)
-        display.columns = ["City", "Peak gap (passengers/hour)", "Top investment", "Cost range", "Lead time", "Evidence"]
-        display = display.sort_values("Peak gap (passengers/hour)", ascending=False, na_position="last")
+        display.columns = ["City", "Peak demand scenario (passengers/hour)", "Capacity-qualified gap (passengers/hour)", "Top investment", "Cost range", "Lead time", "Evidence"]
+        display = display.sort_values(
+            ["Capacity-qualified gap (passengers/hour)", "Peak demand scenario (passengers/hour)"],
+            ascending=False,
+            na_position="last",
+        )
         st.dataframe(display, hide_index=True, use_container_width=True, height=415)
         callout("info", "Decision reading order", "Start with the physical gap, then compare cost, climate outcome, delivery time, and evidence status. No single opaque optimization selects the answer.")
 

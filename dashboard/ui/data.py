@@ -145,7 +145,56 @@ def _load_public_supplements(paths: ProjectPaths) -> dict[str, Any]:
             if payload is not None:
                 bundle[key] = payload
                 break
+    snapshot_root = paths.repo_root / "data" / "snapshots"
+    schedule = _load_json(snapshot_root / "fifa" / "fifa_2026_us_schedule.json")
+    factors = _load_json(snapshot_root / "factors" / "planning_factors.json")
+    walking = _load_json(snapshot_root / "osm" / "walking_networks.json")
+    gtfs = _load_json(snapshot_root / "gtfs" / "gtfs_venue_access.json")
+    if isinstance(schedule, dict):
+        bundle.setdefault("match_events", schedule.get("events", []))
+        bundle.setdefault("source_references", [schedule.get("source", {})])
+    if isinstance(factors, dict):
+        bundle.setdefault(
+            "factor_registry",
+            [{"factor": name, **value} for name, value in factors.get("factors", {}).items()],
+        )
+        bundle.setdefault("source_references", []).extend(factors.get("sources", {}).values())
+    if isinstance(walking, dict):
+        bundle["walking_networks"] = walking.get("cities", {})
+        bundle.setdefault("network_coverage", list(walking.get("cities", {}).values()))
+        bundle.setdefault("source_references", []).append(walking.get("source", {}))
+    if isinstance(gtfs, dict):
+        bundle["gtfs_snapshot"] = gtfs.get("cities", {})
     return bundle
+
+
+def _load_rice_spatial(paths: ProjectPaths) -> dict[str, Any]:
+    names = {
+        "uhi_points": "rice_spatial_uhi_grid.parquet",
+        "poi_points": "rice_spatial_poi_points.parquet",
+        "origin_flows": "rice_spatial_origin_flows.parquet",
+        "movement_context": "rice_spatial_movement_context.parquet",
+        "venue_corridors": "venue_corridor_summary.parquet",
+    }
+    frames = {key: read_parquet(paths, filename) for key, filename in names.items()}
+    map_layers: dict[str, dict[str, list[dict[str, Any]]]] = {}
+    for city in sorted(set(frames["poi_points"].get("city", pd.Series(dtype=str)).dropna())):
+        city_uhi = frames["uhi_points"][frames["uhi_points"]["city"] == city].copy()
+        city_poi = frames["poi_points"][frames["poi_points"]["city"] == city].copy()
+        city_origins = frames["origin_flows"][frames["origin_flows"]["city"] == city].copy()
+        if not city_uhi.empty:
+            city_uhi = city_uhi.rename(columns={"grid_lat": "lat", "grid_lon": "lon"})
+        if not city_poi.empty:
+            city_poi = city_poi.rename(columns={"point_lat": "lat", "point_lon": "lon"})
+        if not city_origins.empty:
+            city_origins = city_origins.rename(columns={"venue_lat": "lat", "venue_lon": "lon", "home_state": "name"})
+        map_layers[city] = {
+            "uhi": city_uhi.to_dict("records"),
+            "poi": city_poi.to_dict("records"),
+            "origin": city_origins.to_dict("records"),
+        }
+    frames["map_layers"] = map_layers
+    return frames
 
 
 def load_artifacts(paths: ProjectPaths) -> dict[str, Any]:
@@ -162,6 +211,8 @@ def load_artifacts(paths: ProjectPaths) -> dict[str, Any]:
     if origins.empty or not {"city", "home_state", "count", "raw_total_spend"}.issubset(origins.columns):
         origins = _legacy_origins(paths)
     brand_spend = read_parquet(paths, "brand_spend_city_daily.parquet")
+    supplements = _load_public_supplements(paths)
+    pinned_gtfs = supplements.get("gtfs_snapshot")
     artifacts = {
         "manifest": read_manifest(paths),
         "visits": visits,
@@ -171,8 +222,20 @@ def load_artifacts(paths: ProjectPaths) -> dict[str, Any]:
         "poi": poi,
         "origins": origins,
         "brand_spend": brand_spend,
-        "gtfs": load_gtfs(paths),
+        "gtfs": pinned_gtfs if isinstance(pinned_gtfs, dict) else load_gtfs(paths),
         "legacy_mode": not (paths.artifact_root / "manifest.json").exists(),
     }
-    artifacts.update(_load_public_supplements(paths))
+    artifacts.update(supplements)
+    spatial = _load_rice_spatial(paths)
+    for city, city_layers in spatial.pop("map_layers", {}).items():
+        artifacts.setdefault("map_layers", {}).setdefault(city, {}).update(city_layers)
+    artifacts.update(spatial)
+    for city, network in artifacts.get("walking_networks", {}).items():
+        walk_rows = []
+        for isochrone in network.get("isochrones", []):
+            geometry = isochrone.get("geometry", {})
+            coordinates = geometry.get("coordinates", [])
+            if coordinates:
+                walk_rows.append({"coordinates": coordinates[0], "minutes": isochrone.get("minutes")})
+        artifacts.setdefault("map_layers", {}).setdefault(city, {})["walk"] = walk_rows
     return artifacts

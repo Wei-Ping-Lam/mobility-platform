@@ -13,6 +13,7 @@ REPO_ROOT = Path(__file__).resolve().parents[1]
 if str(REPO_ROOT) not in sys.path:
     sys.path.insert(0, str(REPO_ROOT))
 
+from dashboard.domain.decision_support import build_transportation_bundle  # noqa: E402
 from dashboard.domain.scoring import DEFAULT_WEIGHTS, build_city_metrics, normalize_weights  # noqa: E402
 from dashboard.mobility_platform.config import project_paths  # noqa: E402
 from dashboard.mobility_platform.mappings import HOST_CITIES  # noqa: E402
@@ -97,6 +98,7 @@ metrics = build_city_metrics(
     artifacts["visits"], artifacts["weather"], artifacts["uhi"], artifacts["poi"], artifacts["gtfs"],
     weights=weights, include_estimates=include_estimates,
 )
+artifacts.update(build_transportation_bundle(metrics, artifacts))
 
 if selected_city != "All cities" and selected_city in metrics["city"].values:
     selected_metrics = metrics[metrics["city"] == selected_city].copy()

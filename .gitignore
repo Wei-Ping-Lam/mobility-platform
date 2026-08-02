@@ -1,4 +1,4 @@
-# Raw data — too large for GitHub (6.8 GB+)
+# Raw data - too large for GitHub (6.8 GB+)
 store-visits-rice/
 urban-heat-index-rice/
 daily-weather-rice/
@@ -9,6 +9,7 @@ Rice WC Hack/
 
 # Parallel development worktrees
 .worktrees/
+.tmp/
 
 # Keep the processed cache so the app runs on Streamlit Cloud without raw data
 !dashboard/cache/
