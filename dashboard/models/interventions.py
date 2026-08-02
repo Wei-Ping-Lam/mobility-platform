@@ -9,7 +9,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass, fields
 from math import inf
-from typing import Iterable
+from typing import Any, Iterable, Mapping
 
 from dashboard.mobility_platform.contracts import (
     AccessGapResult,
@@ -92,6 +92,8 @@ class InterventionFactorRegistry:
     """Versioned low/base/high planning factors supplied by the evidence pipeline."""
 
     registry_version: str
+    artifact_sha256: str
+    source_version: str
     shuttle_passengers_per_bus: FactorRange
     transit_passengers_per_departure: FactorRange
     service_load_factor: FactorRange
@@ -116,6 +118,10 @@ class InterventionFactorRegistry:
     def __post_init__(self) -> None:
         if not self.registry_version.strip():
             raise ValueError("registry_version is required")
+        if len(self.artifact_sha256) != 64:
+            raise ValueError("artifact_sha256 must be a SHA-256 digest")
+        if not self.source_version.strip():
+            raise ValueError("source_version is required")
         if self.bike_max_distance_m <= 0:
             raise ValueError("bike_max_distance_m must be greater than zero")
 
@@ -129,6 +135,8 @@ def default_factor_registry() -> InterventionFactorRegistry:
 
     return InterventionFactorRegistry(
         registry_version="contract-0.3-planning-fixture",
+        artifact_sha256="0" * 64,
+        source_version="unit-test-fixture",
         shuttle_passengers_per_bus=FactorRange(35, 45, 55),
         transit_passengers_per_departure=FactorRange(90, 140, 200),
         service_load_factor=FactorRange(0.60, 0.75, 0.90),
@@ -148,6 +156,71 @@ def default_factor_registry() -> InterventionFactorRegistry:
         bike_hub_cost_per_space=FactorRange(350, 700, 1300),
         cooled_walkway_cost_per_km=FactorRange(750_000, 1_600_000, 3_200_000),
         arrival_management_cost_per_pct=FactorRange(1200, 2500, 5000),
+    )
+
+
+FACTOR_UNITS = {
+    "shuttle_passengers_per_bus": "passengers / bus",
+    "transit_passengers_per_departure": "passengers / departure",
+    "service_load_factor": "fraction",
+    "park_ride_occupancy": "passengers / parked vehicle",
+    "park_ride_utilization": "fraction",
+    "bike_hub_turnover": "passengers / space / event",
+    "bike_uptake_share": "fraction of attendance",
+    "walk_uptake_per_covered_km": "fraction of attendance / covered km",
+    "maximum_new_walk_share": "fraction of attendance",
+    "private_vehicle_co2e_kg_per_mile": "kg CO2e / vehicle-mile",
+    "service_vehicle_co2e_kg_per_mile": "kg CO2e / vehicle-mile",
+    "route_heat_reduction_c": "degrees C",
+    "heat_exposure_hours_per_walker": "person-hours / walker",
+    "shuttle_cost_per_bus_hour": "2026 planning USD / bus-hour",
+    "transit_cost_per_departure": "2026 planning USD / departure",
+    "park_ride_cost_per_space": "2026 planning USD / space",
+    "bike_hub_cost_per_space": "2026 planning USD / space",
+    "cooled_walkway_cost_per_km": "2026 planning USD / km",
+    "arrival_management_cost_per_pct": "2026 planning USD / percentage point",
+    "bike_max_distance_m": "meters",
+}
+
+
+def factor_registry_from_snapshot(snapshot: Mapping[str, Any]) -> InterventionFactorRegistry:
+    """Strictly adapt one validated factor snapshot to the intervention model."""
+
+    from dashboard.pipeline.public.common import artifact_hash
+
+    if snapshot.get("snapshot_kind") != "planning_factor_registry":
+        raise ValueError("Production interventions require a planning_factor_registry snapshot")
+    digest = str(snapshot.get("artifact_sha256") or "")
+    if digest != artifact_hash(dict(snapshot)):
+        raise ValueError("Factor registry artifact hash mismatch")
+    factors = snapshot.get("factors")
+    sources = snapshot.get("sources")
+    if not isinstance(factors, Mapping) or not isinstance(sources, Mapping):
+        raise ValueError("Factor registry requires factors and source references")
+    missing = sorted(set(FACTOR_UNITS) - set(factors))
+    if missing:
+        raise ValueError("Factor registry is incomplete: " + ", ".join(missing))
+
+    ranges: dict[str, FactorRange] = {}
+    for name, expected_unit in FACTOR_UNITS.items():
+        row = factors[name]
+        if not isinstance(row, Mapping):
+            raise ValueError(f"Factor {name} must be an object")
+        if str(row.get("unit")) != expected_unit:
+            raise ValueError(f"Factor {name} must use {expected_unit}")
+        source_ids = row.get("source_ids")
+        if not isinstance(source_ids, list) or not source_ids or any(source_id not in sources for source_id in source_ids):
+            raise ValueError(f"Factor {name} has invalid source references")
+        if not str(row.get("basis") or "").strip():
+            raise ValueError(f"Factor {name} requires a written basis")
+        ranges[name] = FactorRange(float(row["low"]), float(row["base"]), float(row["high"]))
+
+    return InterventionFactorRegistry(
+        registry_version=str(snapshot.get("schema_version") or snapshot.get("generated_at_utc") or "unversioned"),
+        artifact_sha256=digest,
+        source_version=", ".join(sorted(str(source["version"]) for source in sources.values())),
+        bike_max_distance_m=ranges.pop("bike_max_distance_m").base,
+        **ranges,
     )
 
 
@@ -381,6 +454,11 @@ def evaluate_intervention(
     base = cases["base"]
     assumptions = (
         f"Factor registry: {registry.registry_version}.",
+        f"Factor artifact SHA-256: {registry.artifact_sha256}.",
+        f"Factor source versions: {registry.source_version}.",
+        f"Private-mode share: {city.private_vehicle_share:.3f}; vehicle occupancy: {city.average_vehicle_occupancy:.2f} passengers.",
+        f"Private round-trip distance: {city.average_private_trip_miles:.2f} miles; venue-area leg: {city.venue_area_leg_miles:.2f} miles.",
+        f"Bike access distance: {city.bike_access_distance_m:.0f} m; base uptake threshold: {registry.bike_max_distance_m:.0f} m.",
         "Capacity is potential passenger throughput, not observed ridership or mode shift.",
         "Park-and-ride retains upstream private travel and avoids only the venue-area leg.",
         "Arrival spreading moves peak demand to shoulder periods and does not change total travel or emissions.",

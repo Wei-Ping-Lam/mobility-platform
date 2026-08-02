@@ -1,10 +1,17 @@
 from __future__ import annotations
 
+import copy
+
+import pytest
+
 from dashboard.domain.decision_support import build_transportation_bundle
 from dashboard.domain.scoring import DEFAULT_WEIGHTS, build_city_metrics
 from dashboard.mobility_platform.config import project_paths
 from dashboard.mobility_platform.mappings import HOST_CITIES
+from dashboard.pipeline.public.common import artifact_hash
 from dashboard.ui.data import load_artifacts
+from dashboard.ui.presentation import build_presentation, city_layer_records
+from dashboard.ui.views import _before_after, _movement_chart
 
 
 def _loaded():
@@ -45,7 +52,7 @@ def test_compact_evidence_composes_match_decisions_without_promoting_failed_gtfs
     assert access_by_city["Philadelphia"]["status"] == "unavailable"
     assert access_by_city["Atlanta"]["status"] == "scenario"
     assert access_by_city["Miami"]["transit_capacity_base"] == 0
-    assert access_by_city["Miami"]["status"] == "scenario"
+    assert access_by_city["Miami"]["status"] == "partial"
     recommendation_statuses = {row["city"]: row["status"] for row in bundle["investment_recommendations"]}
     assert recommendation_statuses["Kansas City"] == "partial"
     assert recommendation_statuses["Philadelphia"] == "partial"
@@ -66,3 +73,62 @@ def test_same_package_responds_to_city_evidence():
     assert len(first_match_by_city) == 11
     assert len({row["net_vmt_base"] for row in first_match_by_city.values()}) > 1
     assert len({row["gap_resolved_passengers"] for row in first_match_by_city.values()}) > 1
+
+
+def test_all_real_movement_timelines_render_and_operational_spreading_conserves_flow():
+    artifacts, metrics = _loaded()
+    artifacts.update(build_transportation_bundle(metrics, artifacts))
+    presentation = build_presentation(metrics, artifacts)
+    checked = 0
+    for decision in presentation.cities.values():
+        for match in decision.matches:
+            movement = decision.movement(match.match_id)
+            figure, table = _movement_chart(movement)
+            assert figure is not None and not table.empty
+            assert {"timestamp_local", "arrivals_low", "arrivals_base", "arrivals_high", "departures_low", "departures_base", "departures_high"}.issubset(table)
+            operational = decision.scenario_set(match.match_id)[1]
+            timeline = _before_after(movement, operational)
+            assert not timeline.empty
+            assert timeline["Before"].sum() == pytest.approx(timeline["After"].sum())
+            assert timeline["After"].max() < timeline["Before"].max()
+            checked += 1
+    assert checked == 78
+
+
+def test_gtfs_map_adapter_matches_compact_snapshot_and_exposes_routes():
+    artifacts, _ = _loaded()
+    houston = artifacts["gtfs"]["Houston"]
+    assert len(city_layer_records(artifacts, "Houston", "gtfs")) == len(houston["stop_points_2mi"]) > 0
+    assert len(city_layer_records(artifacts, "Houston", "gtfs_routes")) == len(houston["route_shapes"]) > 0
+
+
+def test_factor_provenance_is_required_and_changes_dependent_outputs():
+    artifacts, metrics = _loaded()
+    bundle = build_transportation_bundle(metrics, artifacts)
+    digest = artifacts["factor_snapshot"]["artifact_sha256"]
+    assert all(any(digest in assumption for assumption in row["assumptions"]) for row in bundle["intervention_outcomes"])
+
+    missing = dict(artifacts)
+    missing.pop("factor_snapshot")
+    with pytest.raises(ValueError, match="factor snapshot"):
+        build_transportation_bundle(metrics, missing)
+
+    changed = copy.deepcopy(artifacts)
+    changed["factor_snapshot"]["factors"]["shuttle_cost_per_bus_hour"]["base"] *= 1.25
+    changed["factor_snapshot"]["artifact_sha256"] = artifact_hash(changed["factor_snapshot"])
+    changed_bundle = build_transportation_bundle(metrics, changed)
+    original = next(row for row in bundle["intervention_outcomes"] if row["package"]["name"] == "Operational Package")
+    revised = next(row for row in changed_bundle["intervention_outcomes"] if row["city"] == original["city"] and row["match_id"] == original["match_id"] and row["package"]["name"] == "Operational Package")
+    assert revised["cost_base"] > original["cost_base"]
+
+
+def test_spatial_map_budgets_preserve_full_source_counts():
+    artifacts, _ = _loaded()
+    for layers in artifacts["map_layers"].values():
+        assert len(layers.get("uhi", [])) <= 500
+        assert len(layers.get("poi", [])) <= 500
+        assert len(layers.get("origin", [])) <= 30
+        for key in ("uhi", "poi", "origin"):
+            rows = layers.get(key, [])
+            if rows:
+                assert max(row["source_total_records"] for row in rows) >= len(rows)

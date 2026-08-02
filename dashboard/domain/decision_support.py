@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from dataclasses import replace
+from dataclasses import asdict, replace
 from typing import Any, Mapping
 
 import pandas as pd
@@ -12,7 +12,9 @@ from dashboard.models.access import build_access_gap_result
 from dashboard.models.demand import validation_metrics
 from dashboard.models.interventions import (
     CityInterventionInputs,
+    InterventionFactorRegistry,
     evaluate_intervention,
+    factor_registry_from_snapshot,
     named_packages,
     pareto_recommendations,
 )
@@ -109,7 +111,11 @@ def _origin_share(artifacts: Mapping[str, Any], city: str) -> float:
     return 0.25
 
 
-def build_transportation_bundle(metrics: pd.DataFrame, artifacts: Mapping[str, Any]) -> dict[str, Any]:
+def build_transportation_bundle(
+    metrics: pd.DataFrame,
+    artifacts: Mapping[str, Any],
+    factor_registry: InterventionFactorRegistry | None = None,
+) -> dict[str, Any]:
     """Build display-ready contracts without external or raw-data access.
 
     Public schedule records are observed. Attendance, capacity, intervention, cost,
@@ -120,6 +126,11 @@ def build_transportation_bundle(metrics: pd.DataFrame, artifacts: Mapping[str, A
     event_rows = artifacts.get("match_events", [])
     if not event_rows:
         return {}
+    if factor_registry is None:
+        snapshot = artifacts.get("factor_snapshot")
+        if not isinstance(snapshot, Mapping):
+            raise ValueError("Validated production factor snapshot is required")
+        factor_registry = factor_registry_from_snapshot(snapshot)
     metric_rows = metrics.set_index("city").to_dict("index") if not metrics.empty else {}
     gtfs = artifacts.get("gtfs", {}) if isinstance(artifacts.get("gtfs"), Mapping) else {}
     walking = artifacts.get("walking_networks", {}) if isinstance(artifacts.get("walking_networks"), Mapping) else {}
@@ -129,13 +140,14 @@ def build_transportation_bundle(metrics: pd.DataFrame, artifacts: Mapping[str, A
     access_results = []
     outcomes = []
     recommendations = []
+    intervention_inputs = []
     for raw_event in event_rows:
         match = _match(raw_event)
         city_metric = metric_rows.get(match.city, {})
         historical_label = validation_label(validation, city=match.city)
         movement = build_movement_scenario(match, validation_status=historical_label)
         city_walk = walking.get(match.city, {}) if isinstance(walking.get(match.city, {}), Mapping) else {}
-        route_heat = city_metric.get("heat_index_c_p90")
+        route_heat = city_walk.get("route_heat_exposure_c") if city_walk.get("route_geometry") else None
         walk_metrics = {
             "network_walk_distance_m": city_walk.get("network_distance_m"),
             "straight_line_distance_m": city_walk.get("straight_distance_m"),
@@ -171,10 +183,11 @@ def build_transportation_bundle(metrics: pd.DataFrame, artifacts: Mapping[str, A
             walk_corridor_length_km=max(1.0, network_distance * 3.0 / 1000.0),
         )
         city_outcomes = [
-            evaluate_intervention(package, match, movement, access, city_inputs)
+            evaluate_intervention(package, match, movement, access, city_inputs, factor_registry)
             for package in named_packages().values()
         ]
-        city_recommendations = pareto_recommendations(match, movement, access, city_inputs)
+        intervention_inputs.append(asdict(city_inputs))
+        city_recommendations = pareto_recommendations(match, movement, access, city_inputs, factor_registry)
         if access.status == EvidenceStatus.UNAVAILABLE:
             city_recommendations = [
                 replace(
@@ -196,5 +209,6 @@ def build_transportation_bundle(metrics: pd.DataFrame, artifacts: Mapping[str, A
         "access_gaps": access_results,
         "intervention_outcomes": outcomes,
         "investment_recommendations": recommendations,
+        "city_intervention_inputs": intervention_inputs,
         "movement_validation": validation.to_dict("records"),
     }
