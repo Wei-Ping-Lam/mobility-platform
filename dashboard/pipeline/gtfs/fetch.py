@@ -137,7 +137,8 @@ def _venue_stop_ids(
     required = {"stop_id", "stop_lat", "stop_lon"}
     if stops.empty or not required.issubset(stops):
         return set(), pd.DataFrame(columns=["stop_id", "stop_lat", "stop_lon", "distance_mi"])
-    work = stops[list(required)].copy()
+    columns = [column for column in ("stop_id", "stop_name", "stop_lat", "stop_lon", "agency", "routes") if column in stops]
+    work = stops[columns].copy()
     work["stop_lat"] = pd.to_numeric(work["stop_lat"], errors="coerce")
     work["stop_lon"] = pd.to_numeric(work["stop_lon"], errors="coerce")
     work = work.dropna(subset=["stop_lat", "stop_lon"])
@@ -146,6 +147,91 @@ def _venue_stop_ids(
     )
     nearby = work[work["distance_mi"] <= radius_miles].copy()
     return set(nearby["stop_id"].astype(str)), nearby
+
+
+def _bounded_coordinates(frame: pd.DataFrame, maximum: int = 200) -> list[list[float]]:
+    """Return a deterministic, bounded GTFS line without claiming geometric precision."""
+
+    if frame.empty or not {"shape_pt_lat", "shape_pt_lon"}.issubset(frame):
+        return []
+    work = frame.copy()
+    work["shape_pt_lat"] = pd.to_numeric(work["shape_pt_lat"], errors="coerce")
+    work["shape_pt_lon"] = pd.to_numeric(work["shape_pt_lon"], errors="coerce")
+    work["shape_pt_sequence_num"] = pd.to_numeric(work.get("shape_pt_sequence"), errors="coerce")
+    work = work.dropna(subset=["shape_pt_lat", "shape_pt_lon"]).sort_values(
+        ["shape_pt_sequence_num"], kind="stable", na_position="last"
+    )
+    if len(work) > maximum:
+        indices = np.linspace(0, len(work) - 1, maximum, dtype=int)
+        work = work.iloc[indices]
+    return [
+        [round(float(row.shape_pt_lon), 6), round(float(row.shape_pt_lat), 6)]
+        for row in work.itertuples(index=False)
+    ]
+
+
+def _event_route_shapes(
+    stops: pd.DataFrame,
+    stop_times: pd.DataFrame,
+    trips: pd.DataFrame,
+    routes: pd.DataFrame,
+    shapes: pd.DataFrame,
+    services: dict[date, set[str]],
+    venue_stop_ids: set[str],
+    events: list[dict[str, Any]],
+) -> tuple[list[dict[str, Any]], dict[str, tuple[str, ...]]]:
+    """Extract route labels and shapes for event-valid trips serving the venue catchment."""
+
+    required_trip = {"trip_id", "service_id", "route_id"}
+    if not required_trip.issubset(trips) or not {"trip_id", "stop_id"}.issubset(stop_times):
+        return [], {}
+    active_services = set().union(
+        *(services.get(datetime.fromisoformat(str(event["kickoff_local"])).date(), set()) for event in events)
+    ) if events else set().union(*services.values()) if services else set()
+    catchment_times = stop_times[stop_times["stop_id"].astype(str).isin(venue_stop_ids)].copy()
+    trip_ids = set(catchment_times["trip_id"].astype(str))
+    eligible = trips[
+        trips["trip_id"].astype(str).isin(trip_ids)
+        & trips["service_id"].astype(str).isin(active_services)
+    ].copy()
+    route_labels: dict[str, str] = {}
+    if "route_id" in routes:
+        for row in routes.to_dict("records"):
+            route_id = str(row.get("route_id"))
+            route_labels[route_id] = str(
+                row.get("route_short_name") or row.get("route_long_name") or route_id
+            )
+    trip_routes = eligible.set_index("trip_id")["route_id"].astype(str).to_dict() if not eligible.empty else {}
+    stop_routes: dict[str, tuple[str, ...]] = {}
+    for stop_id, group in catchment_times.groupby(catchment_times["stop_id"].astype(str)):
+        labels = sorted(
+            {
+                route_labels.get(str(trip_routes.get(str(trip_id))), str(trip_routes.get(str(trip_id))))
+                for trip_id in group["trip_id"].astype(str)
+                if str(trip_id) in trip_routes
+            }
+        )
+        stop_routes[str(stop_id)] = tuple(label for label in labels if label and label != "None")
+    if shapes.empty or "shape_id" not in eligible or not {"shape_id", "shape_pt_lat", "shape_pt_lon"}.issubset(shapes):
+        return [], stop_routes
+    results = []
+    shape_routes = eligible.dropna(subset=["shape_id"])[["route_id", "shape_id"]].drop_duplicates()
+    for item in shape_routes.sort_values(["route_id", "shape_id"], kind="stable").itertuples(index=False):
+        shape_id = str(item.shape_id)
+        coordinates = _bounded_coordinates(shapes[shapes["shape_id"].astype(str) == shape_id])
+        if len(coordinates) < 2:
+            continue
+        route_id = str(item.route_id)
+        results.append(
+            {
+                "route_id": route_id,
+                "route_name": route_labels.get(route_id, route_id),
+                "shape_id": shape_id,
+                "coordinates": coordinates,
+                "status": "observed",
+            }
+        )
+    return results, stop_routes
 
 
 def _event_departures(
@@ -264,6 +350,8 @@ def extract_feed(
     calendar_ends = []
     event_rows: list[dict[str, Any]] = []
     mode_counts: Counter[int] = Counter()
+    route_shapes: list[dict[str, Any]] = []
+    stop_routes: dict[str, set[str]] = defaultdict(set)
     with zipfile.ZipFile(io.BytesIO(payload)) as outer:
         for zf in _nested_zips(outer):
             tables = {name: _read_table(zf, name) for name in REQUIRED_FILES}
@@ -285,6 +373,19 @@ def extract_feed(
             if details["calendar_end"]:
                 calendar_ends.append(details["calendar_end"])
             venue_ids, _ = _venue_stop_ids(stops, venue, SERVICE_RADIUS_MILES)
+            shape_rows, stop_route_rows = _event_route_shapes(
+                stops,
+                stop_times,
+                trips,
+                routes,
+                optional["shapes.txt"],
+                services,
+                venue_ids,
+                events,
+            )
+            route_shapes.extend(shape_rows)
+            for stop_id, labels in stop_route_rows.items():
+                stop_routes[stop_id].update(labels)
             rows, counts = _event_departures(
                 stop_times, trips, routes, optional["frequencies.txt"], services, venue_ids, events
             )
@@ -320,6 +421,8 @@ def extract_feed(
             MODE_CAPACITY_RANGES.get(mode, MODE_CAPACITY_RANGES[3])["mode"]: count for mode, count in sorted(mode_counts.items())
         },
         "capacity": capacity,
+        "route_shapes": route_shapes,
+        "stop_routes": {stop_id: sorted(labels) for stop_id, labels in stop_routes.items()},
     }
 
 
@@ -343,7 +446,16 @@ def count_near_venue(stops: pd.DataFrame, venue: dict[str, Any]) -> dict[str, An
         "stops_5mi": int((distances <= 5).sum()),
         "nearest_stop_mi": round(float(distances.min()), 3) if len(distances) else None,
         "stop_points_2mi": [
-            {"lat": round(float(row.stop_lat), 6), "lon": round(float(row.stop_lon), 6)}
+            {
+                "stop_id": str(row.stop_id),
+                "name": str(getattr(row, "stop_name", "") or "Unnamed stop"),
+                "lat": round(float(row.stop_lat), 6),
+                "lon": round(float(row.stop_lon), 6),
+                "distance_mi": round(float(row.distance_mi), 3),
+                "agency": str(getattr(row, "agency", "") or "Agency unavailable"),
+                "route": ", ".join(getattr(row, "routes", ()) or ()) or "Route unavailable",
+                "status": "observed",
+            }
             for row in nearby.itertuples(index=False)
         ],
     }
@@ -360,6 +472,7 @@ def fetch_city(city: str, feeds: list[tuple[str, str]], events: list[dict[str, A
     spans_after = []
     optional_presence: dict[str, bool] = defaultdict(bool)
     match_evidence: dict[str, dict[str, Any]] = {}
+    route_shapes: list[dict[str, Any]] = []
     for agency, url in feeds:
         base = {"agency": agency, "url": url, "retrieved_at_utc": retrieved_at, "status": "unavailable", "sha256": None}
         try:
@@ -382,7 +495,14 @@ def fetch_city(city: str, feeds: list[tuple[str, str]], events: list[dict[str, A
                     "service_span": extracted["service_span"],
                 }
             )
-            all_stops.append(extracted["stops"])
+            feed_stops = extracted["stops"].copy()
+            if not feed_stops.empty:
+                feed_stops["agency"] = agency
+                feed_stops["routes"] = feed_stops["stop_id"].astype(str).map(
+                    lambda stop_id: tuple(extracted["stop_routes"].get(stop_id, ()))
+                )
+            all_stops.append(feed_stops)
+            route_shapes.extend({**shape, "agency": agency} for shape in extracted["route_shapes"])
             totals.update(
                 route_count=extracted["route_count"],
                 scheduled_departures=extracted["scheduled_departures"],
@@ -429,6 +549,13 @@ def fetch_city(city: str, feeds: list[tuple[str, str]], events: list[dict[str, A
     )
     for row in match_evidence.values():
         row["status"] = "partial" if status == "partial" else "observed"
+    unique_shapes = {
+        (str(row["agency"]), str(row["route_id"]), str(row["shape_id"])): row
+        for row in route_shapes
+    }
+    ordered_shapes = [unique_shapes[key] for key in sorted(unique_shapes)]
+    omitted_shapes = max(len(ordered_shapes) - 100, 0)
+    ordered_shapes = ordered_shapes[:100]
     return {
         **count_near_venue(stops, venue),
         "city": city,
@@ -447,6 +574,8 @@ def fetch_city(city: str, feeds: list[tuple[str, str]], events: list[dict[str, A
         "event_capacity_base": capacities["base"],
         "event_capacity_high": capacities["high"],
         "matches": match_evidence,
+        "route_shapes": ordered_shapes,
+        "route_shapes_omitted": omitted_shapes,
         "capacity_status": "scenario" if status != "unavailable" else "unavailable",
         "feed_status": status,
         "feeds": feed_results,

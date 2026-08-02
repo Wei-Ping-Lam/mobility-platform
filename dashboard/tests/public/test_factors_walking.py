@@ -9,24 +9,32 @@ from dashboard.pipeline.public.walking import validate_walking_city
 
 def test_factor_registry_ranges_and_primary_sources_are_ui_ready():
     registry = load_factor_registry(Path("data/snapshots/factors/planning_factors.json"))
-    assert set(registry["sources"]) == {"epa", "fta_ntd", "fta_ccd", "fhwa"}
-    for source in registry["sources"].values():
-        assert source["url"].startswith("https://")
+    assert {"epa", "fta_ntd", "fta_ccd", "fhwa", "scenario_assumptions"} == set(registry["sources"])
+    for source_id, source in registry["sources"].items():
+        if source_id != "scenario_assumptions":
+            assert source["url"].startswith("https://")
         assert len(source["sha256"]) == 64
+    assert len(registry["factors"]) == 20
     for factor in registry["factors"].values():
         assert factor["low"] <= factor["base"] <= factor["high"]
         assert factor["source_ids"]
 
 
-def test_walking_fixture_covers_all_cities_without_ada_claims():
+def test_graph_derived_walking_snapshot_covers_all_cities_without_ada_claims():
     snapshot = load_walking_snapshot(Path("data/snapshots/osm/walking_networks.json"))
     assert set(snapshot["cities"]) == set(HOST_CITIES)
-    assert snapshot["status"] == "estimated"
+    assert snapshot["status"] == "derived"
+    assert snapshot["snapshot_kind"] == "osm_walking_networks"
     for row in snapshot["cities"].values():
-        assert row["network_distance_m"] >= row["straight_distance_m"]
+        assert row["snapshot_kind"] != "fixture"
+        assert len(row["source"]["sha256"]) == 64
         assert row["accessibility_status"] == "not_measured"
-        assert row["status"] != "observed"
         assert len(row["isochrones"]) == 2
+        if row["route_geometry"]:
+            assert row["network_distance_m"] >= row["straight_distance_m"]
+            assert len(row["route_geometry"]["coordinates"]) >= 2
+        else:
+            assert row["status"] == "partial"
 
 
 def test_network_distance_invariant_fails_closed():

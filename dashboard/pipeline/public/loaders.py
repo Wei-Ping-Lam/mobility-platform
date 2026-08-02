@@ -31,11 +31,18 @@ def load_factor_registry(path: str | Path = "data/snapshots/factors/planning_fac
     snapshot = _load(path, "planning_factor_registry")
     for source in snapshot["sources"].values():
         validate_source(source)
+    from dashboard.models.interventions import factor_registry_from_snapshot
+
+    factor_registry_from_snapshot(snapshot)
     return snapshot
 
 
 def load_walking_snapshot(path: str | Path = "data/snapshots/osm/walking_networks.json") -> dict[str, Any]:
-    return _load(path, "osm_walking_fixture")
+    snapshot = _load(path, "osm_walking_networks")
+    from dashboard.pipeline.public.walking import validate_snapshot
+
+    validate_snapshot(snapshot)
+    return snapshot
 
 
 def load_gtfs_snapshot(path: str | Path = "data/snapshots/gtfs/gtfs_venue_access.json") -> dict[str, Any]:

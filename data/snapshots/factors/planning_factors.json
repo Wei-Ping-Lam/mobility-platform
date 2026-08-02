@@ -1,32 +1,132 @@
 {
-  "artifact_sha256": "ecd00eced4fc979b7634fb445bac85d154b0461873eba6f6f21593dabecc8695",
+  "artifact_sha256": "f36cba57ede7b6c7dfb720c492ee584545b46912e0cac7da4d7337c5bdb1bbd6",
   "contract_version": "0.3.0",
   "factors": {
-    "bus_operation_usd_per_vehicle_hour": {
-      "base": 180.0,
-      "basis": "Order-of-magnitude range; replace with agency NTD operating expense divided by vehicle revenue hours.",
-      "high": 300.0,
-      "low": 100.0,
+    "arrival_management_cost_per_pct": {
+      "base": 2500,
+      "basis": "Event communications, curb allocation, staffing, and enforcement screening allowance.",
+      "high": 5000,
+      "low": 1200,
       "source_ids": [
-        "fta_ntd"
-      ],
-      "status": "estimated",
-      "unit": "2026 planning USD / vehicle-hour"
-    },
-    "diesel_shuttle_kg_co2_per_vehicle_mile": {
-      "base": 1.6967,
-      "basis": "EPA 10.180 kg CO2/gallon divided by 8/6/4 mpg sensitivity assumptions; excludes upstream emissions.",
-      "high": 2.545,
-      "low": 1.2725,
-      "source_ids": [
-        "epa"
+        "scenario_assumptions"
       ],
       "status": "scenario",
-      "unit": "kg CO2 / vehicle-mile"
+      "unit": "2026 planning USD / percentage point"
     },
-    "passenger_vehicle_kg_co2e_per_vehicle_mile": {
+    "bike_hub_cost_per_space": {
+      "base": 700,
+      "basis": "Order-of-magnitude installed secure parking and event operations allowance.",
+      "high": 1300,
+      "low": 350,
+      "source_ids": [
+        "fhwa"
+      ],
+      "status": "estimated",
+      "unit": "2026 planning USD / space"
+    },
+    "bike_hub_turnover": {
+      "base": 0.9,
+      "basis": "Completed event trips per installed bike or micromobility parking space.",
+      "high": 1.1,
+      "low": 0.7,
+      "source_ids": [
+        "scenario_assumptions"
+      ],
+      "status": "scenario",
+      "unit": "passengers / space / event"
+    },
+    "bike_max_distance_m": {
+      "base": 5000,
+      "basis": "Maximum practical active-mode distance sensitivity; the model currently uses the base threshold.",
+      "high": 8000,
+      "low": 3000,
+      "source_ids": [
+        "scenario_assumptions"
+      ],
+      "status": "scenario",
+      "unit": "meters"
+    },
+    "bike_uptake_share": {
+      "base": 0.025,
+      "basis": "Distance-limited active-mode uptake ceiling; not observed fan behavior.",
+      "high": 0.05,
+      "low": 0.01,
+      "source_ids": [
+        "scenario_assumptions"
+      ],
+      "status": "scenario",
+      "unit": "fraction of attendance"
+    },
+    "cooled_walkway_cost_per_km": {
+      "base": 1600000,
+      "basis": "Conceptual corridor allowance combining crossings, shade, cooling, and design contingency.",
+      "high": 3200000,
+      "low": 750000,
+      "source_ids": [
+        "fhwa",
+        "fta_ccd"
+      ],
+      "status": "estimated",
+      "unit": "2026 planning USD / km"
+    },
+    "heat_exposure_hours_per_walker": {
+      "base": 0.5,
+      "basis": "Walking exposure-duration sensitivity for treated venue approaches.",
+      "high": 0.75,
+      "low": 0.25,
+      "source_ids": [
+        "scenario_assumptions"
+      ],
+      "status": "scenario",
+      "unit": "person-hours / walker"
+    },
+    "maximum_new_walk_share": {
+      "base": 0.03,
+      "basis": "Upper bound on incremental walking uptake in the screening model.",
+      "high": 0.06,
+      "low": 0.01,
+      "source_ids": [
+        "scenario_assumptions"
+      ],
+      "status": "scenario",
+      "unit": "fraction of attendance"
+    },
+    "park_ride_cost_per_space": {
+      "base": 7000,
+      "basis": "Conceptual temporary/permanent remote-parking allowance; local scope is required.",
+      "high": 14000,
+      "low": 3500,
+      "source_ids": [
+        "fta_ccd"
+      ],
+      "status": "estimated",
+      "unit": "2026 planning USD / space"
+    },
+    "park_ride_occupancy": {
+      "base": 1.8,
+      "basis": "Vehicle occupancy sensitivity for event park-and-ride users.",
+      "high": 2.1,
+      "low": 1.5,
+      "source_ids": [
+        "scenario_assumptions"
+      ],
+      "status": "scenario",
+      "unit": "passengers / parked vehicle"
+    },
+    "park_ride_utilization": {
+      "base": 0.7,
+      "basis": "Share of provided remote spaces assumed occupied.",
+      "high": 0.85,
+      "low": 0.55,
+      "source_ids": [
+        "scenario_assumptions"
+      ],
+      "status": "scenario",
+      "unit": "fraction"
+    },
+    "private_vehicle_co2e_kg_per_mile": {
       "base": 0.393,
-      "basis": "EPA national typical gasoline vehicle is the base; low/high are planning sensitivity bounds.",
+      "basis": "EPA national typical gasoline vehicle is the base; bounds are planning sensitivity values.",
       "high": 0.55,
       "low": 0.25,
       "source_ids": [
@@ -35,27 +135,93 @@
       "status": "scenario",
       "unit": "kg CO2e / vehicle-mile"
     },
-    "raised_crosswalk_usd_each": {
-      "base": 6000.0,
-      "basis": "Midpoint calculated from FHWA's published $4,000-$8,000 typical range; excludes right-of-way.",
-      "high": 8000.0,
-      "low": 4000.0,
+    "route_heat_reduction_c": {
+      "base": 1.5,
+      "basis": "Screening response for shade/cooling treatment; replace with a designed corridor study.",
+      "high": 2.5,
+      "low": 0.5,
       "source_ids": [
-        "fhwa"
+        "scenario_assumptions"
       ],
-      "status": "derived",
-      "unit": "published USD / installation"
+      "status": "scenario",
+      "unit": "degrees C"
     },
-    "transit_priority_capital_usd_per_route_mile": {
-      "base": 5000000.0,
-      "basis": "Conceptual allowance only; local scope and Standard Cost Categories are required before investment use.",
-      "high": 15000000.0,
-      "low": 1000000.0,
+    "service_load_factor": {
+      "base": 0.75,
+      "basis": "Share of nominal vehicle capacity assumed usable during event operations.",
+      "high": 0.9,
+      "low": 0.6,
       "source_ids": [
-        "fta_ccd"
+        "scenario_assumptions"
+      ],
+      "status": "scenario",
+      "unit": "fraction"
+    },
+    "service_vehicle_co2e_kg_per_mile": {
+      "base": 1.6967,
+      "basis": "EPA diesel CO2 factor divided by 8/6/4 mpg sensitivity assumptions; upstream emissions excluded.",
+      "high": 2.545,
+      "low": 1.2725,
+      "source_ids": [
+        "epa"
+      ],
+      "status": "scenario",
+      "unit": "kg CO2e / vehicle-mile"
+    },
+    "shuttle_cost_per_bus_hour": {
+      "base": 180,
+      "basis": "Order-of-magnitude bus operating range informed by NTD operating-expense categories.",
+      "high": 300,
+      "low": 100,
+      "source_ids": [
+        "fta_ntd"
       ],
       "status": "estimated",
-      "unit": "2026 planning USD / route-mile"
+      "unit": "2026 planning USD / bus-hour"
+    },
+    "shuttle_passengers_per_bus": {
+      "base": 45,
+      "basis": "Event shuttle seated/standing capacity sensitivity; verify against procured fleet.",
+      "high": 55,
+      "low": 35,
+      "source_ids": [
+        "scenario_assumptions"
+      ],
+      "status": "scenario",
+      "unit": "passengers / bus"
+    },
+    "transit_cost_per_departure": {
+      "base": 396,
+      "basis": "Two-point-two vehicle-hours per added departure multiplied by the bus-hour planning range.",
+      "high": 660,
+      "low": 220,
+      "source_ids": [
+        "fta_ntd"
+      ],
+      "status": "estimated",
+      "unit": "2026 planning USD / departure"
+    },
+    "transit_passengers_per_departure": {
+      "base": 140,
+      "basis": "Cross-mode planning capacity for added departures; scheduled capacity is not observed loading.",
+      "high": 200,
+      "low": 90,
+      "source_ids": [
+        "scenario_assumptions"
+      ],
+      "status": "scenario",
+      "unit": "passengers / departure"
+    },
+    "walk_uptake_per_covered_km": {
+      "base": 0.005,
+      "basis": "Incremental walking uptake sensitivity per covered corridor kilometer.",
+      "high": 0.009,
+      "low": 0.002,
+      "source_ids": [
+        "scenario_assumptions"
+      ],
+      "status": "scenario",
+      "unit": "fraction of attendance / covered km"
     }
   },
   "generated_at_utc": "2026-08-01T00:00:00Z",
@@ -64,6 +230,7 @@
     "range_order": "low <= base <= high",
     "use": "Planning sensitivity only; not engineering estimates or a local emissions inventory"
   },
+  "schema_version": "1.0.0",
   "snapshot_kind": "planning_factor_registry",
   "sources": {
     "epa": {
@@ -121,6 +288,20 @@
       "status": "derived",
       "url": "https://www.transit.dot.gov/ntd",
       "version": "report-year-2024"
+    },
+    "scenario_assumptions": {
+      "coverage_end": null,
+      "coverage_start": null,
+      "hash_scope": "canonical pinned citation descriptor; not remote page bytes",
+      "license": "Project documentation",
+      "notes": "Behavioral uptake, vehicle loading, heat-response, and screening-cost values are explicit planning assumptions, not observations.",
+      "publisher": "Mobility Platform project team",
+      "retrieved_at_utc": "2026-08-01T00:00:00Z",
+      "sha256": "bfee5b29a4e20ea4f015ccc3650509a72aebd2981c2e3a9bc91c3f761b31c80c",
+      "source": "Mobility Platform scenario assumption register",
+      "status": "derived",
+      "url": "docs/MODEL_CARD.md",
+      "version": "contract-0.3.0-assumptions-1"
     }
   },
   "status": "scenario"
