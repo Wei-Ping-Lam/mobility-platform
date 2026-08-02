@@ -1,24 +1,25 @@
 # Judging criteria mapping
 
-This mapping separates current strengths from release acceptance. Scores and
-outcomes must be taken from the integrated application, never invented here.
+The application now displays this evidence dynamically. Statuses are proof
+states—not self-awarded competition points. Current run values must come from
+the integrated application.
 
-| Criterion | Current evidence | Competition-ready acceptance evidence |
+| Criterion | Current visible evidence | Remaining competition gate |
 | --- | --- | --- |
-| Impact — 25 | All cities have match demand, intervention packages, VMT/CO2e and cost ranges, candidate actors, and explicit evidence status; eight cities have capacity-qualified match evidence | Repair the three wholly outside-window city feeds and remaining match gaps; demonstrate a defensible package tradeoff for each city |
-| Data Analytics — 20 | Deterministic Rice/public artifacts, 78 match records, hashed GTFS/OSM refreshes, hourly reconciliation, seasonal-naive comparison, physical invariants, city differentiation, and no silent fallback | Add local operating/ridership observations and resolve remaining unavailable/partial GTFS coverage |
-| Innovation — 15 | Match-specific movement plus evidence-gated Pareto tradeoffs across gap resolved, cost-effectiveness, emissions, lead time, and evidence quality | Demonstrate the frontier with capacity-qualified service evidence |
-| Feasibility — 15 | Modular cache-only application, candidate owner/dependencies, lead-time bands, operational/capital packages, order-of-magnitude costs, tests, and isolated workstreams | Confirm local agency costs, fleet constraints, and delivery dependencies |
-| Legacy — 10 | Reusable evidence contracts and data pipeline beyond FIFA | Event-agnostic match/event input, repeatable source refresh, baseline monitoring, and post-event comparison without causal claims |
-| Visualization — 10 | Executive, Explorer, and Methods views include match selector, hourly uncertainty, bounded Rice layers, GTFS stops/routes, OSM routes/isochrones, Pareto options, table alternatives, and exact downloads | Capture and review final desktop/narrow screenshots |
-| Presentation — 5 | Narrative and automated guards map claims to contract fields and prohibit unsupported conclusions | Fill team metadata and rehearse the repaired Kansas City or Philadelphia case |
+| Impact — 25 | Decision Brief exposes match-level gap, Pareto options, cost, VMT/CO2e, heat, and cumulative horizon outcomes; 29 matches currently pass the complete capacity-and-network gate | Repair partial/unavailable access evidence and compare future observed outcomes without causal claims |
+| Data Analytics — 20 | Deterministic Rice/public artifacts, 78 matches, hashed GTFS/OSM, hourly reconciliation, seasonal-naive comparison, physical invariants, all-city evidence bounds, and no silent fallback | Add local operations/ridership observations and resolve remaining partial GTFS/network coverage |
+| Innovation — 15 | Exact match-scoped Pareto sets, strict/all-city comparison separation, and capital-safe cumulative ledgers | Demonstrate the frontier with capacity-qualified service evidence in the final pitch |
+| Feasibility — 15 | Candidate owners/dependencies, lead-time bands, capital versus recurring operating costs, cache-only startup, tests, and isolated workstreams | Confirm local agency costs, fleet constraints, right-of-way, and delivery dependencies |
+| Legacy — 10 | Reusable event contracts plus match, city-tournament, and U.S.-tournament horizons | Add baseline monitoring and post-event observed comparison without causal claims |
+| Visualization — 10 | Decision Brief, Compare Cities, City & Match, and Methods include uncertainty, selectable maps, time horizons, accessible tables, and exact downloads | Capture and review final desktop/narrow screenshots |
+| Presentation — 5 | The application maps every criterion and required deliverable to visible proof and an explicit limitation | Fill team metadata and rehearse the repaired Kansas City or Philadelphia case |
 
 ## Judge-facing proof sequence
 
-1. Start with one city’s match-specific access gap and evidence status.
-2. Show the corridor evidence behind the gap, including missing coverage.
-3. Compare Baseline, Operational Package, and Capital Package.
-4. Explain one tradeoff rather than claiming a universally optimal package.
-5. Open Methods & QA and trace a headline metric to its contract field, source,
-   hash, factor, and assumption.
-6. State what the platform does not measure.
+1. Start in **Decision Brief** with one city's match-specific access gap and evidence status.
+2. Show its exact match-scoped Pareto set and one package tradeoff.
+3. Change the time horizon and explain which matches were omitted for evidence.
+4. Open **Compare Cities** and distinguish strict rank from all-city screening.
+5. Open **City & Match** and show selected route, service, heat, and venue layers.
+6. Open **Methods & QA** and trace one metric to its source, hash, factor, and assumption.
+7. State what the platform does not measure.

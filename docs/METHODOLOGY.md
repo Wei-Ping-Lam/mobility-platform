@@ -28,7 +28,7 @@ flowchart LR
   G --> Q
   O --> Q
   X --> Q
-  P --> U[Executive and Explorer]
+  P --> U[Decision Brief, Compare Cities, and City & Match]
 ```
 
 ## Evidence lifecycle
@@ -51,6 +51,21 @@ flowchart LR
    Pareto comparison, not an unsupported universal optimum.
 6. **Audit the claim.** A metric is presentation-ready only after its field,
    artifact status, source record, formula, and release test all pass.
+
+## City comparison and time horizons
+
+- The strict transportation rank includes only cities whose selected components
+  use eligible observed or derived evidence.
+- The all-city screening order uses every available numeric value, including
+  visibly partial evidence. Its low/high range lets each non-strict component
+  vary from 0 to 100; this is an evidence-eligibility bound, not a confidence
+  interval and not a substitute for missing data.
+- Match, city-tournament, and U.S.-tournament ledgers default to capacity-qualified
+  access results. Users may explicitly opt into partial screening totals.
+- Park-and-ride, bike hubs, and cooled corridors are treated as one-time capital
+  per city. Shuttle, added service, and arrival management recur per event.
+- Every recommendation retains its exact `city` and `match_id`; the interface
+  does not assign citywide recommendations to whichever match happens to be selected.
 
 ## Movement and validation
 

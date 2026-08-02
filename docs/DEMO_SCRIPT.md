@@ -7,50 +7,45 @@ items are presenter prompts, not values to read aloud.
 
 1. “The six Rice datasets are our canonical supplied evidence. They describe
    commercial activity, weather, urban heat, POIs, origin context, and spending.”
-2. Open **Methods & QA**. Show source status, missing weather coverage,
-   combined-market allocation, model validation, and artifact downloads.
-3. Open **Explorer**. “The current event band is a planning scenario. It is not
-   observed match attendance, and the current model has not passed both annual
-   holdout gates.”
-4. Show the transit status. “Strict transit comparison is available only where
-   the pinned feed is event-valid. Kansas City and Philadelphia now use pinned,
-   hash-checked event archives; we never substitute an expert score.”
-5. Show the OSM route and isochrones. “All venues have pinned five-mile network
-   context; a route to transit appears only when an event-relevant stop passes
-   the GTFS gate. Missing tags do not certify accessibility.”
+2. Open **Decision Brief**. Show that judging criteria and required track
+   deliverables are visible proof records, not self-awarded scores.
+3. Open **Compare Cities**. “Every host remains visible. Strict ranks use only
+   eligible evidence; the screening range exposes partial or missing components.”
+4. Open **City & Match**. “This event band is a planning scenario, not observed
+   match attendance, because both annual holdout gates did not pass.”
+5. Show map-layer controls, GTFS status, the OSM route/isochrones, and missing
+   coverage. “Scheduled service is not ridership; OSM is not an accessibility audit.”
+6. Return to **Decision Brief** and change the time horizon. “Capital is counted
+   once per city, operations recur per event, and nonqualified matches are omitted
+   unless I explicitly opt into screening totals.”
+7. Open **Methods & QA** and trace one claim to its source hash and assumptions.
 
-Continue with Kansas City or Philadelphia to show the repaired event-period
-service evidence; use Methods & QA to demonstrate unavailable evidence elsewhere.
+Use Kansas City or Philadelphia to show repaired event-period service evidence;
+use Boston, Dallas, or New York/NJ to demonstrate honest unavailable evidence.
 
 ## Release demonstration after all gates pass
 
-1. Open **Executive** and select `[city]` and `[match]`.
-   - “The base planning scenario has `[peak_demand_per_hour]` peak passengers
-     per hour and `[residual_passengers]` passengers beyond modeled scheduled
-     capacity.”
-   - State evidence status and one material limitation.
-2. Open the priority-corridor map.
-   - Show GTFS routes/stops, OSM network walk distance, UHI, POIs, and source
-     coverage.
-   - “This is a network-planning view. It is not an accessibility certification.”
+1. Select `[city]` in **Decision Brief**.
+   - Read `[peak_demand_per_hour]`, `[residual_passengers]`, and evidence status.
+   - State one material limitation.
+2. Compare the exact match-scoped Pareto set.
+   - Read gap resolved, cost per passenger, net CO2e, lead time, candidate owner,
+     and dependencies without calling one option universally optimal.
 3. Compare **Baseline**, **Operational Package**, and **Capital Package**.
-   - State package inputs before outcomes.
-   - Read the modeled ranges for gap resolved, venue-area vehicle trips, net
-     VMT, net CO2e, heat exposure, and cost.
-   - “These are scenario differences under documented assumptions.”
-4. Open the tradeoff view.
-   - Compare cost per passenger, net CO2e, lead time, and evidence quality.
-   - Explain why one package suits the selected objective without calling it
-     universally optimal.
-5. Open **Methods & QA**.
-   - Trace one metric to its contract field, source URL, retrieval time, hash,
-     factor range, and test result.
-   - Download the scenario and verify that it matches the displayed values.
-6. Close with the decision:
-   - “For `[city]`, this evidence supports evaluating `[intervention]` because
-     it addresses `[documented gap]`. The modeled range is `[range]`, the
-     order-of-magnitude cost is `[range]`, and the implementation lead time is
-     `[band]`. Agency review and local engineering remain required.”
+   - State package inputs before scenario outcomes.
+4. Change the time horizon.
+   - Explain one-time capital, recurring operations, included matches, and omissions.
+5. Open **Compare Cities**.
+   - Distinguish strict rank from all-city screening and read one exclusion reason.
+6. Open **City & Match**.
+   - Show hourly uncertainty, selected map layers, and the exact scenario download.
+7. Open **Methods & QA**.
+   - Trace one metric to its contract field, URL, retrieval time, hash, factor,
+     validation result, and test.
+8. Close with the decision:
+   - “For `[city]`, this evidence supports evaluating `[intervention]` because it
+     addresses `[documented gap]`. The modeled range is `[range]`, planning cost
+     is `[range]`, lead time is `[band]`, and local agency review remains required.”
 
 ## Language guardrails
 
@@ -58,6 +53,6 @@ service evidence; use Methods & QA to demonstrate unavailable evidence elsewhere
   vehicle trips,” and “network evidence.”
 - Do not describe retail visits as match attendance or origin records as fans.
 - Do not present scheduled transit capacity as ridership or reliability.
-- Do not present an OSM route as an ADA or safety audit.
+- Do not present an OSM route as an ADA, safety, or sidewalk audit.
 - Do not present scenario differences as observed outcomes or causal effects.
 - Do not describe a pressure proxy as roadway congestion.

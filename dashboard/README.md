@@ -8,8 +8,8 @@ source quality, assumptions, uncertainty, cost, and implementation constraints.
 
 Contract `0.3.0` is frozen. The current branch implements Rice enrichment,
 the 78-match official schedule snapshot, match-specific movement scenarios,
-physical access contracts, six intervention types, Pareto recommendations,
-three decision workspaces, and Methods & QA downloads. Cited factor ranges are
+physical access contracts, six intervention types, match-scoped Pareto recommendations,
+four decision workspaces, and exact Methods & QA downloads. Cited factor ranges are
 integrated as scenario/estimated evidence.
 
 Transportation evidence remains incomplete after the explicit GTFS refresh:
@@ -18,6 +18,8 @@ observed and five are partial. Pinned event-period archives repaired Kansas City
 and Philadelphia without promoting a legacy score. Five-mile OSM walking graphs
 provide isochrones for all 11 venues and event-relevant stop routes for seven.
 The UI suppresses capacity-qualified gaps wherever required evidence remains unavailable.
+Twenty-nine match access results currently pass the complete capacity-and-network
+qualification gate; 21 remain partial and 28 unavailable.
 
 ## Run locally
 
@@ -36,9 +38,11 @@ evidence without the required version, coverage, license, timestamp, and hash.
 
 ## Current product behavior
 
-- **Executive:** match demand, capacity-qualified gaps where eligible, partial
-  investment screening, cost ranges, lead times, and evidence status. MRS is secondary.
-- **Explorer:** official match selection, hourly movement, available Rice/OSM
+- **Decision Brief:** a guided where/why/what/outcome/confidence story, explicit
+  judging-criteria evidence, required-deliverable ledger, and evidence-gated time horizons.
+- **Compare Cities:** strict ranking for eligible evidence plus a separate all-city
+  screening order with conservative evidence ranges and exact exclusion reasons.
+- **City & Match:** official match selection, hourly movement, selectable Rice/GTFS/OSM
   layers, three packages, before/after timelines, tradeoffs, and exact downloads.
 - **Methods & QA:** source hashes, factors, network status, formulas, assumptions,
   holdout validation, rank sensitivity, manifests, and downloads.
@@ -51,10 +55,12 @@ Current pressure outputs do not measure roadway congestion.
 
 The implemented product behavior is:
 
-- **Executive** leads with match, priority corridor, peak passenger gap,
+- **Decision Brief** leads with match, access evidence, peak passenger gap,
   candidate investment, modeled outcome range, planning cost, lead time, and
   evidence quality. MRS is secondary.
-- **Explorer** shows hourly movement, GTFS routes/stops, OSM isochrones, Rice
+- **Compare Cities** keeps all 11 cities visible without presenting partial evidence
+  as a strict rank.
+- **City & Match** shows hourly movement, GTFS routes/stops, OSM isochrones, Rice
   heat/POI layers, and Baseline/Operational/Capital package comparisons.
 - **Methods & QA** traces every headline number to a contract field, formula,
   source record, factor, validation result, and exact download.

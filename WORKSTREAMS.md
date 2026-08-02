@@ -20,8 +20,8 @@ This repository uses isolated branches and Git worktrees so agents and people ca
 | W0 Foundation | integration-owned | repository root | `pyproject.toml`, `uv.lock`, `.python-version`, CI, `dashboard/app.py`, shared contracts/source registry, fixtures, `.gitignore`, `WORKSTREAMS.md` | None |
 | W1 Public evidence | `work/gtfs` | `.worktrees/gtfs` | `dashboard/pipeline/gtfs/`, `dashboard/pipeline/public/`, `dashboard/tests/gtfs/`, `dashboard/tests/public/`, `data/snapshots/` | W0 contracts |
 | W2 Rice enrichment | `work/etl` | `.worktrees/etl` | `dashboard/pipeline/etl/`, `dashboard/pipeline/schemas/`, `dashboard/tests/etl/`, Rice-derived cache artifacts | W0 contracts |
-| W3 Movement/access | `work/models` | `.worktrees/models` | `dashboard/models/movement.py`, `dashboard/models/access.py`, `dashboard/tests/models/` | W0 fixtures |
-| W4 Interventions | `work/interventions` | `.worktrees/interventions` | `dashboard/models/interventions.py`, `dashboard/tests/interventions/` | W0 fixtures |
+| W3 Movement/access and comparison | `work/models` | `.worktrees/models` | `dashboard/models/movement.py`, `dashboard/models/access.py`, `dashboard/domain/comparison.py`, movement/access/comparison tests under `dashboard/tests/models/` | W0 fixtures |
+| W4 Interventions and portfolio | `work/interventions` | `.worktrees/interventions` | `dashboard/models/interventions.py`, `dashboard/domain/decision_support.py`, `dashboard/domain/portfolio.py`, `dashboard/tests/interventions/`, `dashboard/tests/models/test_portfolio.py` | W0 fixtures |
 | W5 UI | `work/ui` | `.worktrees/ui` | `dashboard/ui/`, `dashboard/viz/`, `dashboard/tests/ui/` | W0 fixtures |
 | W6 QA/docs | `work/qa-docs` | `.worktrees/qa-docs` | `dashboard/tests/integration/`, `docs/`, `DATA_DOCUMENTATION.md`, `SUBMISSION_NARRATIVE.md`, `dashboard/README.md` | W1-W5 interfaces |
 
@@ -48,6 +48,7 @@ The `dashboard/mobility_platform/contracts.py` module owns the stable data contr
 - `ScenarioResult`
 
 Contract changes require a focused commit and must update the corresponding fixture tests.
+`InvestmentRecommendation.match_id` is required; adapters must never infer it from the currently selected match.
 
 ## Handoff checklist
 

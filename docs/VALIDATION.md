@@ -65,9 +65,11 @@ completed analytical result.
 
 ## Release UI and presentation gates
 
-- Executive answers where, why, candidate investment, modeled outcome, cost,
-  lead time, and evidence quality without relying on MRS.
-- Explorer supports match selection and Baseline, Operational Package, and
+- Decision Brief answers where, why, candidate investment, modeled outcome,
+  cost, lead time, and evidence quality without relying on MRS. It also exposes
+  criterion evidence, required deliverables, and evidence-gated time horizons.
+- Compare Cities separates strict eligible ranks from an all-city evidence screening.
+- City & Match supports match selection and Baseline, Operational Package, and
   Capital Package comparison with routes, stops, isochrones, UHI, POIs, and
   origin-context layers.
 - Every major visualization has labels, provenance, status, uncertainty where
@@ -84,7 +86,7 @@ completed analytical result.
 
 - Environment: uv 0.11.16, CPython 3.11, committed lockfile, and project `.venv`;
   no machine-specific preview runtime is referenced.
-- Automated suite: `157 passed`; Ruff and whitespace checks pass.
+- Automated suite: `168 passed`; Ruff passes. Whitespace is checked separately.
 - Public cache validator: 78 schedule events, 20 planning factors, 11 GTFS city
   records, and 11 graph-derived walking records; validator passed.
 - GTFS artifact SHA-256:
@@ -99,15 +101,23 @@ completed analytical result.
   `f36cba57ede7b6c7dfb720c492ee584545b46912e0cac7da4d7337c5bdb1bbd6`.
   Production composition fails on missing/incomplete factors and every outcome
   includes this hash in its assumptions.
-- Streamlit AppTest: Executive, Explorer, and Methods & QA render without an
-  exception. All 78 movement timelines and before/after tables pass nonempty,
-  reconciliation, and peak-reduction checks.
+- Streamlit AppTest: Decision Brief, Compare Cities, City & Match, and Methods & QA
+  render without an exception. All 78 movement timelines and before/after tables
+  pass nonempty, reconciliation, and peak-reduction checks.
+- Recommendation identity: all 231 Pareto records retain an exact `match_id`;
+  each match renders only its own two or three nondominated options.
+- All-city comparison: five cities are strictly rankable under the default
+  balanced profile; all 11 remain visible in the bounded screening view.
+- Portfolio accounting: match, city-tournament, and U.S.-tournament tests verify
+  one-time capital per city, recurring event operations, and default exclusion
+  of partial/unavailable access results.
 - Local project-owned Streamlit preview: health check returned HTTP 200 at
-  `http://127.0.0.1:8503`; the stale port-8501 preview process was stopped.
+  `http://127.0.0.1:8504` after the Decision Brief and Compare Cities integration.
 - Screenshot record: failed because the in-app browser sandbox-policy handshake
   blocked localhost control. No desktop/narrow screenshot claim is made.
 - Known release failures: 28 matches still lack event-valid service evidence;
-  several feeds/routes remain partial; team/contact metadata and final
+  another 21 access results remain partial after service/network composition;
+  team/contact metadata and final
   desktop/narrow screenshot review remain outstanding.
 
 This is a competition MVP validation record, not certification for operational

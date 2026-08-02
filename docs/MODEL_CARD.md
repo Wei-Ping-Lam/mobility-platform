@@ -5,7 +5,7 @@
 - Contract: `0.3.0`
 - Intended release: competition-ready planning MVP
 - Current state: Rice and public-source pipelines, contract-0.3 transportation
-  models, and all three dashboard workspaces are integrated and tested
+  models, and all four dashboard workspaces are integrated and tested
 - Decision authority: advisory only; agencies retain operational and engineering
   responsibility
 

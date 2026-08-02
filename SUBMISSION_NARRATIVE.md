@@ -53,13 +53,19 @@ gaps and intervention outcomes—not rank—lead the decision.
 - The official schedule snapshot maps 78 US-hosted matches to all 11 cities with
   local kickoff times and source hashes.
 - Hourly movement, physical access, intervention accounting, city differentiation,
-  Pareto screening, and all three UI workspaces are implemented and tested.
+  exact match-scoped Pareto screening, and all four UI workspaces are implemented and tested.
 - EPA/FTA/FHWA inputs are pinned as scenario/estimated planning ranges.
 - The GTFS refresh produced event-valid evidence for 50 matches across eight cities.
   Pinned, hash-checked event archives repaired Kansas City and Philadelphia;
   three cities remain wholly outside the event window.
 - Five-mile OSM walking graphs and hashes cover all 11 venues; all venues retain
   isochrones, while event-relevant stop routes remain partial where GTFS is ineligible.
+- Compare Cities keeps all 11 cities visible in an evidence-bounded screening
+  view while limiting strict transportation ranks to eligible evidence.
+- Decision Brief exposes every judging criterion and required deliverable as a
+  visible proof record with a limitation; it does not award the project points.
+- Match, city-tournament, and U.S.-tournament ledgers count capital once per
+  city and recurring operations per event. Qualified evidence is the default.
 
 ### Required before the competition-ready claim
 
@@ -103,9 +109,10 @@ with observed counts, but the platform does not perform causal attribution.
 
 ## Visualization and communication
 
-The release Executive view answers where, why, what investment, what modeled
-outcome, at what cost/lead time, and with what confidence. Explorer combines
-hourly bands with routes, stops, network isochrones, UHI, POIs, and scenario
+The Decision Brief answers where, why, what investment, what modeled outcome,
+at what cost/lead time, and with what confidence. Compare Cities separates strict
+rank from all-city screening. City & Match combines hourly bands with selectable
+routes, stops, network isochrones, UHI, POIs, and scenario
 tradeoffs. Methods & QA maps every headline metric to its contract field,
 source, hash, factor, assumptions, and test status. Major charts require table
 equivalents and exact downloads.
