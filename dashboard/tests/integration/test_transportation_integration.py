@@ -31,14 +31,38 @@ def _loaded():
 
 
 def test_nested_public_and_rice_artifacts_load_for_all_host_cities():
-    artifacts, _ = _loaded()
+    artifacts, metrics = _loaded()
     assert len(artifacts["match_events"]) == 78
     assert set(artifacts["gtfs"]) == set(HOST_CITIES)
     assert set(artifacts["walking_networks"]) == set(HOST_CITIES)
     assert set(artifacts["map_layers"]) == set(HOST_CITIES)
+    assert len(artifacts["operational_metrics"]) == 33
+    assert len(artifacts["operational_event_records"]) == 13
+    assert set(artifacts["weather"].loc[artifacts["weather"]["city"].isin(["Miami", "New York/NJ"]), "source_dataset"]) == {"noaa-global-hourly-supplement"}
+    assert artifacts["uhi"].loc[artifacts["uhi"]["city"] == "Boston", "source_dataset"].iloc[0] == "usgs-landsat-surface-uhi-supplement"
+    evidence = {
+        row.city: json.loads(row.evidence_json)
+        for row in metrics[["city", "evidence_json"]].itertuples(index=False)
+    }
+    assert evidence["Miami"]["heat"]["source"].startswith("NOAA NCEI")
+    assert evidence["New York/NJ"]["heat"]["source"].startswith("NOAA NCEI")
+    assert evidence["Boston"]["uhi"]["source"].startswith("USGS Landsat")
+    assert set(artifacts["operational_coverage"]) == set(HOST_CITIES)
     assert not artifacts["uhi_points"].empty
     assert not artifacts["poi_points"].empty
     assert not artifacts["origin_flows"].empty
+
+
+def test_published_operational_aggregates_do_not_silently_recalibrate_match_hours():
+    artifacts, metrics = _loaded()
+    with_operations = build_transportation_bundle(metrics, artifacts)
+    without_operations = dict(artifacts)
+    without_operations.pop("operational_metrics", None)
+    without_operations.pop("operational_coverage", None)
+    without_operations.pop("operational_snapshot", None)
+    baseline = build_transportation_bundle(metrics, without_operations)
+    assert with_operations["movement_scenarios"] == baseline["movement_scenarios"]
+    assert with_operations["access_gaps"] == baseline["access_gaps"]
 
 
 def test_compact_evidence_composes_match_decisions_with_repaired_event_gtfs():
@@ -102,6 +126,10 @@ def test_recommendations_are_scoped_to_exact_matches_without_citywide_bleed():
     assert download["equations"]
     assert download["recommendation_policy"]
     assert download["assumption_registry"]
+    houston_match = presentation.city("Houston").match()
+    houston_download = json.loads(presentation.scenario_json("Houston", houston_match.match_id))
+    assert houston_download["operational_event_records"]
+    assert all(row["city"] == "Houston" for row in houston_download["operational_event_records"])
 
 
 def test_same_package_responds_to_city_evidence():

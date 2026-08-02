@@ -177,11 +177,15 @@ def build_city_metrics(
             heat_status = weather_source_status if heat_index is not None else EvidenceStatus.UNAVAILABLE.value
             weather_station = str(event_weather.iloc[0].get("station", "unknown"))
             weather_station_distance = event_weather.iloc[0].get("station_distance_mi")
+            weather_source_dataset = str(event_weather.iloc[0].get("source_dataset", ""))
+            weather_source_id = event_weather.iloc[0].get("source_id")
         else:
             heat_index = avg_temp = humidity = None
             heat_status = EvidenceStatus.UNAVAILABLE.value
             weather_station = None
             weather_station_distance = None
+            weather_source_dataset = ""
+            weather_source_id = None
 
         uhi_city = uhi[uhi["city"] == city] if not uhi.empty and "city" in uhi else pd.DataFrame()
         uhi_value = None
@@ -196,6 +200,8 @@ def build_city_metrics(
         )
         venue_points_value = uhi_city.iloc[0].get("venue_points") if not uhi_city.empty else None
         venue_point_count = int(venue_points_value) if venue_points_value is not None and pd.notna(venue_points_value) else 0
+        uhi_source_dataset = str(uhi_city.iloc[0].get("source_dataset", "")) if not uhi_city.empty else ""
+        uhi_source_id = uhi_city.iloc[0].get("source_id") if not uhi_city.empty else None
 
         gtfs_row = gtfs.get(city, {})
         transit_value = gtfs_row.get("gtfs_transit_score")
@@ -283,6 +289,39 @@ def build_city_metrics(
             row["data_coverage"] >= 1.0
             and (include_estimates or row["score_status"] == EvidenceStatus.DERIVED.value)
         )
+        weather_is_noaa_supplement = weather_source_dataset == "noaa-global-hourly-supplement"
+        heat_source = (
+            f"NOAA NCEI / Global Hourly / {weather_source_id} / station {weather_station}, June-July p90 heat index"
+            if weather_is_noaa_supplement
+            else rice_source(
+                "daily-weather-rice",
+                f"station {weather_station}, June-July p90 heat index"
+                if weather_station
+                else "host-area station unavailable",
+            )
+        )
+        heat_formula_assumption = (
+            "NOAA Rothfusz heat-index formula applied to NOAA Global Hourly temperature and dew-point-derived relative humidity."
+            if weather_is_noaa_supplement
+            else "NOAA Rothfusz heat-index formula applied to Rice WC Hack station observations."
+        )
+        uhi_is_landsat_supplement = uhi_source_dataset == "usgs-landsat-surface-uhi-supplement"
+        uhi_source = (
+            f"USGS Landsat Collection 2 Level-2 Surface Temperature / {uhi_source_id} / two-mile venue buffer"
+            if uhi_is_landsat_supplement
+            else rice_source(
+                "urban-heat-index-rice",
+                "points within two miles of venue" if venue_point_count > 0 else "market-level p90 fallback",
+            )
+        )
+        uhi_assumptions = (
+            (
+                "Surface UHI is the median scene-level venue p90 surface temperature minus the 3-8 mile reference median.",
+                "Landsat surface temperature is not air temperature, physiological heat exposure, shade, or an accessibility audit.",
+            )
+            if uhi_is_landsat_supplement
+            else ("Distance-weighted venue context is not a pedestrian shade or surface-temperature audit.",)
+        )
         evidence = {
             "transit": _metric_payload(
                 transit_value,
@@ -298,17 +337,12 @@ def build_city_metrics(
                 row["heat_score"],
                 unit="safety score (0-100)",
                 status=heat_status,
-                source=rice_source(
-                    "daily-weather-rice",
-                    f"station {weather_station}, June-July p90 heat index"
-                    if weather_station
-                    else "host-area station unavailable",
-                ),
+                source=heat_source,
                 coverage_start=event_weather["date"].min().date() if not event_weather.empty and "date" in event_weather else None,
                 coverage_end=event_weather["date"].max().date() if not event_weather.empty and "date" in event_weather else None,
                 sample_size=len(event_weather),
                 assumptions=(
-                    "NOAA Rothfusz heat-index formula applied to Rice WC Hack station observations.",
+                    heat_formula_assumption,
                     f"Station is {float(weather_station_distance):.1f} miles from the venue."
                     if weather_station_distance is not None and pd.notna(weather_station_distance)
                     else "Station-to-venue distance is unavailable.",
@@ -318,12 +352,9 @@ def build_city_metrics(
                 row["uhi_score"],
                 unit="safety score (0-100)",
                 status=uhi_status,
-                source=rice_source(
-                    "urban-heat-index-rice",
-                    "points within two miles of venue" if venue_point_count > 0 else "market-level p90 fallback",
-                ),
+                source=uhi_source,
                 sample_size=venue_point_count or None,
-                assumptions=("Distance-weighted venue context is not a pedestrian shade or surface-temperature audit.",),
+                assumptions=uhi_assumptions,
             ),
             "access": _metric_payload(
                 row["access_score"],
