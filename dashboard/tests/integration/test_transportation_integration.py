@@ -3,6 +3,7 @@ from __future__ import annotations
 import copy
 import json
 
+import pandas as pd
 import pytest
 
 from dashboard.domain.decision_support import build_transportation_bundle
@@ -144,6 +145,39 @@ def test_same_package_responds_to_city_evidence():
     assert len(first_match_by_city) == 11
     assert len({row["net_vmt_base"] for row in first_match_by_city.values()}) > 1
     assert len({row["gap_resolved_passengers"] for row in first_match_by_city.values()}) > 1
+
+
+def test_access_capacity_uses_exact_peak_hour_and_event_phase():
+    artifacts, metrics = _loaded()
+    bundle = build_transportation_bundle(metrics, artifacts)
+    movement_by_match = {row["match_id"]: row for row in bundle["movement_scenarios"]}
+
+    for access in bundle["access_gaps"]:
+        movement = movement_by_match[access["match_id"]]
+        peak = max(
+            movement["hourly_rows"],
+            key=lambda row: float(row["arrivals_base"]) + float(row["departures_base"]),
+        )
+        direction = (
+            "arrival"
+            if float(peak["arrivals_base"]) > float(peak["departures_base"])
+            else "departure"
+            if float(peak["departures_base"]) > float(peak["arrivals_base"])
+            else "both"
+        )
+        peak_hour = pd.Timestamp(peak["timestamp_local"]).floor("h")
+        match_service = artifacts["gtfs"][access["city"]]["matches"][access["match_id"]]
+        applicable = [
+            row
+            for row in match_service.get("hourly_service", [])
+            if pd.Timestamp(row["hour_start_local"]).floor("h") == peak_hour
+            and (direction == "both" or row["direction"] in {direction, "both"})
+        ]
+        expected = sum(
+            float(row["departures_per_hour"]) * float(row["vehicle_capacity_base"])
+            for row in applicable
+        )
+        assert access["transit_capacity_base"] == pytest.approx(expected)
 
 
 def test_all_real_movement_timelines_render_and_operational_spreading_conserves_flow():

@@ -133,6 +133,7 @@ def _contract_artifacts() -> dict:
         intervention="Operational Package",
         rationale="Closes part of the documented match-hour gap.",
         status=EvidenceStatus.SCENARIO,
+        scope="Operate a defined fixture shuttle service",
         cost_low=100000,
         cost_base=150000,
         cost_high=200000,
@@ -180,6 +181,7 @@ def test_contract_adapter_preserves_gap_ranges_sources_and_exact_download():
     payload = json.loads(presentation.scenario_json("Atlanta", "ATL-01"))
     assert payload["access_gap"]["residual_passengers"] == access.residual_passengers
     assert payload["scenarios"] == [scenario.to_dict() for scenario in scenarios]
+    assert payload["nondominated_options"][0]["scope"] == "Operate a defined fixture shuttle service"
     assert presentation.source_rows[0]["sha256"] == "fixture-sha256"
 
 

@@ -10,6 +10,7 @@ from dashboard.mobility_platform.contracts import AccessGapResult, EvidenceStatu
 @dataclass(frozen=True)
 class MeasurePolicy:
     name: str
+    scope: str
     lead_time_band: str
     responsible_actor: str
     dependencies: tuple[str, ...]
@@ -33,6 +34,7 @@ class EvidenceAssessment:
 MEASURE_POLICIES = {
     "Shuttle service": MeasurePolicy(
         "Shuttle service",
+        "Operate 10 event shuttle buses per hour",
         "0-6 months",
         "Venue operator and transit agency",
         ("Staging and layover space", "Event-day operator agreement"),
@@ -42,6 +44,7 @@ MEASURE_POLICIES = {
     ),
     "Added transit frequency": MeasurePolicy(
         "Added transit frequency",
+        "Add 6 transit departures per hour in the event window",
         "3-12 months",
         "Transit agency",
         ("Fleet and operator availability", "Event-window timetable"),
@@ -51,6 +54,7 @@ MEASURE_POLICIES = {
     ),
     "Park-and-ride feeder service": MeasurePolicy(
         "Park-and-ride feeder service",
+        "Provide 1,200 remote spaces with 15 feeder departures per hour",
         "6-24 months",
         "City, parking partner, and transit agency",
         ("Remote lot agreement", "Feeder fleet", "Traffic management plan"),
@@ -60,6 +64,7 @@ MEASURE_POLICIES = {
     ),
     "Bike and micromobility hubs": MeasurePolicy(
         "Bike and micromobility hubs",
+        "Provide 800 secure bike and micromobility spaces",
         "6-18 months",
         "City transportation department",
         ("Safe network connection", "Micromobility operating plan"),
@@ -69,6 +74,7 @@ MEASURE_POLICIES = {
     ),
     "Cooled walking corridors": MeasurePolicy(
         "Cooled walking corridors",
+        "Treat 2 km of the event walking corridor",
         "12-36 months",
         "City public works department",
         ("Right-of-way design", "Shade and cooling maintenance plan"),
@@ -78,6 +84,7 @@ MEASURE_POLICIES = {
     ),
     "Arrival spreading and curb management": MeasurePolicy(
         "Arrival spreading and curb management",
+        "Shift 15% of peak arrivals into adjacent event-window hours",
         "0-6 months",
         "City and venue operator",
         ("Ticket-holder communications", "Curb allocation and enforcement plan"),
@@ -103,6 +110,7 @@ def measure_policy(name: str) -> MeasurePolicy:
         name,
         MeasurePolicy(
             name,
+            "Scope requires local definition",
             "Requires scoping",
             "Multi-agency delivery team",
             ("Implementation plan",),

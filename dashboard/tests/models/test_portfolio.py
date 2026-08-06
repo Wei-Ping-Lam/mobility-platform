@@ -15,6 +15,7 @@ PACKAGE = {
     "shuttle_buses_per_hour": 2,
     "added_transit_departures_per_hour": 1,
     "park_ride_spaces": 10,
+    "park_ride_feeder_departures_per_hour": 2,
     "bike_hub_spaces": 5,
     "cooled_walkway_km": 1,
     "arrival_spreading_pct": 5,

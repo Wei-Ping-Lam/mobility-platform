@@ -60,7 +60,7 @@ def build_deliverable_evidence(
             "Status": "scenario" if movements else "unavailable",
             "Visible proof": f"{len(movements)} match-specific hourly low/base/high scenarios plus {len(operational)} official post-event benchmarks",
             "Limitation": "Planning scenario; published aggregates do not yet qualify match-hour calibration.",
-            "Workspace": "City & Match / Movement",
+            "Workspace": "Scenario Explorer / Movement",
         },
         {
             "Deliverable": "First/last-mile gaps",
@@ -71,35 +71,35 @@ def build_deliverable_evidence(
                 if qualified == len(access)
                 else "Missing event-window service is withheld, never treated as zero service."
             ),
-            "Workspace": "City & Match / Access map",
+            "Workspace": "Scenario Explorer / Access map",
         },
         {
             "Deliverable": "Compare resilience",
             "Status": "derived" if access_ranked == len(comparison) else "partial",
             "Visible proof": f"All {access_ranked}/{len(comparison)} cities have a physical access-gap priority; {strict_count} have strict secondary MRS ranks",
             "Limitation": "Access-gap priority, evidence screening, and strict MRS are intentionally separate.",
-            "Workspace": "Detailed Comparison",
+            "Workspace": "Portfolio",
         },
         {
             "Deliverable": "Recommend investments",
             "Status": "scenario" if recommendations and match_scoped == len(recommendations) else "unavailable",
             "Visible proof": f"{match_scoped}/{len(recommendations)} nondominated options tied to exact matches; {evidence_qualified_options} pass the current screening evidence gate",
             "Limitation": "Exploratory sensitivities are separated from evidence-qualified screens; neither is an agency commitment or one optimal answer.",
-            "Workspace": "Overview / City & Match",
+            "Workspace": "Portfolio / Scenario Explorer",
         },
         {
             "Deliverable": "Sustainability outcomes",
             "Status": "scenario" if outcomes else "unavailable",
             "Visible proof": f"{len(outcomes)} package outcomes include VMT, net CO2e, heat, and cost",
             "Limitation": "Planning factors; not observed mode shift or a local MOVES inventory.",
-            "Workspace": "Overview / City & Match / Scenarios",
+            "Workspace": "Portfolio / Scenario Explorer / Scenarios",
         },
         {
             "Deliverable": "Outcomes over time",
             "Status": "scenario" if outcomes else "unavailable",
             "Visible proof": "Match, city-tournament, and U.S.-tournament cumulative ledgers",
             "Limitation": "Capital is counted once per city; operations recur per event.",
-            "Workspace": "City Brief / Time horizon",
+            "Workspace": "City Action Plan / Tournament horizon",
         },
     ]
     return pd.DataFrame(rows)
@@ -131,31 +131,31 @@ def build_criteria_evidence(
             "partial",
             f"{len(outcomes)} modeled package outcomes across {qualified} capacity-qualified matches.",
             "Benefits are scenario estimates, not observed impacts.",
-            "Overview / City Brief",
+            "Portfolio / City Action Plan",
         ),
         "Data Analytics": (
             "derived" if validation and full_hashes else "partial",
             f"{len(validation)} holdouts and {len(operational)} source-located operational benchmarks across {operational_cities} cities, plus pinned Rice, FIFA, GTFS, OSM, and factors.",
             "Published operational aggregates do not supply complete match-hour arrival, mode, load, curb, parking, and roadway records.",
-            "Methods & QA",
+            "Methods",
         ),
         "Innovation": (
             "derived" if match_scoped else "unavailable",
             "Match-specific access gaps and nondominated tradeoffs preserve total and comparison cost, emissions, heat, lead time, and evidence quality.",
             "Novelty is a decision-support method, not a claim of predictive accuracy.",
-            "Overview / City & Match / Tradeoffs",
+            "Portfolio / Scenario Explorer / Tradeoffs",
         ),
         "Feasibility": (
             "partial",
             f"Candidate actors, dependencies, lead times, costs, and {len(operational)} official implementation/throughput benchmarks are visible.",
             "Local fleet, labor, right-of-way, and agency budget constraints require confirmation.",
-            "Overview / City & Match / Implementation",
+            "Portfolio / Scenario Explorer / Implementation",
         ),
         "Legacy": (
             "partial",
             f"Reusable event inputs, city/tournament horizons, and post-event evidence for {operational_cities} cities extend beyond a single match.",
             "All cities have at least one published outcome benchmark, but no city has a complete interval-level operational validation set.",
-            "City Brief / Time horizon",
+            "City Action Plan / Tournament horizon",
         ),
         "Visualization": (
             "derived" if visual_review else "partial",

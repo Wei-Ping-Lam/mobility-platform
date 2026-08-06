@@ -1,7 +1,7 @@
 # Model equations
 
 The code-owned registry is `dashboard/models/equations.py`. Stable IDs below
-appear in Methods & QA and scenario downloads so a reviewer can trace each
+appear in Methods and scenario downloads so a reviewer can trace each
 number to one definition. Multiplication and subtraction are evaluated
 separately for low, base, and high cases where ranged factors apply.
 
@@ -54,6 +54,20 @@ resolved = min(residual_gap, physical_capacity_added + feasible_arrival_shift)
 
 Physical capacity includes shuttle, added transit, park-and-ride feeder, bike,
 and eligible walking uptake. Potential throughput is not observed mode shift.
+
+## EQ-PARK-RIDE-01 — park-and-ride throughput
+
+```text
+park_pph = min(
+  space_passengers / arrival_hours,
+  feeder_departures_h × passengers_per_bus × usable_load_factor
+)
+```
+
+Parking spaces do not create passenger throughput by themselves. The model
+requires explicit feeder departures, caps passengers at the lower of parking
+and feeder capacity, includes feeder VMT, and prices scheduled feeder service
+as event bus-hours.
 
 ## EQ-VMT-01 — net vehicle-miles avoided
 

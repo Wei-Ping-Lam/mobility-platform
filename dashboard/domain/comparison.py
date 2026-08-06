@@ -8,6 +8,7 @@ from typing import Any
 import pandas as pd
 
 from dashboard.domain.scoring import DIMENSIONS, OBSERVED_STATUSES, normalize_weights
+from dashboard.models.recommendation_policy import lead_time_rank
 
 
 def _number(value: Any) -> float | None:
@@ -97,11 +98,39 @@ def _event_summary(
         if str(row.get("city")) == city and str(row.get("match_id")) == match_id
     ]
     eligible_candidates = [row for row in candidates if bool(row.get("evidence_qualified"))]
+    screening_pool = eligible_candidates or candidates
     recommendation = min(
-        eligible_candidates or candidates,
+        screening_pool,
         key=lambda row: (
             _number(row.get("cost_per_passenger")) or float("inf"),
             str(row.get("intervention") or ""),
+        ),
+        default={},
+    )
+    fastest = min(
+        screening_pool,
+        key=lambda row: (
+            lead_time_rank(str(row.get("intervention") or "")),
+            _number(row.get("cost_per_passenger")) or float("inf"),
+            str(row.get("intervention") or ""),
+        ),
+        default={},
+    )
+    greatest_relief = max(
+        screening_pool,
+        key=lambda row: (
+            _number(row.get("gap_resolved_passengers")) or 0.0,
+            -(_number(row.get("cost_per_passenger")) or float("inf")),
+        ),
+        default={},
+    )
+    greatest_climate = max(
+        screening_pool,
+        key=lambda row: (
+            _number(row.get("net_co2e_kg"))
+            if _number(row.get("net_co2e_kg")) is not None
+            else -float("inf"),
+            _number(row.get("gap_resolved_passengers")) or 0.0,
         ),
         default={},
     )
@@ -115,6 +144,10 @@ def _event_summary(
             _number(peak_row.get("residual_passengers")) if peak_row in qualified else None
         ),
         "top_intervention": recommendation.get("intervention"),
+        "lowest_cost_intervention": recommendation.get("intervention"),
+        "fastest_intervention": fastest.get("intervention"),
+        "greatest_relief_intervention": greatest_relief.get("intervention"),
+        "greatest_climate_intervention": greatest_climate.get("intervention"),
         "top_cost_per_passenger": _number(recommendation.get("cost_per_passenger")),
         "top_net_co2e_kg": _number(recommendation.get("net_co2e_kg")),
         "top_lead_time": recommendation.get("lead_time_band"),

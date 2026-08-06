@@ -9,7 +9,7 @@ factor registry, physical access gaps, and city-specific intervention outcomes
 are connected through compact cache-only artifacts.
 
 The release is intended to answer: **where is the access gap, why does it
-exist, which package addresses it, what modeled range results, at what planning
+exist, which defined investment should be screened first, at what scale, what modeled range results, at what planning
 cost and lead time, and with what evidence quality?**
 
 ```mermaid
@@ -29,7 +29,7 @@ flowchart LR
   G --> Q
   O --> Q
   X --> Q
-  P --> U[Portfolio Overview, City Brief, Detailed Comparison, and City & Match]
+  P --> U[Portfolio, City Action Plan, and Scenario Explorer]
 ```
 
 ## Evidence lifecycle
@@ -105,7 +105,8 @@ Planetary Computer's public mirror; USGS remains the data publisher.
 - Match, city-tournament, and U.S.-tournament ledgers default to capacity-qualified
   access results. Users may explicitly opt into partial screening totals.
 - Park-and-ride, bike hubs, and cooled corridors are treated as one-time capital
-  per city. Shuttle, added service, and arrival management recur per event.
+  per city. Shuttle, park-and-ride feeder operations, added service, and arrival
+  management recur per event.
 - Every recommendation retains its exact `city` and `match_id`; the interface
   does not assign citywide recommendations to whichever match happens to be selected.
 
@@ -137,10 +138,16 @@ Planetary Computer's public mirror; USGS remains the data publisher.
 
 ## Intervention accounting
 
+- The Explorer traffic layer compares modeled venue-area vehicle trips at the
+  venue. Marker color and its written label show the direction and percentage
+  change from the base case; hover ranges use the minimum and maximum outputs
+  across the low, base, and high input cases because those named cases are not
+  assumed to produce ordered outcome bounds.
 - Shuttle and added-transit capacity are capped by demand and include operating
   VMT and emissions.
 - Park-and-ride preserves driving to remote lots and counts only venue-area VMT
-  displaced.
+  displaced. Passenger throughput is capped by explicitly scheduled feeder
+  departures; feeder VMT and event operating cost are included.
 - Bike uptake is distance-limited and capacity-capped.
 - Cooled walking investment must change a documented heat/walking outcome or
   remain absent from the release UI.
@@ -160,11 +167,11 @@ Planetary Computer's public mirror; USGS remains the data publisher.
   are separated from exploratory sensitivities, and no row is called optimal.
 
 Stable definitions and variable meanings are maintained in
-`dashboard/models/equations.py` and rendered in Methods & QA. See
+`dashboard/models/equations.py` and rendered in Methods. See
 `EQUATIONS.md` and `ASSUMPTIONS.md` for the reviewer-facing versions.
 
 MRS remains a secondary policy index. Transportation-weighted profiles require
-eligible transit evidence, and Methods & QA reports weight sensitivity and rank
+eligible transit evidence, and Methods reports weight sensitivity and rank
 stability. Physical quantities and evidence status take precedence over rank.
 
 See `SOURCE_REGISTER.md`, `EVIDENCE_TO_CLAIM_MATRIX.md`, and `VALIDATION.md`.

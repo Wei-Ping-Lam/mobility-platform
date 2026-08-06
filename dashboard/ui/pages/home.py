@@ -5,12 +5,19 @@ from __future__ import annotations
 from collections.abc import Mapping
 from typing import Any
 
+import numpy as np
 import pandas as pd
 import streamlit as st
 
-from dashboard.domain.overview import PACKAGE_NAMES, build_portfolio_overview, portfolio_summary
+from dashboard.domain.overview import build_portfolio_overview
 from dashboard.ui.theme import metric_card, page_header, section_header
-from dashboard.viz.portfolio import LENS_DEFINITIONS, outcome_ranking_chart, portfolio_map
+from dashboard.viz.portfolio import (
+    portfolio_access_chart,
+    portfolio_climate_chart,
+    portfolio_traffic_chart,
+    readiness_components_chart,
+    readiness_ranking_chart,
+)
 
 
 def _number(value: Any, suffix: str = "", decimals: int = 0) -> str:
@@ -19,242 +26,354 @@ def _number(value: Any, suffix: str = "", decimals: int = 0) -> str:
     return f"{float(value):,.{decimals}f}{suffix}"
 
 
-def _money(value: Any) -> str:
-    if value is None or pd.isna(value):
-        return "Not available"
-    numeric = float(value)
-    if abs(numeric) >= 1_000_000:
-        return f"${numeric / 1_000_000:,.1f}M"
-    if abs(numeric) >= 1_000:
-        return f"${numeric / 1_000:,.0f}K"
-    return f"${numeric:,.0f}"
-
-
-def _median(frame: pd.DataFrame, column: str) -> float | None:
-    values = pd.to_numeric(frame.get(column), errors="coerce").dropna()
-    return float(values.median()) if not values.empty else None
-
-
 def _metric_grid(items: list[tuple[str, str, str, str, str]]) -> None:
-    for column, item in zip(st.columns(len(items)), items):
-        value, label, status, note, accent = item
-        with column:
-            st.markdown(metric_card(value, label, status, note=note, accent=accent), unsafe_allow_html=True)
+    for start in range(0, len(items), 2):
+        for column, item in zip(st.columns(2), items[start : start + 2]):
+            value, label, status, note, accent = item
+            with column:
+                st.markdown(metric_card(value, label, status, note=note, accent=accent), unsafe_allow_html=True)
 
 
 def _navigate(workspace: str, city: str | None = None) -> None:
     st.session_state["workspace"] = workspace
     if city:
         st.session_state["city_focus"] = city
+        st.session_state["selected_city_context"] = city
 
 
-def _readiness_position(rank: Any, rankable_count: int) -> str:
-    if rank is None or pd.isna(rank):
-        return "Not rankable"
-    numeric = int(rank)
-    third = max(1, (rankable_count + 2) // 3)
-    if numeric <= third:
-        return "Higher-readiness third"
-    if numeric > rankable_count - third:
-        return "Priority-improvement third"
-    return "Middle third"
-
-
-def _comparison_table(frame: pd.DataFrame, lens: str) -> pd.DataFrame:
-    rankable_count = int(frame["strict_rank"].notna().sum())
-    display_frame = frame.copy()
-    display_frame["readiness_position"] = display_frame["strict_rank"].map(
-        lambda rank: _readiness_position(rank, rankable_count)
+def _with_access_metrics(frame: pd.DataFrame) -> pd.DataFrame:
+    result = frame.copy()
+    demand = pd.to_numeric(result.get("peak_demand_pph"), errors="coerce")
+    gap = pd.to_numeric(result.get("capacity_qualified_gap_pph"), errors="coerce").clip(lower=0)
+    result["scheduled_transit_capacity_pph"] = (demand - gap).clip(lower=0)
+    result["scheduled_coverage_pct"] = np.where(
+        demand > 0,
+        result["scheduled_transit_capacity_pph"] / demand * 100,
+        np.nan,
     )
-    definition = LENS_DEFINITIONS[lens]
-    display_frame = display_frame.sort_values(
-        [definition["column"], "city"],
-        ascending=[not bool(definition["higher_is_better"]), True],
-        na_position="last",
-    )
-    display = display_frame[
-        [
-            "strict_rank",
-            "city",
-            "strict_score",
-            "readiness_position",
-            "capacity_qualified_gap_pph",
-            "package_vehicle_trips_base",
-            "package_net_co2e_base",
-            "package_cost_per_passenger",
-            "qualified_option_count",
-            "screening_confidence",
-        ]
+    return result
+
+
+def _readiness_table(frame: pd.DataFrame, metrics: pd.DataFrame) -> pd.DataFrame:
+    components = metrics[
+        ["city", "transit_score", "heat_score", "uhi_score", "access_score"]
     ].copy()
+    display = frame[["city", "strict_rank", "strict_score"]].merge(components, on="city", how="left")
+    display = display.sort_values(["strict_rank", "city"], na_position="last")
     display.columns = [
-        "Readiness rank",
         "City",
-        "Readiness score",
-        "Portfolio position",
-        "Peak access gap (pph)",
-        "Traffic pressure after package (vehicle trips)",
+        "Readiness rank",
+        "Combined readiness",
+        "Transit proximity",
+        "Heat safety",
+        "Urban heat safety",
+        "Venue support",
+    ]
+    return display
+
+
+def _access_table(frame: pd.DataFrame) -> pd.DataFrame:
+    display = frame.sort_values(["capacity_qualified_gap_pph", "city"], ascending=[False, True]).copy()
+    display = display[
+        [
+            "city",
+            "representative_match_id",
+            "peak_demand_pph",
+            "scheduled_transit_capacity_pph",
+            "scheduled_coverage_pct",
+            "capacity_qualified_gap_pph",
+        ]
+    ]
+    display.columns = [
+        "City",
+        "Representative match",
+        "Peak arrivals / hour",
+        "Scheduled transit capacity / hour",
+        "Scheduled coverage",
+        "Remaining peak gap / hour",
+    ]
+    display["Scheduled coverage"] = display["Scheduled coverage"].map(
+        lambda value: f"{value:.1f}%" if pd.notna(value) else "Not available"
+    )
+    return display
+
+
+def _traffic_table(frame: pd.DataFrame) -> pd.DataFrame:
+    display = frame.sort_values(["baseline_vehicle_trips_base", "city"], ascending=[False, True]).copy()
+    display = display[
+        [
+            "city",
+            "representative_match_id",
+            "baseline_vehicle_trips_low",
+            "baseline_vehicle_trips_base",
+            "baseline_vehicle_trips_high",
+        ]
+    ]
+    display.columns = [
+        "City",
+        "Representative match",
+        "Low input case",
+        "Base input case",
+        "High input case",
+    ]
+    return display
+
+
+def _climate_table(frame: pd.DataFrame) -> pd.DataFrame:
+    display = frame.sort_values(["top_net_co2e_kg", "city"], ascending=[False, True]).copy()
+    display = display[
+        [
+            "city",
+            "representative_match_id",
+            "lowest_cost_intervention",
+            "top_scope",
+            "top_net_co2e_kg",
+            "top_evidence_quality",
+        ]
+    ]
+    display.columns = [
+        "City",
+        "Representative match",
+        "Qualified single measure",
+        "Proposed scale",
         "Net CO2e avoided (kg)",
-        "Package cost/passenger addressed",
-        "Qualified investment options",
-        "Evidence confidence",
+        "Evidence quality",
     ]
     return display
 
 
 def render_home(metrics: pd.DataFrame, artifacts: Mapping[str, Any], weights: Mapping[str, float]) -> None:
-    """Render a progressive all-city overview with optional city drill-down."""
+    """Render an all-city funnel from readiness orientation to task evidence."""
 
     page_header(
         "Transportation & access",
         "FIFA 2026 Host City Mobility Readiness",
-        "Compare how 11 U.S. host cities could move match-day visitors, close first/last-mile gaps, and prioritize lower-emission transportation investments.",
-        ("11 U.S. host cities", "78 official matches", "Start broad, then explore a city"),
+        "Start with the overall readiness order, understand which criteria drive it, then move into narrower access, traffic, and climate questions.",
+        ("11 U.S. host cities", "Rank → drivers → task evidence", "No city filter"),
     )
-    package_name = st.selectbox(
-        "Scenario package",
-        list(PACKAGE_NAMES),
-        index=list(PACKAGE_NAMES).index("Operational Package"),
-        help="Updates access, traffic-pressure, emissions, and investment outcomes. Readiness remains a current-condition score.",
-        key="overview_package",
+    frame = _with_access_metrics(
+        build_portfolio_overview(
+            metrics,
+            artifacts.get("access_gaps", []),
+            artifacts.get("investment_recommendations", []),
+            artifacts.get("intervention_outcomes", []),
+            weights=weights,
+        )
     )
-    frame = build_portfolio_overview(
-        metrics,
-        artifacts.get("access_gaps", []),
-        artifacts.get("investment_recommendations", []),
-        artifacts.get("intervention_outcomes", []),
-        weights=weights,
-        package_name=package_name,
-    )
-    summary = portfolio_summary(frame, len(artifacts.get("match_events", [])))
     ranked = frame.dropna(subset=["strict_rank", "strict_score"]).sort_values("strict_rank")
     highest = ranked.iloc[0] if not ranked.empty else None
-    lowest = ranked.iloc[-1] if not ranked.empty else None
+    readiness_order = frame.dropna(subset=["strict_score"]).sort_values(["strict_score", "city"])["city"].tolist()
+
+    section_header(
+        "How do hosts rank on overall readiness?",
+        "This is the high-level orientation across all 11 hosts. It combines four normalized criteria under the current sidebar weights; it is not an investment recommendation.",
+        "1 · Readiness rank",
+    )
+    st.plotly_chart(
+        readiness_ranking_chart(frame),
+        width="stretch",
+        config={"displayModeBar": False},
+        key="overview_readiness_rank",
+    )
+    st.caption(
+        f"{highest['city']} ranks first at {_number(highest['strict_score'], decimals=1)} under the current weights. "
+        "Use the next figure to see why; do not interpret rank as the size of an access gap or expected return on investment."
+        if highest is not None
+        else "No city has enough eligible evidence for the current readiness ranking."
+    )
+
+    st.markdown("#### What drives the rank?")
+    st.caption(
+        "The grid decomposes the combined score. Darker cells mean a higher normalized criterion score, allowing a reader to distinguish transit proximity from heat and venue-support evidence."
+    )
+    st.plotly_chart(
+        readiness_components_chart(metrics, readiness_order),
+        width="stretch",
+        config={"displayModeBar": False},
+        key="overview_readiness_components",
+    )
+
+    with st.container(border=True):
+        definitions = [
+            ("Transit proximity", "Relative GTFS stops and routes near the venue. It does not measure event-hour capacity."),
+            ("Heat safety", "Inverse of the June–July 90th-percentile heat index. Higher means less heat exposure."),
+            ("Urban heat safety", "Inverse of the venue-area urban heat-island anomaly. Higher means less local heat amplification."),
+            ("Venue support", "Nearby support destinations relative to other hosts. It is not a walking-safety or accessibility audit."),
+        ]
+        for start in range(0, len(definitions), 2):
+            for column, (label, definition) in zip(st.columns(2), definitions[start : start + 2]):
+                with column:
+                    st.markdown(f"**{label}**")
+                    st.caption(definition)
+        weight_text = " · ".join(
+            f"{label} {float(weights.get(key, 0)):.0%}"
+            for label, key in (
+                ("Transit", "transit"),
+                ("Heat", "heat"),
+                ("Urban heat", "uhi"),
+                ("Venue support", "access"),
+            )
+        )
+        st.caption(f"Current weight profile: {weight_text}. Scores are normalized 0–100 across these hosts.")
+
+    with st.expander("Exact readiness scores", icon=":material/table_chart:"):
+        st.dataframe(_readiness_table(frame, metrics), hide_index=True, width="stretch", height=455)
+
     largest_gap = frame.dropna(subset=["capacity_qualified_gap_pph"]).sort_values(
         "capacity_qualified_gap_pph", ascending=False
     )
     largest_gap_row = largest_gap.iloc[0] if not largest_gap.empty else None
-    _metric_grid(
+    coverage = pd.to_numeric(frame["scheduled_coverage_pct"], errors="coerce").dropna()
+    zero_capacity = int((pd.to_numeric(frame["scheduled_transit_capacity_pph"], errors="coerce").fillna(0) <= 0).sum())
+    traffic = frame.dropna(subset=["baseline_vehicle_trips_base"]).sort_values(
+        "baseline_vehicle_trips_base", ascending=False
+    )
+    highest_traffic = traffic.iloc[0] if not traffic.empty else None
+    traffic_values = pd.to_numeric(frame["baseline_vehicle_trips_base"], errors="coerce").dropna()
+    climate = frame.dropna(subset=["top_net_co2e_kg"]).sort_values("top_net_co2e_kg", ascending=False)
+    highest_climate = climate.iloc[0] if not climate.empty else None
+    climate_values = pd.to_numeric(frame["top_net_co2e_kg"], errors="coerce").dropna()
+
+    section_header(
+        "What does each transportation task show?",
+        "Now narrow from the readiness screen to one task-specific question at a time. Each tab uses a different unit and answers a different decision question.",
+        "2 · Task-specific evidence",
+    )
+    access_tab, traffic_tab, climate_tab = st.tabs(
         [
-            (
-                f"{highest['city']} · {_number(highest['strict_score'], decimals=1)}" if highest is not None else "Not available",
-                "Highest readiness",
-                "derived",
-                "Relative MRS under selected weights",
-                "teal",
-            ),
-            (
-                f"{lowest['city']} · {_number(lowest['strict_score'], decimals=1)}" if lowest is not None else "Not available",
-                "Greatest readiness challenge",
-                "derived",
-                "Relative MRS under selected weights",
-                "blue",
-            ),
-            (
-                f"{largest_gap_row['city']} · {_number(largest_gap_row['capacity_qualified_gap_pph'], ' pph')}" if largest_gap_row is not None else "Not available",
-                "Largest peak access gap",
-                "scenario",
-                "Scheduled capacity, not roadway congestion",
-                "coral",
-            ),
-            (f"{summary.cities_with_qualified_options} / {summary.city_count}", "Cities with qualified options", "scenario", "No automatic winner", "amber"),
+            ":material/train: Access shortfall",
+            ":material/traffic: Traffic pressure",
+            ":material/eco: Climate outcome",
         ]
     )
-    section_header(
-        "Selected package outcomes",
-        "Median representative-match result across the 11 host cities.",
-        package_name,
-    )
-    _metric_grid(
-        [
-            (_number(_median(frame, "package_gap_resolved"), " passengers"), "Peak gap addressed", "scenario", package_name, "teal"),
-            (_number(_median(frame, "package_vehicle_trips_base"), " trips"), "Venue-area vehicle pressure", "scenario", package_name, "blue"),
-            (_number(_median(frame, "package_net_co2e_base"), " kg"), "Net CO2e avoided", "scenario", package_name, "coral"),
-            (_money(_median(frame, "package_cost_base")), "Planning cost", "scenario", package_name, "amber"),
-        ]
-    )
-
-    section_header(
-        "See which cities are most ready—and why",
-        "All 11 cities are shown by default. Switch outcomes to compare readiness, access, traffic pressure, CO2, or investment efficiency without losing the national context.",
-        "All-city overview",
-    )
-    lens = st.segmented_control(
-        "Outcome to compare",
-        list(LENS_DEFINITIONS),
-        default="Mobility readiness",
-        key="overview_map_lens",
-    ) or "Mobility readiness"
-    selected_cities = st.multiselect(
-        "Filter cities (leave empty to show all 11)",
-        sorted(frame["city"].tolist()),
-        default=[],
-        help="Optionally narrow the chart and table to any number of cities. An empty filter always means all cities.",
-        key="overview_cities",
-    )
-    active = frame[frame["city"].isin(selected_cities)].copy() if selected_cities else frame.copy()
-    ranking_column, map_column = st.columns([1.15, 1], gap="large")
-    with ranking_column:
+    with access_tab:
+        st.markdown("#### Can scheduled transit cover the representative peak hour?")
+        _metric_grid(
+            [
+                (
+                    _number(largest_gap_row["capacity_qualified_gap_pph"], " pph")
+                    if largest_gap_row is not None else "Not available",
+                    f"Largest gap — {largest_gap_row['city']}" if largest_gap_row is not None else "Largest remaining peak gap",
+                    "scenario",
+                    "Scheduled transit shortfall in its representative peak hour",
+                    "coral",
+                ),
+                (
+                    f"{coverage.median():.1f}%" if not coverage.empty else "Not available",
+                    "Median scheduled coverage",
+                    "derived",
+                    f"{zero_capacity} of {len(frame)} hosts have zero matched capacity in that hour",
+                    "teal",
+                ),
+            ]
+        )
         st.plotly_chart(
-            outcome_ranking_chart(active, lens),
+            portfolio_access_chart(frame),
             width="stretch",
             config={"displayModeBar": False},
-            key=f"overview_rank_{lens}",
+            key="overview_access_coverage",
         )
-        st.caption(str(LENS_DEFINITIONS[lens]["context"]))
-    with map_column:
+        st.caption(
+            "Scheduled coverage = event-valid scheduled passenger capacity in the matching hour ÷ modeled base peak arrivals. "
+            "Each city uses its most constrained capacity-qualified match. The remaining gap is not roadway congestion, "
+            "observed ridership, or a citywide daily total."
+        )
+        with st.expander("Exact access values", icon=":material/table_chart:"):
+            st.dataframe(_access_table(frame), hide_index=True, width="stretch", height=455)
+
+    with traffic_tab:
+        st.markdown("#### How many venue-area vehicle trips does the base case imply?")
+        _metric_grid(
+            [
+                (
+                    _number(highest_traffic["baseline_vehicle_trips_base"], " trips")
+                    if highest_traffic is not None else "Not available",
+                    f"Highest base pressure — {highest_traffic['city']}" if highest_traffic is not None else "Highest base traffic pressure",
+                    "scenario",
+                    "Modeled private vehicle trips for the representative match",
+                    "blue",
+                ),
+                (
+                    _number(traffic_values.median(), " trips") if not traffic_values.empty else "Not available",
+                    "Median base traffic pressure",
+                    "scenario",
+                    "Across the 11 representative match scenarios",
+                    "blue",
+                ),
+            ]
+        )
         st.plotly_chart(
-            portfolio_map(frame, lens, selected_cities),
+            portfolio_traffic_chart(frame),
             width="stretch",
             config={"displayModeBar": False},
-            key=f"overview_map_{lens}",
+            key="overview_baseline_traffic",
         )
+        st.caption(
+            "Baseline vehicle trips = modeled attendance × assumed private-vehicle share ÷ 2.2 occupants per vehicle. "
+            "Whiskers span the named low and high input cases. This is venue-area trip pressure, not measured roadway congestion, delay, or queue length."
+        )
+        with st.expander("Exact traffic values", icon=":material/table_chart:"):
+            st.dataframe(_traffic_table(frame), hide_index=True, width="stretch", height=455)
 
-    comparison_table = _comparison_table(active, lens)
-    st.dataframe(comparison_table, hide_index=True, width="stretch", height=455)
-    st.caption("MRS ranks current readiness; the other lenses show selected-package outcomes.")
+    with climate_tab:
+        st.markdown("#### What net CO2e benefit does the common qualified measure imply?")
+        _metric_grid(
+            [
+                (
+                    _number(highest_climate["top_net_co2e_kg"], " kg")
+                    if highest_climate is not None else "Not available",
+                    f"Largest modeled benefit — {highest_climate['city']}" if highest_climate is not None else "Largest modeled climate benefit",
+                    "scenario",
+                    "Base-case net CO2e avoided by the qualified single measure",
+                    "teal",
+                ),
+                (
+                    _number(climate_values.median(), " kg") if not climate_values.empty else "Not available",
+                    "Median modeled climate benefit",
+                    "scenario",
+                    "Across the 11 representative match screens",
+                    "teal",
+                ),
+            ]
+        )
+        st.plotly_chart(
+            portfolio_climate_chart(frame),
+            width="stretch",
+            config={"displayModeBar": False},
+            key="overview_single_measure_climate",
+        )
+        st.caption(
+            "Every city's lowest-cost qualified screen is the same proposed scale: add 6 transit departures per hour in the event window. "
+            "Net CO2e avoided subtracts added transit-service emissions from displaced private-vehicle emissions; positive values mean modeled avoidance. "
+            "The result varies with modeled private trip distance. It is a base-case scenario—not an observed reduction, certified inventory, or package forecast."
+        )
+        with st.expander("Exact climate values", icon=":material/table_chart:"):
+            st.dataframe(_climate_table(frame), hide_index=True, width="stretch", height=455)
 
+    priority_city = str(largest_gap_row["city"]) if largest_gap_row is not None else None
     section_header(
-        "Open a city decision brief",
-        "Choose any host to understand its score components, match-level access gap, traffic-pressure proxy, CO2 range, investment choices, assumptions, and evidence.",
-        "Drill down",
-    )
-    drill_order = ranked["city"].tolist() if not ranked.empty else sorted(frame["city"].tolist())
-    drill_city = st.selectbox(
-        "City to investigate",
-        ["Select a city"] + drill_order,
-        index=0,
-        key="overview_drill_city",
+        "Open the priority case",
+        "Continue with the largest documented representative peak gap. The action plan shows concrete investment screens, scope, cost, owner, dependencies, and evidence limits.",
+        "3 · Drill down",
     )
     st.button(
-        "Open city brief",
+        f"Open {priority_city} action plan" if priority_city else "Open priority city action plan",
         key="overview_open_city",
         on_click=_navigate,
-        args=("City Brief", None if drill_city == "Select a city" else drill_city),
-        disabled=drill_city == "Select a city",
+        args=("City Brief", priority_city),
+        disabled=priority_city is None,
         width="stretch",
     )
-
-    action_compare, action_methods = st.columns(2)
-    with action_compare:
-        st.button(
-            "Open full city comparison",
-            on_click=_navigate,
-            args=("Compare Cities",),
-            key="overview_open_compare",
-            width="stretch",
-        )
-    with action_methods:
-        st.button(
-            "Review methods, assumptions, and sources",
-            on_click=_navigate,
-            args=("Methods & QA",),
-            key="overview_open_methods",
-            width="stretch",
-        )
-
+    st.button(
+        "Review methods, assumptions, and sources",
+        on_click=_navigate,
+        args=("Methods & QA",),
+        key="overview_open_methods",
+        width="stretch",
+    )
     st.download_button(
         "Download exact overview comparison CSV",
-        frame.to_csv(index=False),
+        frame[[column for column in frame.columns if not column.startswith("package_")]].to_csv(index=False),
         file_name="host-city-mobility-overview.csv",
         mime="text/csv",
         width="stretch",

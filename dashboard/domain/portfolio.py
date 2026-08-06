@@ -41,6 +41,9 @@ def _cost_components(
         + _number(package.get("added_transit_departures_per_hour"))
         * arrival_window_hours
         * factors.transit_cost_per_departure.value(case)
+        + _number(package.get("park_ride_feeder_departures_per_hour"))
+        * arrival_window_hours
+        * factors.shuttle_cost_per_bus_hour.value(case)
         + _number(package.get("arrival_spreading_pct"))
         * factors.arrival_management_cost_per_pct.value(case)
     )

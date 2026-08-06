@@ -12,7 +12,7 @@
 ## Intended use
 
 Host-city planners, transit agencies, venue operators, and residents can compare
-match-specific access evidence and explore transportation packages. The model is
+match-specific access evidence and explore defined single-measure investments. The model is
 appropriate for screening, scenario comparison, evidence-gap discovery, and
 order-of-magnitude planning.
 
@@ -39,10 +39,19 @@ causal evaluation.
   passengers, network walk distance, service span, and route heat exposure.
 - `InterventionOutcome` reports gap resolved, venue-area vehicle trips, net VMT,
   net CO2e, heat exposure avoided, and costs as ranges where defined.
-- `InvestmentRecommendation` identifies a candidate intervention, rationale,
+- `InvestmentRecommendation` identifies a candidate intervention, proposed scale, rationale,
   cost-effectiveness, lead-time band, responsible actor, dependencies, and
   status. It is not an agency commitment.
+- Operational and capital composites combine several measures only for sensitivity
+  testing; they are not named investment recommendations.
 - MRS is a secondary sensitivity-tested index, not the primary decision result.
+- The portfolio does not rank cities by the added-frequency screen's cost per passenger.
+  That ratio is useful for understanding one measure within an action plan, but the common
+  six-departures-per-hour scale and national cost/capacity factors produce the same $11.31
+  value across hosts, so it contains no cross-city decision information.
+- The Portfolio climate tab uses the same qualified added-frequency scale across hosts and
+  reports base-case net CO2e avoided. Values vary with modeled private trip distance; they
+  are scenario outputs, not observed reductions, certified inventories, or package forecasts.
 
 ## Validation and uncertainty
 

@@ -209,6 +209,7 @@ class RecommendationView:
     intervention: str
     rationale: str
     status: str = "unavailable"
+    scope: str = "Scope requires local definition"
     cost_low: float | None = None
     cost_base: float | None = None
     cost_high: float | None = None
@@ -529,6 +530,7 @@ def build_presentation(metrics: pd.DataFrame, artifacts: Mapping[str, Any]) -> P
                     intervention=str(item.get("intervention") or "Investment unavailable"),
                     rationale=str(item.get("rationale") or "No rationale supplied."),
                     status=_status(item.get("status")),
+                    scope=str(item.get("scope") or "Scope requires local definition"),
                     cost_low=_number(item.get("cost_low")),
                     cost_base=_number(item.get("cost_base")),
                     cost_high=_number(item.get("cost_high")),

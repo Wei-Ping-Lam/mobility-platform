@@ -88,6 +88,46 @@ def test_event_summary_uses_only_the_representative_match_recommendations():
     assert frame["qualified_matches"] == 2
 
 
+def test_event_summary_exposes_objective_specific_choices_instead_of_one_winner():
+    access = [
+        {
+            "city": "Complete",
+            "match_id": "A-1",
+            "status": "scenario",
+            "capacity_qualified": True,
+            "peak_demand_per_hour": 1400,
+            "residual_passengers": 900,
+        }
+    ]
+    recommendations = [
+        {
+            "city": "Complete",
+            "match_id": "A-1",
+            "intervention": "Shuttle service",
+            "gap_resolved_passengers": 300,
+            "cost_per_passenger": 10,
+            "net_co2e_kg": 100,
+            "evidence_qualified": True,
+        },
+        {
+            "city": "Complete",
+            "match_id": "A-1",
+            "intervention": "Added transit frequency",
+            "gap_resolved_passengers": 600,
+            "cost_per_passenger": 12,
+            "net_co2e_kg": 250,
+            "evidence_qualified": True,
+        },
+    ]
+
+    row = build_city_comparison(_metrics().iloc[:1], access, recommendations).iloc[0]
+
+    assert row["lowest_cost_intervention"] == "Shuttle service"
+    assert row["fastest_intervention"] == "Shuttle service"
+    assert row["greatest_relief_intervention"] == "Added transit frequency"
+    assert row["greatest_climate_intervention"] == "Added transit frequency"
+
+
 def test_access_priority_orders_capacity_qualified_physical_gaps_for_all_cities():
     access = [
         {"city": "Complete", "match_id": "A-1", "capacity_qualified": True, "peak_demand_per_hour": 1200, "residual_passengers": 900},

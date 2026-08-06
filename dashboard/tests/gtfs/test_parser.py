@@ -70,6 +70,48 @@ def test_nested_archive_uses_exact_stops_member_and_not_route_stops():
     assert result["event_departures_by_match"][0]["departures"] == 1
 
 
+def test_vehicle_is_counted_once_across_multiple_nearby_stops_and_keeps_peak_hour():
+    payload = _feed(
+        {
+            "stops.txt": (
+                "stop_id,stop_name,stop_lat,stop_lon\n"
+                "S1,Closest stop,33.7554,-84.4009\n"
+                "S2,Second stop,33.7560,-84.4009\n"
+            ),
+            "routes.txt": "route_id,route_type\nR1,3\n",
+            "trips.txt": "route_id,service_id,trip_id\nR1,WK,T1\nR1,WK,T2\n",
+            "stop_times.txt": (
+                "trip_id,arrival_time,departure_time,stop_id,stop_sequence\n"
+                "T1,17:00:00,17:00:00,S1,1\n"
+                "T1,17:02:00,17:02:00,S2,2\n"
+                "T2,17:00:00,17:00:00,S1,1\n"
+            ),
+            "calendar.txt": (
+                "service_id,monday,tuesday,wednesday,thursday,friday,saturday,sunday,start_date,end_date\n"
+                "WK,1,1,1,1,1,1,1,20260101,20261231\n"
+            ),
+        }
+    )
+    event = {"match_id": "M004", "kickoff_local": "2026-06-12T18:00:00-04:00"}
+
+    result = extract_feed(payload, {"lat": 33.7554, "lon": -84.4009}, [event])
+    match = result["event_departures_by_match"][0]
+
+    assert match["departures"] == 2
+    assert sum(row["departures_per_hour"] for row in match["hourly_service"]) == 2
+    assert match["hourly_service"] == [
+        {
+            "hour_start_local": "2026-06-12T17:00:00-04:00",
+            "direction": "arrival",
+            "mode": "bus",
+            "departures_per_hour": 2,
+            "vehicle_capacity_low": 40,
+            "vehicle_capacity_base": 55,
+            "vehicle_capacity_high": 80,
+        }
+    ]
+
+
 def test_numeric_trip_ids_retain_event_route_labels_for_walking_targets():
     payload = _feed(
         {

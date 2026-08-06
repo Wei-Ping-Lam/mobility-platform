@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-import json
 from collections.abc import Mapping
 from typing import Any
 
@@ -14,10 +13,9 @@ import streamlit as st
 from dashboard.domain.comparison import build_city_comparison
 from dashboard.domain.portfolio import build_portfolio_timeline, portfolio_summary
 from dashboard.models.interventions import factor_registry_from_snapshot
-from dashboard.ui.judging import build_criteria_evidence, build_deliverable_evidence
 from dashboard.ui.presentation import build_presentation
-from dashboard.ui.theme import callout, metric_card, page_header, priority_card, section_header
-from dashboard.viz.style import COLORS, style_figure, style_map
+from dashboard.ui.theme import callout, metric_card, page_header, section_header
+from dashboard.viz.style import COLORS, STATUS_COLORS, style_figure
 
 
 def _number(value: Any, suffix: str = "", decimals: int = 0) -> str:
@@ -35,6 +33,27 @@ def _money(value: Any) -> str:
     if abs(value) >= 1_000:
         return f"${value / 1_000:,.0f}K"
     return f"${value:,.0f}"
+
+
+def _scenario_scope(package: Mapping[str, Any]) -> str:
+    """Translate a model composite into plain-language quantities."""
+
+    fields = (
+        ("shuttle_buses_per_hour", "shuttle buses/hour"),
+        ("added_transit_departures_per_hour", "added transit departures/hour"),
+        ("park_ride_spaces", "park-and-ride spaces"),
+        ("park_ride_feeder_departures_per_hour", "feeder departures/hour"),
+        ("bike_hub_spaces", "bike and micromobility spaces"),
+        ("cooled_walkway_km", "km cooled walking corridor"),
+        ("arrival_spreading_pct", "peak arrivals shifted"),
+    )
+    parts = []
+    for field, label in fields:
+        value = package.get(field)
+        if value is not None and float(value) > 0:
+            prefix = f"{float(value):g}%" if field == "arrival_spreading_pct" else f"{float(value):g}"
+            parts.append(f"{prefix} {label}")
+    return "; ".join(parts) if parts else "No intervention (baseline)"
 
 
 def _metric_row(items: list[tuple[str, str, str, str, str]]) -> None:
@@ -58,6 +77,7 @@ def _priority_city(comparison: pd.DataFrame, selected_city: str | None) -> str:
 def _open_explorer(city: str) -> None:
     st.session_state["workspace"] = "Explorer"
     st.session_state["city_focus"] = city
+    st.session_state["selected_city_context"] = city
 
 
 def _portfolio_chart(timeline: pd.DataFrame) -> go.Figure:
@@ -88,32 +108,35 @@ def _portfolio_chart(timeline: pd.DataFrame) -> go.Figure:
     return style_figure(figure, 390)
 
 
-def _coverage_map(comparison: pd.DataFrame) -> go.Figure:
-    figure = go.Figure()
-    for confidence in ("high", "medium", "low", "insufficient"):
-        subset = comparison[comparison["screening_confidence"] == confidence].dropna(subset=["lat", "lon"])
-        if subset.empty:
-            continue
-        color = {"high": COLORS["teal"], "medium": COLORS["blue"], "low": COLORS["amber"], "insufficient": COLORS["slate"]}[confidence]
-        size_value = pd.to_numeric(subset["capacity_qualified_gap_pph"], errors="coerce").fillna(
-            pd.to_numeric(subset["peak_demand_pph"], errors="coerce").fillna(0)
-        )
-        sizes = 13 + 17 * size_value / max(float(size_value.max()), 1)
-        figure.add_trace(
-            go.Scattermap(
-                lat=subset["lat"],
-                lon=subset["lon"],
-                mode="markers",
-                marker=dict(size=sizes, color=color, opacity=.88),
-                name=f"{confidence.title()} confidence",
-                customdata=subset[["city", "capacity_qualified_gap_pph", "top_intervention", "qualified_matches"]],
-                hovertemplate=(
-                    "<b>%{customdata[0]}</b><br>Capacity-qualified gap: %{customdata[1]:,.0f} passengers/hour"
-                    "<br>Portfolio option: %{customdata[2]}<br>Qualified matches: %{customdata[3]}<extra></extra>"
-                ),
+def _readiness_components(metric: Mapping[str, Any]) -> tuple[go.Figure, pd.DataFrame]:
+    rows = pd.DataFrame(
+        [
+            {"Component": label, "Score": metric.get(f"{key}_score"), "Evidence": metric.get(f"{key}_status", "unavailable")}
+            for key, label in (
+                ("transit", "Transit service"),
+                ("access", "Venue support"),
+                ("heat", "Heat safety"),
+                ("uhi", "Urban heat safety"),
             )
+        ]
+    )
+    rows["Score"] = pd.to_numeric(rows["Score"], errors="coerce")
+    chart = rows.dropna(subset=["Score"]).sort_values("Score")
+    figure = go.Figure(
+        go.Bar(
+            x=chart["Score"],
+            y=chart["Component"],
+            orientation="h",
+            marker_color=[STATUS_COLORS.get(str(status), COLORS["slate"]) for status in chart["Evidence"]],
+            text=chart["Score"],
+            texttemplate="%{text:.1f}",
+            textposition="outside",
+            customdata=chart[["Evidence"]],
+            hovertemplate="<b>%{y}</b><br>Score: %{x:.1f}<br>Evidence: %{customdata[0]}<extra></extra>",
         )
-    return style_map(figure, 440, zoom=3.0, lat=38.5, lon=-96)
+    )
+    figure.update_xaxes(range=[0, 100], title="Component score (0–100)")
+    return style_figure(figure, 300, legend=False), rows
 
 
 def render_decision_brief(
@@ -140,37 +163,28 @@ def render_decision_brief(
     recommendations = decision.recommendation_set(match.match_id)
     qualified_options = [item for item in recommendations if item.evidence_qualified]
     exploratory_options = [item for item in recommendations if not item.evidence_qualified]
-    comparison_example = min(
-        qualified_options,
-        key=lambda item: (
-            item.cost_per_passenger
-            if item.cost_per_passenger is not None
-            else float("inf"),
-            item.intervention,
-        ),
-        default=None,
-    )
+    screening_options = qualified_options or exploratory_options
 
     page_header(
-        "Decision brief",
-        "From match-hour gap to an auditable investment choice",
-        "A guided proof sequence for FIFA 2026 transportation access: where the pressure is, what evidence supports it, which options remain Pareto-efficient, and what outcomes are still only planning scenarios.",
-        ("11 U.S. host cities", "78 official matches", "No opaque optimum"),
+        "City action plan",
+        f"{city}: from access gap to action",
+        f"Representative match {match.match_id} at {match.venue}.",
+        (match.stage, match.kickoff_local or "Kickoff unavailable", f"Readiness rank {row.get('strict_rank', '—')} of 11"),
     )
     st.button(
-        f"Open {city} maps and match details",
+        f"Explore {city} maps and scenarios",
         on_click=_open_explorer,
         args=(city,),
         key=f"brief_open_explorer_{city}",
     )
 
-    section_header(f"Priority case: {city}", f"Representative match {match.match_id} at {match.venue}. The city changes when a capacity-qualified gap is larger or the sidebar selection changes.", "Where and why")
+    section_header("Access challenge", "Peak-hour demand and scheduled transit capacity for the representative match.", "Problem")
     _metric_row(
         [
-            (_number(access.peak_demand_per_hour, " pph"), "Peak movement demand", "scenario", "Low/base/high attendance planning range", "blue"),
-            (_number(access.residual_passengers if access.capacity_qualified else None, " pph"), "Capacity-qualified access gap", access.transit_status, "Not measured roadway congestion", "coral"),
-            (f"{len(qualified_options)} + {len(exploratory_options)}", "Qualified + exploratory options", "scenario" if qualified_options else "partial", "No automatic winner", "amber"),
-            (_money(comparison_example.comparison_cost_base) if comparison_example else "Not available", "Lowest qualified comparison cost", comparison_example.status if comparison_example else "unavailable", "Lifecycle-equivalent; total cost remains separate", "teal"),
+            (f"#{int(row['strict_rank'])}" if pd.notna(row.get("strict_rank")) else "Not ranked", "Readiness rank", "derived", "Selected weight profile", "teal"),
+            (_number(access.peak_demand_per_hour, " / hr"), "Peak arrival demand", "scenario", "Base attendance scenario", "blue"),
+            (_number(access.residual_passengers if access.capacity_qualified else None, " / hr"), "Unserved peak demand", access.transit_status, "After scheduled transit capacity", "coral"),
+            (_number(access.transit_capacity_base if access.capacity_qualified else None, " / hr"), "Scheduled transit capacity", access.transit_status, "Event-window service", "amber"),
         ]
     )
     if not access.capacity_qualified:
@@ -178,83 +192,116 @@ def render_decision_brief(
     elif float(access.transit_capacity_high or 0) == 0:
         callout(
             "warning",
-            "Pinned schedule shows zero nearby event-window departures",
-            "This is a qualified observed service gap within the half-mile catchment, not missing data. Any special-event shuttle absent from GTFS remains outside the evidence base.",
+            "No nearby event-window departures",
+            "The pinned schedule contains no departures within the half-mile venue catchment.",
         )
     elif access.walking_status == "unavailable":
         callout("warning", "Transit gap qualified; walking route unavailable", "Scheduled capacity can support a residual passenger gap, but the pedestrian connection remains a separate missing evidence component.")
 
+    section_header("Why readiness differs", "The readiness score combines four independently labeled components.", "Why")
+    readiness_figure, readiness_table = _readiness_components(decision.metric)
+    st.plotly_chart(readiness_figure, width="stretch", config={"displayModeBar": False})
+    with st.expander("Readiness component table"):
+        st.dataframe(readiness_table, hide_index=True, width="stretch")
+
     section_header(
-        "What the official post-event record shows",
-        "Observed agency aggregates benchmark the scenario without being mistaken for match-hour arrivals, stadium attendance, or causal impact.",
-        "Observed outcome",
+        "Concrete investment screen",
+        "Start with one defined measure for this representative match, then compare why another objective could change the choice.",
+        "Decision",
     )
-    operational_rows = [row for row in presentation.operational_rows if row.get("city") == city]
-    operational_event_rows = [row for row in presentation.operational_event_rows if row.get("city") == city]
-    if operational_rows:
-        source_lookup = {
-            str(row.get("source_id")): row
-            for row in presentation.source_rows
-            if row.get("source_id")
-        }
-        observed_table = pd.DataFrame(operational_rows)
-        observed_table["Source"] = observed_table["source_id"].map(
-            lambda source_id: source_lookup.get(str(source_id), {}).get("source", source_id)
+    if screening_options:
+        priority = min(
+            qualified_options,
+            key=lambda item: (
+                item.cost_per_passenger if item.cost_per_passenger is not None else float("inf"),
+                item.intervention,
+            ),
+            default=None,
         )
-        observed_table["Cannot establish"] = observed_table["not_suitable_for"].map(
-            lambda values: "; ".join(str(value) for value in values) if isinstance(values, list) else values
-        )
-        observed_table = observed_table.rename(
-            columns={
-                "metric": "Observed benchmark",
-                "value": "Value",
-                "unit": "Unit",
-                "status": "Evidence",
-                "granularity": "Coverage",
-                "calibration_use": "Permitted use",
-            }
+        if priority is not None:
+            with st.container(border=True):
+                st.caption("Priority screen for local validation")
+                st.markdown(f"### {priority.intervention}")
+                st.write(priority.scope)
+                _metric_row(
+                    [
+                        (_money(priority.comparison_cost_base), "Comparison cost", priority.status, priority.cost_basis, "amber"),
+                        (_number(priority.gap_resolved_passengers, " passengers"), "Peak demand addressed", priority.status, "Representative match", "teal"),
+                        (_money(priority.cost_per_passenger), "Cost / passenger", priority.status, "Comparison basis", "blue"),
+                        (priority.lead_time_band, "Lead time", priority.status, "Planning range", "slate"),
+                    ]
+                )
+                st.markdown(f"**Delivery owner:** {priority.responsible_actor}")
+                st.markdown(f"**Dependencies:** {', '.join(priority.dependencies) or 'Local implementation plan'}")
+                st.caption(
+                    "Why it leads: lowest modeled comparison cost per peak passenger among evidence-qualified options. "
+                    "Validate fleet, labor, operations, uptake, and local pricing before procurement."
+                )
+        elif exploratory_options:
+            callout(
+                "warning",
+                "Do not select an investment yet",
+                "Only exploratory measures remain. Close the stated local evidence gaps before advancing funding.",
+            )
+
+        lens_table = pd.DataFrame(
+            [
+                {
+                    "Decision": (
+                        "Screen first"
+                        if priority is option
+                        else "Compare"
+                        if option.evidence_qualified
+                        else "Hold - evidence gap"
+                    ),
+                    "Investment": option.intervention,
+                    "Proposed scale": option.scope,
+                    "Peak passengers": option.gap_resolved_passengers,
+                    "Comparison cost": option.comparison_cost_base,
+                    "Cost / passenger": option.cost_per_passenger,
+                    "Lead time": option.lead_time_band,
+                    "Evidence": option.evidence_quality,
+                }
+                for option in recommendations
+            ]
         )
         st.dataframe(
-            observed_table[["Observed benchmark", "Value", "Unit", "Evidence", "Coverage", "Permitted use", "Cannot establish", "Source"]],
+            lens_table,
             hide_index=True,
             width="stretch",
+            column_config={
+                "Peak passengers": st.column_config.NumberColumn(format="%.0f"),
+                "Comparison cost": st.column_config.NumberColumn(format="$%,.0f"),
+                "Cost / passenger": st.column_config.NumberColumn(format="$%.2f"),
+            },
+        )
+        st.caption(
+            f"{len(qualified_options)} qualified and {len(exploratory_options)} exploratory options. "
+            "Local bids, fleet constraints, rights-of-way, and observed uptake should replace the shared national screening assumptions before funding."
         )
     else:
-        callout(
-            "warning",
-            "No published outcome benchmark located",
-            "The official operating-data source is registered, but match outcomes still require an agency, venue, or public-records request.",
-        )
+        callout("warning", "No match-specific action", "Movement, transit, factors, and intervention evidence must be complete before screening an option.")
 
-    map_col, action_col = st.columns([1.25, 1], gap="large")
-    with map_col:
-        st.plotly_chart(_coverage_map(comparison), width="stretch", config={"displayModeBar": False})
-        st.caption("Marker size uses the qualified gap when available, otherwise scenario demand. Color indicates screening confidence and is repeated in the table.")
-    with action_col:
-        st.markdown("#### Match-specific nondominated set")
-        if recommendations:
-            if qualified_options:
-                st.caption("Evidence-qualified screening options")
-            for item in qualified_options:
-                body = (
-                    f"Resolves {_number(item.gap_resolved_passengers, ' peak passengers')}; "
-                    f"{_money(item.cost_per_passenger)} comparison cost per passenger; "
-                    f"total cost {_money(item.cost_base)}; {_number(item.net_co2e_kg, ' kg')} net CO2e; "
-                    f"lead time {item.lead_time_band}. Candidate owner: {item.responsible_actor}. No automatic winner."
-                )
-                st.markdown(priority_card(city, item.intervention, body, item.status), unsafe_allow_html=True)
-            if exploratory_options:
-                with st.expander("Exploratory sensitivities requiring additional evidence", expanded=True):
-                    for item in exploratory_options:
-                        st.markdown(f"**{item.intervention}:** {item.evidence_reason}")
-        else:
-            callout("warning", "No match-specific recommendation", "Complete movement, transit, factors, and recommendation identity before presenting an investment option.")
+    show_composites = st.toggle(
+        "Show advanced composite model tests",
+        value=False,
+        help="Operational and capital composites combine multiple measures for sensitivity testing; they are not funding recommendations.",
+        key="brief_show_composites",
+    )
+    if not show_composites:
+        return
 
-    section_header("Package tradeoffs", "Cost, peak benefit, and climate outcome stay separate. Bubble size represents absolute net CO2e magnitude; negative values remain visible in the table.", "What outcome")
+    section_header(
+        "Composite scenario sensitivity",
+        "These fixed multi-measure bundles stress-test the model. They are not locally engineered plans or investment recommendations.",
+        "Advanced",
+    )
+    st.markdown("#### Exact composite definitions")
     scenario_rows = pd.DataFrame(
         [
             {
-                "Scenario": item.name,
+                "Composite": item.name,
+                "What it combines": _scenario_scope(item.package),
                 "Gap resolved": item.gap_resolved_passengers,
                 "Cost": item.cost_base,
                 "Net CO2e avoided": item.net_co2e_kg_base,
@@ -271,21 +318,27 @@ def render_decision_brief(
             chart,
             x="Cost",
             y="Gap resolved",
-            color="Scenario",
+            color="Composite",
             size="Climate magnitude",
-            text="Scenario",
+            text="Composite",
             color_discrete_map={"Baseline": COLORS["slate"], "Operational Package": COLORS["teal"], "Capital Package": COLORS["blue"]},
         )
         figure.update_traces(textposition="top center")
         figure.update_xaxes(tickprefix="$", title="Planning cost")
         st.plotly_chart(style_figure(figure, 390), width="stretch", config={"displayModeBar": False})
-    with st.expander("Accessible table: package tradeoffs", expanded=True):
+    with st.expander("Exact composite outcome table"):
         st.dataframe(scenario_rows, hide_index=True, width="stretch")
 
-    section_header("Outcomes over time", "Choose one match, the selected city's tournament, or the U.S. tournament. Infrastructure capital is counted once per city; operations recur per match.", "When")
+    st.markdown("#### Tournament sensitivity")
     scope_labels = {"match": "Selected match", "city_tournament": f"{city} tournament", "us_tournament": "All U.S. matches"}
-    scope = st.radio("Time horizon", list(scope_labels), format_func=scope_labels.get, horizontal=True, key="brief_scope")
-    package_name = st.selectbox("Package", [item.name for item in scenarios], index=1, key="brief_package")
+    scope_label = st.segmented_control(
+        "Time horizon",
+        list(scope_labels.values()),
+        default="Selected match",
+        key="brief_scope",
+    ) or "Selected match"
+    scope = next(key for key, label in scope_labels.items() if label == scope_label)
+    package_name = st.selectbox("Composite scenario", [item.name for item in scenarios], index=1, key="brief_package")
     include_partial_portfolio = st.checkbox(
         "Include partial or unavailable access evidence in screening totals",
         value=False,
@@ -318,35 +371,3 @@ def render_decision_brief(
         st.plotly_chart(_portfolio_chart(timeline), width="stretch", config={"displayModeBar": False})
         with st.expander("Accessible table: cumulative outcome ledger"):
             st.dataframe(timeline, hide_index=True, width="stretch")
-
-    section_header("Competition evidence", "These are proof statuses, not self-awarded points. Every partial item states what remains unproven.", "Why it matters")
-    criteria = build_criteria_evidence(metrics, artifacts, comparison)
-    for start in range(0, len(criteria), 3):
-        group = criteria.iloc[start : start + 3]
-        for column, (_, criterion) in zip(st.columns(len(group)), group.iterrows()):
-            body = f"{criterion['Visible proof']} Limitation: {criterion['Current limitation']} Open: {criterion['Open in']}."
-            with column:
-                st.markdown(priority_card(f"{criterion['Weight']} points", criterion["Criterion"], body, criterion["Status"]), unsafe_allow_html=True)
-    with st.expander("Accessible table: judging criteria evidence", expanded=True):
-        st.dataframe(criteria, hide_index=True, width="stretch")
-
-    deliverables = build_deliverable_evidence(metrics, artifacts, comparison)
-    section_header("Required deliverables", "Nothing is left implicit: each requested track output has a proof location and an explicit limitation.", "Submission checklist")
-    st.dataframe(deliverables, hide_index=True, width="stretch")
-    st.download_button(
-        "Download decision brief evidence JSON",
-        json.dumps(
-            {
-                "city_comparison": comparison.to_dict("records"),
-                "criteria": criteria.to_dict("records"),
-                "deliverables": deliverables.to_dict("records"),
-                "operational_benchmarks": operational_rows,
-                "operational_event_records": operational_event_rows,
-            },
-            indent=2,
-            default=str,
-        ),
-        file_name="mobility-decision-brief-evidence.json",
-        mime="application/json",
-        width="stretch",
-    )

@@ -101,17 +101,15 @@ def style_map(fig: go.Figure, height: int = 500, *, zoom: float, lat: float, lon
         font=dict(family='Inter, Aptos, "Segoe UI", sans-serif', color=COLORS["ink"], size=12),
         hoverlabel=dict(bgcolor=COLORS["ink"], bordercolor=COLORS["ink"], font_color="#ffffff"),
         height=height,
-        margin=dict(l=0, r=0, t=0, b=0),
+        margin=dict(l=0, r=0, t=0, b=72),
         legend=dict(
             orientation="h",
-            yanchor="bottom",
-            y=.01,
+            yanchor="top",
+            y=-.025,
             xanchor="left",
-            x=.01,
-            bgcolor="rgba(255,255,255,.88)",
-            bordercolor=COLORS["line"],
-            borderwidth=1,
-            font=dict(size=10, color=COLORS["ink"]),
+            x=0,
+            bgcolor="rgba(0,0,0,0)",
+            font=dict(size=11, color=COLORS["ink"]),
         ),
     )
     return fig

@@ -64,6 +64,21 @@ def _event_service(city_gtfs: Mapping[str, Any], match_id: str) -> list[dict[str
     matches = city_gtfs.get("matches", {})
     match_service = matches.get(match_id, {}) if isinstance(matches, Mapping) else {}
     status = _status(match_service.get("status"))
+    hourly_service = match_service.get("hourly_service")
+    if status != EvidenceStatus.UNAVAILABLE and isinstance(hourly_service, list) and hourly_service:
+        return [
+            {
+                "hour_start_local": row.get("hour_start_local"),
+                "direction": str(row.get("direction") or "both"),
+                "departures_per_hour": float(row.get("departures_per_hour") or 0),
+                "vehicle_capacity_low": float(row.get("vehicle_capacity_low") or 0),
+                "vehicle_capacity_base": float(row.get("vehicle_capacity_base") or 0),
+                "vehicle_capacity_high": float(row.get("vehicle_capacity_high") or 0),
+                "status": status.value,
+                "service_span_after_match_min": match_service.get("service_span_after_match_min"),
+            }
+            for row in hourly_service
+        ]
     departures = match_service.get("event_window_departures")
     capacities = {
         level: match_service.get(f"event_capacity_{level}") for level in ("low", "base", "high")
@@ -89,6 +104,8 @@ def _event_service(city_gtfs: Mapping[str, Any], match_id: str) -> list[dict[str
                 "service_span_after_match_min": match_service.get("service_span_after_match_min"),
             }
         ]
+    # Compatibility fallback for pinned artifacts generated before exact-hour
+    # service was available. New snapshots always take the branch above.
     event_window_hours = float(match_service.get("event_window_hours") or 8.0)
     departures_per_hour = float(departures) / event_window_hours
     return [

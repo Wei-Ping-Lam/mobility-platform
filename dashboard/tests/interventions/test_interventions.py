@@ -132,7 +132,14 @@ def test_zero_intervention_exactly_preserves_baseline(event_inputs):
     [
         (InterventionPackage(name="shuttle", shuttle_buses_per_hour=5), "mobility"),
         (InterventionPackage(name="frequency", added_transit_departures_per_hour=3), "mobility"),
-        (InterventionPackage(name="park ride", park_ride_spaces=500), "mobility"),
+        (
+            InterventionPackage(
+                name="park ride",
+                park_ride_spaces=500,
+                park_ride_feeder_departures_per_hour=8,
+            ),
+            "mobility",
+        ),
         (InterventionPackage(name="bike", bike_hub_spaces=300), "mobility"),
         (InterventionPackage(name="cooling", cooled_walkway_km=1), "heat"),
         (InterventionPackage(name="spreading", arrival_spreading_pct=10), "peak_only"),
@@ -221,7 +228,11 @@ def test_bike_benefit_is_distance_limited(event_inputs):
 
 
 def test_park_ride_retains_upstream_vmt(event_inputs):
-    package = InterventionPackage(name="park ride", park_ride_spaces=1000)
+    package = InterventionPackage(
+        name="park ride",
+        park_ride_spaces=1000,
+        park_ride_feeder_departures_per_hour=15,
+    )
     short_origin = evaluate(
         package,
         event_inputs,
@@ -239,6 +250,26 @@ def test_park_ride_retains_upstream_vmt(event_inputs):
     )
     assert short_origin.net_vmt_base == long_origin.net_vmt_base
     assert longer_venue_leg.net_vmt_base > long_origin.net_vmt_base
+
+
+def test_park_ride_requires_and_costs_feeder_capacity(event_inputs):
+    spaces_only = evaluate(
+        InterventionPackage(name="spaces only", park_ride_spaces=1000),
+        event_inputs,
+    )
+    feeder = evaluate(
+        InterventionPackage(
+            name="lot plus feeder",
+            park_ride_spaces=1000,
+            park_ride_feeder_departures_per_hour=2,
+        ),
+        event_inputs,
+    )
+
+    assert spaces_only.gap_resolved_passengers == 0
+    assert feeder.gap_resolved_passengers == pytest.approx(2 * 45 * 0.75)
+    assert feeder.operating_cost_base == pytest.approx(2 * 3 * 160)
+    assert feeder.cost_base > spaces_only.cost_base
 
 
 def test_added_shuttle_vmt_and_emissions_are_deducted(event_inputs):

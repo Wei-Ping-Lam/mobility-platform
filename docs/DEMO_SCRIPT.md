@@ -1,60 +1,40 @@
 # Competition demo script
 
-Use this script only after checking the run-specific release report. Bracketed
-items are presenter prompts, not values to read aloud.
+Use current dashboard values; bracketed items are presenter prompts.
 
-## Current branch demonstration
+## Three-minute proof sequence
 
-1. “The six Rice datasets are our canonical supplied evidence. They describe
-   commercial activity, weather, urban heat, POIs, origin context, and spending.”
-2. Start in **Portfolio Overview**. Show all 11 host cities, change the map lens,
-   and select two cities for the common access/cost/climate comparison.
-3. Open **City Brief** for one selection and show the evidence-qualified and
-   exploratory options without calling one an optimum.
-4. Open **Detailed Comparison**. “Physical access priority, strict MRS, and
-   evidence screening are separate decision lenses.”
-5. Open **City & Match**. “This event band is a planning scenario, not observed
-   match attendance, because both annual holdout gates did not pass.”
-6. Show map-layer controls, GTFS status, the OSM route/isochrones, and missing
-   coverage. “Scheduled service is not ridership; OSM is not an accessibility audit.”
-7. Return to **City Brief** and change the time horizon. “Capital is counted
-   once per city, operations recur per event, and nonqualified matches are omitted
-   unless I explicitly opt into screening totals.”
-8. Open **Methods & QA** and trace one claim to its source hash and assumptions.
+1. Start in **Portfolio** with the readiness ranking, then use its criterion grid to
+   explain why cities differ. State that readiness is a weighted relative screen—not
+   the access gap or an investment recommendation.
+2. Open the task tabs. In **Access shortfall**, teal is event-hour scheduled transit
+   capacity and coral is the remaining peak gap. In **Traffic pressure**, the bars are
+   modeled venue-area vehicle trips with input-case whiskers—not roadway congestion. In
+   **Climate outcome**, compare base-case net CO2e avoided by the common qualified
+   added-frequency measure—not an observed reduction or city emissions inventory.
+   Then open the largest-gap **City Action Plan**.
+3. Show four things: the access challenge, readiness components, proposed investment
+   scale, and delivery owner/dependencies. Keep composite model tests collapsed.
+4. Open **Scenario Explorer**. Show the hourly movement range, switch the modeled
+   traffic-pressure layer between Baseline and a composite sensitivity, then show concrete
+   investment options and the exact scenario download.
+5. Open **Methods** and trace one displayed result to its source, factor,
+   equation, and validation status.
+6. Close with: “For `[city]`, evaluate `[intervention]` because it addresses
+   `[documented gap]`. The modeled outcome is `[range]`, planning cost is
+   `[range]`, and implementation requires `[owner/dependency]`.”
 
-Use Kansas City or Philadelphia to show repaired event-period service evidence;
-use Boston, Dallas, or New York/NJ to demonstrate honest unavailable evidence.
-
-## Release demonstration after all gates pass
-
-1. Select `[city]` in **Portfolio Overview**, compare it with another host, and open its **City Brief**.
-   - Read `[peak_demand_per_hour]`, `[residual_passengers]`, and evidence status.
-   - State one material limitation.
-2. Compare the exact match-scoped nondominated set, separating qualified options from exploratory sensitivities.
-   - Read gap resolved, cost per passenger, net CO2e, lead time, candidate owner,
-     and dependencies without calling one option universally optimal.
-3. Compare **Baseline**, **Operational Package**, and **Capital Package**.
-   - State package inputs before scenario outcomes.
-4. Change the time horizon.
-   - Explain one-time capital, recurring operations, included matches, and omissions.
-5. Open **Detailed Comparison**.
-   - Distinguish the 11-city physical access priority from strict MRS and evidence screening.
-6. Open **City & Match**.
-   - Show hourly uncertainty, selected map layers, and the exact scenario download.
-7. Open **Methods & QA**.
-   - Trace one metric to its contract field, URL, retrieval time, hash, factor,
-     validation result, and test.
-8. Close with the decision:
-   - “For `[city]`, this evidence supports evaluating `[intervention]` because it
-     addresses `[documented gap]`. The modeled range is `[range]`, planning cost
-     is `[range]`, lead time is `[band]`, and local agency review remains required.”
+Use Kansas City or Philadelphia for repaired event-period service evidence.
+Use Boston, Dallas, or New York/New Jersey for a visible evidence limitation.
 
 ## Language guardrails
 
 - Say “planning scenario,” “modeled range,” “scheduled capacity,” “venue-area
   vehicle trips,” and “network evidence.”
-- Do not describe retail visits as match attendance or origin records as fans.
-- Do not present scheduled transit capacity as ridership or reliability.
-- Do not present an OSM route as an ADA, safety, or sidewalk audit.
-- Do not present scenario differences as observed outcomes or causal effects.
-- Do not describe a pressure proxy as roadway congestion.
+- Commercial visits are not match attendance; customer origins are not fans.
+- Scheduled capacity is not ridership or reliability.
+- An OSM route is not an accessibility or sidewalk audit.
+- Scenario differences are not observed or causal effects.
+- Traffic pressure is not measured roadway congestion.
+- Cost per passenger for the common added-frequency screen is identical across cities
+  under the shared national unit assumptions, so it is not a portfolio ranking criterion.

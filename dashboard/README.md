@@ -1,7 +1,7 @@
 # FIFA 2026 Host City Transportation Decision Platform
 
 Streamlit planning tool for the 11 US host cities. The competition-ready design
-compares match-specific access gaps and transportation packages while exposing
+compares match-specific access gaps and defined single-measure investments while exposing
 source quality, assumptions, uncertainty, cost, and implementation constraints.
 
 ## Implementation status
@@ -9,7 +9,7 @@ source quality, assumptions, uncertainty, cost, and implementation constraints.
 Contract `0.3.0` is frozen. The current branch implements Rice enrichment,
 the 78-match official schedule snapshot, match-specific movement scenarios,
 physical access contracts, six intervention types, match-scoped nondominated option sets,
-five decision workspaces, and exact Methods & QA downloads. Cited factor ranges are
+four decision workspaces, and exact Methods downloads. Cited factor ranges are
 integrated as scenario/estimated evidence.
 
 An independently versioned operational snapshot adds 33 official post-event
@@ -78,16 +78,16 @@ project interpreter directly: `.venv\Scripts\python.exe -m streamlit run dashboa
 
 ## Current product behavior
 
-- **Portfolio Overview:** the default evidence-qualified readiness order, national map,
-  and common outcome table for all 11 cities, with unlimited optional filtering,
-  switchable traffic/CO2/investment lenses, visible package outcomes, and city drill-down.
-- **Detailed Comparison:** strict ranking for eligible evidence plus a separate all-city
-  screening order with conservative evidence ranges and exact exclusion reasons.
-- **City Brief:** a guided where/why/what/outcome/confidence story, explicit
-  judging evidence, and match/city/tournament time horizons.
-- **City & Match:** official match selection, hourly movement, selectable Rice/GTFS/OSM
-  layers, three packages, before/after timelines, tradeoffs, and exact downloads.
-- **Methods & QA:** source hashes, factors, network status, formulas, assumptions,
+- **Portfolio Overview:** a fixed all-city funnel that starts with combined readiness,
+  immediately explains the four normalized criteria behind that rank, then narrows into
+  separate access-shortfall, baseline traffic-pressure, and climate-outcome tabs. Exact tables and a direct
+  link to the largest-gap action plan support drill-down without a map or city filter.
+- **City Action Plan:** a concise problem/why/action story with a defined measure scale,
+  comparison cost, peak benefit, owner, lead time, dependencies, and evidence gate.
+- **Scenario Explorer:** official match selection, hourly movement, a modeled venue-area
+  traffic-pressure comparison, selectable Rice/GTFS/OSM layers, defined single measures,
+  advanced composite sensitivity tests, before/after timelines, and exact downloads.
+- **Methods:** source hashes, factors, network status, formulas, assumptions,
   holdout validation, rank sensitivity, manifests, and downloads.
 
 The current demand band is a planning scenario. Commercial visits are not match
@@ -98,17 +98,15 @@ Current pressure outputs do not measure roadway congestion.
 
 The implemented product behavior is:
 
-- **Portfolio Overview** starts neutrally with all 11 cities, makes the strict readiness
-  order visible, and supports switchable access, traffic-pressure, CO2, and investment
-  lenses. Optional filtering has no city-count cap.
-- **City Brief** leads with match, access evidence, peak passenger gap,
+- **Portfolio Overview** keeps all 11 cities visible at once. It moves from high-level
+  readiness to its drivers and then to task-specific evidence, keeping access capacity and
+  modeled vehicle-trip pressure, and single-measure net CO2e in separate tabs with explicit units and limitations.
+- **City Action Plan** leads with the access challenge, readiness components,
   candidate investment, modeled outcome range, planning cost, lead time, and
   evidence quality. MRS is secondary.
-- **Detailed Comparison** keeps all 11 cities visible without presenting partial evidence
-  as a strict rank.
-- **City & Match** shows hourly movement, GTFS routes/stops, OSM isochrones, Rice
-  heat/POI layers, and Baseline/Operational/Capital package comparisons.
-- **Methods & QA** traces every headline number to a contract field, formula,
+- **Scenario Explorer** shows hourly movement, GTFS routes/stops, OSM isochrones, Rice
+  heat/POI layers, and Baseline/Operational/Capital vehicle-trip pressure comparisons.
+- **Methods** traces every headline number to a contract field, formula,
   source record, factor, validation result, and exact download.
 
 ## Canonical supplied data

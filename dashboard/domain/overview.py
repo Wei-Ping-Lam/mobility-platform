@@ -116,6 +116,7 @@ def build_portfolio_overview(
         city = str(row["city"])
         match_id = str(row.get("representative_match_id") or "")
         recommendation = _recommendation(city, match_id, row.get("top_intervention"), recommendation_rows)
+        baseline = _package_outcome(city, match_id, "Baseline", outcome_rows)
         outcome = _package_outcome(city, match_id, package_name, outcome_rows)
         package_cost = _number(outcome.get("cost_base"))
         package_gap = _number(outcome.get("gap_resolved_passengers"))
@@ -124,10 +125,14 @@ def build_portfolio_overview(
                 "top_cost_low": _number(recommendation.get("cost_low")),
                 "top_cost_base": _number(recommendation.get("cost_base")),
                 "top_cost_high": _number(recommendation.get("cost_high")),
+                "top_scope": str(recommendation.get("scope") or "Not defined"),
                 "top_option_qualified": bool(recommendation.get("evidence_qualified", False)),
                 "top_evidence_quality": str(recommendation.get("evidence_quality") or "unavailable"),
                 "qualified_interventions": _option_set(city, match_id, recommendation_rows, qualified=True),
                 "exploratory_interventions": _option_set(city, match_id, recommendation_rows, qualified=False),
+                "baseline_vehicle_trips_low": _number(baseline.get("venue_vehicle_trips_low")),
+                "baseline_vehicle_trips_base": _number(baseline.get("venue_vehicle_trips_base")),
+                "baseline_vehicle_trips_high": _number(baseline.get("venue_vehicle_trips_high")),
                 "package_name": package_name,
                 "package_status": str(outcome.get("status") or "unavailable"),
                 "package_gap_resolved": package_gap,

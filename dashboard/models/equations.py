@@ -60,9 +60,17 @@ EQUATIONS = (
         "EQ-INTERVENTION-01",
         "Peak gap resolved",
         "resolved = min(residual_gap, physical_capacity_added + feasible_arrival_shift)",
-        "physical capacity includes shuttle, transit, park-and-ride, bike, and eligible walking uptake",
+        "physical capacity includes shuttle, transit, feeder-constrained park-and-ride, bike, and eligible walking uptake",
         "Caps modeled benefit at the residual passenger gap.",
         "Potential throughput is not observed mode shift.",
+    ),
+    EquationDefinition(
+        "EQ-PARK-RIDE-01",
+        "Park-and-ride throughput",
+        "park_pph = min(space_passengers / arrival_hours, feeder_departures_h Ã— passengers_per_bus Ã— usable_load_factor)",
+        "space passengers depend on lot spaces, vehicle occupancy, and utilization; feeder operations are separately specified and costed",
+        "Prevents parking inventory from becoming passenger throughput without a feeder fleet.",
+        "Remote-lot inventory, fleet availability, and travel time remain planning inputs requiring local verification.",
     ),
     EquationDefinition(
         "EQ-VMT-01",

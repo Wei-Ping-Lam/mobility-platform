@@ -6,20 +6,19 @@ the integrated application.
 
 | Criterion | Current visible evidence | Remaining competition gate |
 | --- | --- | --- |
-| Impact — 25 | Portfolio Overview compares all cities and selected packages; City Brief exposes match-level gap, nondominated options, total/comparison cost, VMT/CO2e, heat, and cumulative horizon outcomes | Confirm special-event operating plans and compare future observed outcomes without causal claims |
+| Impact — 25 | Portfolio compares all cities and qualified single measures; City Action Plan exposes a defined scale, cost, peak benefit, owner, lead time, dependencies, and evidence gate | Confirm special-event operating plans and compare future observed outcomes without causal claims |
 | Data Analytics — 20 | Deterministic Rice/public artifacts, 78 event-valid match calendars, hashed GTFS/OSM, hourly reconciliation, seasonal-naive comparison, physical invariants, component-level evidence states, and no silent fallback | Add local operations/ridership observations and resolve the 23 route/heat-partial matches |
 | Innovation — 15 | Exact match-scoped nondominated sets, explicit evidence gates, an all-city physical access-priority order separate from strict MRS, and capital-safe cumulative ledgers | Demonstrate why the frontier changes with city evidence and assumptions in the final pitch |
 | Feasibility — 15 | Candidate owners/dependencies, lead-time bands, capital versus recurring operating costs, cache-only startup, tests, and isolated workstreams | Confirm local agency costs, fleet constraints, right-of-way, and delivery dependencies |
 | Legacy — 10 | Reusable event contracts plus match, city-tournament, and U.S.-tournament horizons | Add baseline monitoring and post-event observed comparison without causal claims |
-| Visualization — 10 | Portfolio Overview, City Brief, Detailed Comparison, City & Match, and Methods include comparison lenses, uncertainty, selectable maps, time horizons, accessible tables, and exact downloads | Capture and review final desktop/narrow screenshots |
-| Presentation — 5 | The application maps every criterion and required deliverable to visible proof and an explicit limitation | Fill team metadata and rehearse one zero-service red-flag case plus one network-qualified case |
+| Visualization — 10 | Portfolio leads with all-city readiness and plainly defined criterion scores, then separates scheduled coverage, baseline vehicle-trip pressure, and single-measure net CO2e into task-specific tabs; the other workspaces retain uncertainty, selectable maps, time horizons, accessible tables, and exact downloads | Capture and review final desktop/narrow screenshots |
+| Presentation — 5 | The public story moves from portfolio priority to city action and scenario evidence; the criterion ledger remains internal | Fill team metadata and rehearse one zero-service red-flag case plus one network-qualified case |
 
 ## Judge-facing proof sequence
 
-1. Start in **Portfolio Overview** and show all 11 cities before selecting a specific case.
-2. Select two cities and compare access gap, package cost, net CO2e, and evidence.
-3. Open one **City Brief**, show its nondominated options, and change the time horizon.
-4. Open **Detailed Comparison** and distinguish physical access priority from secondary MRS; all 11 cities are currently strict-rankable.
-5. Open **City & Match** and show selected route, service, heat, and venue layers.
-6. Open **Methods & QA** and trace one metric to its source, hash, factor, and assumption.
-7. State what the platform does not measure.
+1. Start in **Portfolio** with the all-city readiness order, then use the criterion grid to explain what drives it.
+2. Move into the task tabs: explain scheduled coverage versus remaining peak gap, distinguish modeled venue-area vehicle trips from roadway congestion, and present net CO2e as a base-case single-measure scenario rather than an observed reduction.
+3. Open the largest-gap **City Action Plan** and show the challenge, readiness drivers, concrete investment screen, owner, and dependencies.
+4. Open **Scenario Explorer** and show movement, map layers, concrete options, and the clearly labeled composite sensitivity test.
+5. Open **Methods** and trace one metric to its source, hash, factor, and assumption.
+6. State what the platform does not measure.

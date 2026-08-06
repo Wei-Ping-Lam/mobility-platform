@@ -19,7 +19,6 @@ from dashboard.mobility_platform.config import project_paths  # noqa: E402
 from dashboard.mobility_platform.mappings import HOST_CITIES  # noqa: E402
 from dashboard.mobility_platform.sources import RICE_COLLECTION  # noqa: E402
 from dashboard.ui.data import load_artifacts  # noqa: E402
-from dashboard.ui.pages.compare import render_compare_cities  # noqa: E402
 from dashboard.ui.pages.home import render_home  # noqa: E402
 from dashboard.ui.pages.overview import render_decision_brief  # noqa: E402
 from dashboard.ui.theme import apply_theme, brand_block, sidebar_status  # noqa: E402
@@ -37,15 +36,23 @@ def load_dashboard_data():
 
 paths, artifacts = load_dashboard_data()
 
+city_options = sorted(HOST_CITIES)
+city_context_key = "selected_city_context"
+if st.session_state.get(city_context_key) not in city_options:
+    st.session_state[city_context_key] = city_options[0]
+
+
+def _sync_city_context() -> None:
+    st.session_state[city_context_key] = st.session_state["city_focus"]
+
 with st.sidebar:
     brand_block()
     st.markdown("<div class='sidebar-kicker'>Workspace</div>", unsafe_allow_html=True)
     mode_labels = {
-        "Overview": "Portfolio overview",
-        "Compare Cities": "Detailed comparison",
-        "City Brief": "City decision brief",
-        "Explorer": "City & match",
-        "Methods & QA": "Methods & QA",
+        "Overview": "Portfolio",
+        "City Brief": "City action plan",
+        "Explorer": "Scenario explorer",
+        "Methods & QA": "Methods",
     }
     mode = st.radio(
         "Workspace",
@@ -58,10 +65,14 @@ with st.sidebar:
     selected_city = None
     if mode in {"City Brief", "Explorer"}:
         st.markdown("<div class='sidebar-kicker'>City scope</div>", unsafe_allow_html=True)
-        city_options = sorted(HOST_CITIES)
-        if st.session_state.get("city_focus") not in city_options:
-            st.session_state["city_focus"] = city_options[0]
-        selected_city = st.selectbox("City focus", city_options, key="city_focus")
+        if st.session_state.get("city_focus") != st.session_state[city_context_key]:
+            st.session_state["city_focus"] = st.session_state[city_context_key]
+        selected_city = st.selectbox(
+            "City focus",
+            city_options,
+            key="city_focus",
+            on_change=_sync_city_context,
+        )
     with st.expander("Advanced comparison settings", expanded=False):
         profile_labels = {
             "balanced": "Balanced mobility",
@@ -78,7 +89,7 @@ with st.sidebar:
             format_func=profile_labels.get,
         )
         weights = dict(DEFAULT_WEIGHTS[profile])
-        st.caption("MRS is a secondary sensitivity index; physical access outcomes remain the comparison headline.")
+        st.caption("Readiness gives the high-level orientation; task-specific evidence below should drive decisions.")
         st.markdown("##### Tune score weights")
         weights = {
             "transit": st.slider("Transit", 0.0, 1.0, float(weights["transit"]), 0.05),
@@ -123,8 +134,6 @@ except ValueError as exc:
 
 if mode == "Overview":
     render_home(metrics, artifacts, weights)
-elif mode == "Compare Cities":
-    render_compare_cities(metrics, artifacts, weights)
 elif mode == "City Brief":
     render_decision_brief(metrics, artifacts, selected_city=selected_city, weights=weights)
 elif mode == "Explorer":

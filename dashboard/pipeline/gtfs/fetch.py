@@ -280,17 +280,30 @@ def _event_departures(
     routes: pd.DataFrame,
     frequencies: pd.DataFrame,
     services: dict[date, set[str]],
-    venue_stop_ids: set[str],
+    venue_stop_distances: dict[str, float],
     events: list[dict[str, Any]],
 ) -> tuple[list[dict[str, Any]], Counter[int]]:
     needed_st = {"trip_id", "stop_id", "departure_time"}
     needed_trips = {"trip_id", "service_id", "route_id"}
     if not needed_st.issubset(stop_times) or not needed_trips.issubset(trips):
         return [], Counter()
-    relevant = stop_times[stop_times["stop_id"].astype(str).isin(venue_stop_ids)].copy()
-    relevant["departure_seconds"] = relevant["departure_time"].map(_gtfs_seconds)
+    venue_stop_ids = set(venue_stop_distances)
+    all_stop_times = stop_times.copy()
+    all_stop_times["departure_seconds"] = all_stop_times["departure_time"].map(_gtfs_seconds)
+    trip_start_seconds = (
+        all_stop_times.dropna(subset=["departure_seconds"])
+        .groupby("trip_id")["departure_seconds"]
+        .min()
+        .to_dict()
+    )
+    relevant = all_stop_times[
+        all_stop_times["stop_id"].astype(str).isin(venue_stop_ids)
+    ].copy()
     relevant = relevant.dropna(subset=["departure_seconds"])
     relevant["departure_seconds"] = relevant["departure_seconds"].astype(int)
+    relevant["stop_distance_mi"] = relevant["stop_id"].astype(str).map(
+        venue_stop_distances
+    )
     relevant = relevant.merge(trips[list(needed_trips)], on="trip_id", how="inner")
     route_types = {}
     if {"route_id", "route_type"}.issubset(routes):
@@ -323,26 +336,45 @@ def _event_departures(
         window_end = kickoff_seconds + WINDOW_AFTER_MIN * 60
         active = services.get(match_date, set())
         candidates = relevant[relevant["service_id"].astype(str).isin(active)]
-        departure_types: list[tuple[int, int]] = []
-        for row in candidates.itertuples(index=False):
+        sort_columns = ["trip_id", "stop_distance_mi", "departure_seconds"]
+        if "stop_sequence" in candidates:
+            sort_columns.append("stop_sequence")
+        trip_rows = candidates.sort_values(sort_columns, kind="stable").drop_duplicates(
+            "trip_id"
+        )
+        departure_occurrences: list[tuple[str, int, int]] = []
+        for row in trip_rows.itertuples(index=False):
             seconds = int(row.departure_seconds)
             ranges = frequency_rows.get(str(row.trip_id), [])
             if ranges:
-                for start, end, headway in ranges:
-                    offset = seconds - min(
-                        candidates.loc[candidates["trip_id"] == row.trip_id, "departure_seconds"].min(), seconds
-                    )
+                template_start = int(trip_start_seconds.get(row.trip_id, seconds))
+                offset = seconds - min(template_start, seconds)
+                for range_index, (start, end, headway) in enumerate(ranges):
                     occurrence = start + int(offset)
                     while occurrence < end + int(offset):
                         if window_start <= occurrence <= window_end:
-                            departure_types.append((occurrence, int(row.route_type)))
+                            occurrence_id = (
+                                f"{row.trip_id}:frequency:{range_index}:{occurrence - offset}"
+                            )
+                            departure_occurrences.append(
+                                (occurrence_id, occurrence, int(row.route_type))
+                            )
                         occurrence += headway
             elif window_start <= seconds <= window_end:
-                departure_types.append((seconds, int(row.route_type)))
-        # A trip serving several nearby stops represents one vehicle departure.
-        departure_types = sorted(set(departure_types))
-        after_match = [seconds for seconds, _ in departure_types if seconds >= kickoff_seconds + ASSUMED_MATCH_MIN * 60]
-        event_mode_counts: Counter[int] = Counter(route_type for _, route_type in departure_types)
+                departure_occurrences.append((str(row.trip_id), seconds, int(row.route_type)))
+        # One static trip_id or expanded frequency occurrence is one vehicle.
+        # Selecting the closest venue stop before expansion prevents a vehicle
+        # serving several nearby stops from being counted more than once.
+        departure_occurrences = sorted(set(departure_occurrences))
+        match_end_seconds = kickoff_seconds + ASSUMED_MATCH_MIN * 60
+        after_match = [
+            seconds
+            for _, seconds, _ in departure_occurrences
+            if seconds >= match_end_seconds
+        ]
+        event_mode_counts: Counter[int] = Counter(
+            route_type for _, _, route_type in departure_occurrences
+        )
         mode_counts.update(event_mode_counts)
         event_capacity = {
             band: sum(
@@ -351,13 +383,40 @@ def _event_departures(
             )
             for band in ("low", "base", "high")
         }
+        service_day = kickoff.replace(hour=0, minute=0, second=0, microsecond=0)
+        hourly_counts: Counter[tuple[int, str, int]] = Counter()
+        for _, seconds, route_type in departure_occurrences:
+            direction = (
+                "arrival"
+                if seconds <= kickoff_seconds
+                else "departure"
+                if seconds >= match_end_seconds
+                else "both"
+            )
+            hourly_counts[(seconds // 3600 * 3600, direction, route_type)] += 1
+        hourly_service = []
+        for (hour_seconds, direction, route_type), count in sorted(hourly_counts.items()):
+            capacity = MODE_CAPACITY_RANGES.get(route_type, MODE_CAPACITY_RANGES[3])
+            hourly_service.append(
+                {
+                    "hour_start_local": (service_day + timedelta(seconds=hour_seconds)).isoformat(),
+                    "direction": direction,
+                    "mode": capacity["mode"],
+                    "departures_per_hour": count,
+                    "vehicle_capacity_low": capacity["low"],
+                    "vehicle_capacity_base": capacity["base"],
+                    "vehicle_capacity_high": capacity["high"],
+                }
+            )
         results.append(
             {
                 "match_id": event["match_id"],
                 "kickoff_local": event["kickoff_local"],
                 "calendar_valid": bool(active),
-                "departures": len(departure_types),
-                "latest_departure_seconds": max((seconds for seconds, _ in departure_types), default=None),
+                "departures": len(departure_occurrences),
+                "latest_departure_seconds": max(
+                    (seconds for _, seconds, _ in departure_occurrences), default=None
+                ),
                 "service_span_after_match_min": round(
                     (max(after_match) - kickoff_seconds - ASSUMED_MATCH_MIN * 60) / 60, 1
                 ) if after_match else 0.0,
@@ -368,6 +427,11 @@ def _event_departures(
                 "capacity_low": event_capacity["low"],
                 "capacity_base": event_capacity["base"],
                 "capacity_high": event_capacity["high"],
+                "hourly_service": hourly_service,
+                "direction_basis": (
+                    "arrival through kickoff; departure from assumed match end; "
+                    "in-match service applies to both"
+                ),
             }
         )
     return results, mode_counts
@@ -412,7 +476,11 @@ def extract_feed(
                 calendar_starts.append(details["calendar_start"])
             if details["calendar_end"]:
                 calendar_ends.append(details["calendar_end"])
-            capacity_stop_ids, _ = _venue_stop_ids(stops, venue, SERVICE_RADIUS_MILES)
+            _, capacity_stops = _venue_stop_ids(stops, venue, SERVICE_RADIUS_MILES)
+            capacity_stop_distances = {
+                str(row.stop_id): float(row.distance_mi)
+                for row in capacity_stops.itertuples(index=False)
+            }
             walking_stop_ids, _ = _venue_stop_ids(stops, venue, VENUE_RADIUS_MILES)
             shape_rows, stop_route_rows = _event_route_shapes(
                 stops,
@@ -433,7 +501,7 @@ def extract_feed(
                 routes,
                 optional["frequencies.txt"],
                 services,
-                capacity_stop_ids,
+                capacity_stop_distances,
                 events,
             )
             event_rows.extend(rows)
@@ -613,6 +681,7 @@ def fetch_city(city: str, feeds: list[GtfsFeedSource], events: list[dict[str, An
                             "event_capacity_high": 0,
                             "service_span_after_match_min": 0.0,
                             "event_window_hours": (WINDOW_BEFORE_MIN + WINDOW_AFTER_MIN) / 60.0,
+                            "hourly_service": [],
                         },
                     )
                     current["event_window_departures"] += int(event_row["departures"])
@@ -622,6 +691,8 @@ def fetch_city(city: str, feeds: list[GtfsFeedSource], events: list[dict[str, An
                         float(current["service_span_after_match_min"]),
                         float(event_row["service_span_after_match_min"]),
                     )
+                    current["hourly_service"].extend(event_row.get("hourly_service", []))
+                    current["direction_basis"] = event_row.get("direction_basis")
             for name, present in extracted["optional_files"].items():
                 optional_presence[name] |= present
         except (requests.RequestException, zipfile.BadZipFile, OSError, ValueError) as exc:
@@ -638,6 +709,14 @@ def fetch_city(city: str, feeds: list[GtfsFeedSource], events: list[dict[str, An
     )
     for row in match_evidence.values():
         row["status"] = "partial" if status == "partial" else "observed"
+        row["hourly_service"] = sorted(
+            row.get("hourly_service", []),
+            key=lambda service: (
+                str(service.get("hour_start_local", "")),
+                str(service.get("direction", "")),
+                str(service.get("mode", "")),
+            ),
+        )
     unique_shapes = {
         (str(row["agency"]), str(row["route_id"]), str(row["shape_id"])): row
         for row in route_shapes
@@ -755,6 +834,10 @@ def write_snapshot(results: dict[str, dict[str, Any]], output: Path, generated_a
             "legacy_cache": "never loaded or promoted",
             "observed_gate": "required files, event-valid calendar, retrieval timestamp, and feed SHA-256",
             "capacity_status": "scenario capacity range; not observed ridership",
+            "peak_capacity": (
+                "one vehicle per static trip_id or expanded frequency occurrence; "
+                "nearest eligible venue stop only; exact local event hour and event phase"
+            ),
             "event_window_minutes": {"before": WINDOW_BEFORE_MIN, "after": WINDOW_AFTER_MIN},
             "venue_radius_miles": VENUE_RADIUS_MILES,
             "service_capacity_radius_miles": SERVICE_RADIUS_MILES,

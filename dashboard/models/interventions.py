@@ -260,6 +260,7 @@ CAPITAL_PACKAGE = InterventionPackage(
     shuttle_buses_per_hour=8,
     added_transit_departures_per_hour=4,
     park_ride_spaces=1500,
+    park_ride_feeder_departures_per_hour=19,
     bike_hub_spaces=1000,
     cooled_walkway_km=2.0,
     arrival_spreading_pct=15,
@@ -361,12 +362,20 @@ def _case_result(
         * factors.transit_passengers_per_departure.value(case)
         * load
     )
-    park_passengers = (
+    park_space_passengers = (
         package.park_ride_spaces
         * factors.park_ride_occupancy.value(case)
         * factors.park_ride_utilization.value(case)
     )
-    park_per_hour = park_passengers / arrival_hours
+    feeder_capacity = max(
+        factors.shuttle_passengers_per_bus.value(case) * load,
+        1.0,
+    )
+    park_feeder_per_hour = (
+        package.park_ride_feeder_departures_per_hour * feeder_capacity
+    )
+    park_per_hour = min(park_space_passengers / arrival_hours, park_feeder_per_hour)
+    park_passengers = park_per_hour * arrival_hours
 
     bike_distance_factor = max(
         0.0, 1.0 - city.bike_access_distance_m / factors.bike_max_distance_m
@@ -420,10 +429,6 @@ def _case_result(
     transit_vmt = (
         package.added_transit_departures_per_hour * arrival_hours * city.transit_round_trip_miles
     )
-    feeder_capacity = max(
-        factors.shuttle_passengers_per_bus.value(case) * load,
-        1.0,
-    )
     park_feeder_trips = park_passengers / feeder_capacity
     park_feeder_vmt = park_feeder_trips * city.park_ride_feeder_round_trip_miles
     added_service_vmt = shuttle_vmt + transit_vmt + park_feeder_vmt
@@ -458,6 +463,9 @@ def _case_result(
         + package.added_transit_departures_per_hour
         * arrival_hours
         * factors.transit_cost_per_departure.value(case)
+        + package.park_ride_feeder_departures_per_hour
+        * arrival_hours
+        * factors.shuttle_cost_per_bus_hour.value(case)
         + package.arrival_spreading_pct * factors.arrival_management_cost_per_pct.value(case)
     )
     cost = capital_cost + operating_cost
@@ -503,7 +511,11 @@ def evaluate_intervention(
         f"Private round-trip distance: {city.average_private_trip_miles:.2f} miles; venue-area leg: {city.venue_area_leg_miles:.2f} miles.",
         f"Bike access distance: {city.bike_access_distance_m:.0f} m; base uptake threshold: {registry.bike_max_distance_m:.0f} m.",
         "Capacity is potential passenger throughput, not observed ridership or mode shift.",
-        "Park-and-ride retains upstream private travel and avoids only the venue-area leg.",
+        (
+            "Park-and-ride retains upstream private travel, avoids only the venue-area leg, "
+            "and is capped by explicitly scheduled feeder departures (EQ-PARK-RIDE-01)."
+        ),
+        "Park-and-ride feeder departures are costed as bus-hours over the arrival window.",
         "Arrival spreading moves peak demand to shoulder periods and does not change total travel or emissions.",
         (
             "Arrival spreading equation EQ-SPREAD-01 applies requested share × eligible share × compliance, "
@@ -561,7 +573,11 @@ def recommendation_candidates() -> tuple[InterventionPackage, ...]:
     return (
         InterventionPackage(name="Shuttle service", shuttle_buses_per_hour=10),
         InterventionPackage(name="Added transit frequency", added_transit_departures_per_hour=6),
-        InterventionPackage(name="Park-and-ride feeder service", park_ride_spaces=1200),
+        InterventionPackage(
+            name="Park-and-ride feeder service",
+            park_ride_spaces=1200,
+            park_ride_feeder_departures_per_hour=15,
+        ),
         InterventionPackage(name="Bike and micromobility hubs", bike_hub_spaces=800),
         InterventionPackage(name="Cooled walking corridors", cooled_walkway_km=2.0),
         InterventionPackage(
@@ -667,6 +683,7 @@ def pareto_recommendations(
                     if evidence.screening_eligible
                     else EvidenceStatus.PARTIAL
                 ),
+                scope=policy.scope,
                 cost_low=outcome.cost_low,
                 cost_base=outcome.cost_base,
                 cost_high=outcome.cost_high,

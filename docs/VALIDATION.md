@@ -65,7 +65,11 @@ completed analytical result.
 - Zero intervention reproduces baseline exactly.
 - Every displayed control changes its documented outcome.
 - Shuttle/additional-service VMT and emissions are included; park-and-ride
-  preserves upstream VMT; arrival spreading creates no direct emissions credit.
+  preserves upstream VMT, requires feeder capacity, and includes feeder VMT and
+  operations cost; arrival spreading creates no direct emissions credit.
+- A GTFS vehicle serving multiple nearby stops is counted once by static
+  `trip_id` or expanded frequency occurrence, then matched to the exact peak
+  hour and event phase used by the demand model.
 - Costs, capacities, trips, and absolute VMT inputs remain physically valid;
   net VMT and net CO2e may be negative when a package performs poorly.
 - Identical packages produce different outcomes for fixture cities with
@@ -76,14 +80,18 @@ completed analytical result.
 
 ## Release UI and presentation gates
 
-- Portfolio Overview starts with all 11 cities, supports two-to-four-city
-  selection, switchable outcome lenses, Track 1 proof cards, and exact tables.
-- City Brief answers where, why, candidate investment, modeled outcome, cost,
+- Portfolio starts with all 11 cities and has no city filter or map. It leads with the
+  readiness ranking and its four criterion scores, then separates event-hour access
+  capacity, baseline venue-area vehicle trips, and single-measure net CO2e into their own
+  tabs with exact tables and explicit claim boundaries.
+- City Action Plan answers the access challenge, readiness drivers, candidate investment, modeled outcome, cost,
   lead time, evidence quality, and evidence-gated time horizons.
-- Detailed Comparison separates physical access priority, strict MRS, and evidence screening.
-- City & Match supports match selection and Baseline, Operational Package, and
-  Capital Package comparison with routes, stops, isochrones, UHI, POIs, and
-  origin-context layers.
+- Portfolio separates physical access priority, strict readiness, and qualified single-measure screens.
+  Cost per passenger for the common added-frequency measure is not used as a cross-city
+  portfolio lens because the shared scale and national unit factors make it identical.
+- Scenario Explorer supports match selection and clearly labels Baseline, Operational Package, and
+  Capital Package as composite sensitivity tests, alongside modeled venue-area vehicle-trip pressure, routes,
+  stops, isochrones, UHI, POIs, and origin-context layers.
 - Every major visualization has labels, provenance, status, uncertainty where
   relevant, plain-language interpretation, and a table equivalent.
 - Scenario downloads reproduce displayed values exactly.
@@ -129,7 +137,7 @@ completed analytical result.
   Its NOAA source hashes are `087e554002f51bff3fafe134bb9c494bdefcd5df031cf677b54251e1923d5772`
   and `01e1f9d724dfe4857d16595eec9803194153fc5ec747efc7745d7552399eb955`;
   its Landsat-derived source hash is `16470dd96ad77e4b271e0cbf17c80997a6eb70288d4d005254fac3681f0bb4bd`.
-- Streamlit AppTest: Portfolio Overview, City Brief, Detailed Comparison, City & Match, and Methods & QA
+- Streamlit AppTest: Portfolio, City Action Plan, Scenario Explorer, and Methods
   render without an exception. All 78 movement timelines and before/after tables
   pass nonempty, reconciliation, and peak-reduction checks.
 - Recommendation identity: all 260 nondominated records retain an exact

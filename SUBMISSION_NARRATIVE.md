@@ -62,11 +62,11 @@ gaps and intervention outcomes—not rank—lead the decision.
 - Five-mile OSM walking graphs and hashes cover all 11 venues; all venues retain
   isochrones and eight have paths to event-relevant stops. Boston, Dallas, and
   Miami remain partial for stop-route and route-heat evidence.
-- Compare Cities gives all 11 cities a physical access-gap priority while
-  limiting the secondary strict MRS rank to eight cities with complete required
-  evidence. The two rankings are never presented as interchangeable.
-- Decision Brief exposes every judging criterion and required deliverable as a
-  visible proof record with a limitation; it does not award the project points.
+- Portfolio compares all 11 cities and keeps the secondary strict MRS rank
+  separate from physical access gaps and package outcomes. Boston, Dallas, and
+  Miami remain visibly partial for stop-route and route-heat evidence.
+- City Action Plan connects each headline access gap to a leading intervention,
+  package outcomes, implementation path, and visible evidence limitation.
 - Match, city-tournament, and U.S.-tournament ledgers count capital once per
   city and recurring operations per event. Qualified evidence is the default.
 

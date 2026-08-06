@@ -110,6 +110,7 @@ class InterventionPackage:
     shuttle_buses_per_hour: int = 0
     added_transit_departures_per_hour: int = 0
     park_ride_spaces: int = 0
+    park_ride_feeder_departures_per_hour: int = 0
     bike_hub_spaces: int = 0
     cooled_walkway_km: float = 0.0
     arrival_spreading_pct: float = 0.0
@@ -176,6 +177,7 @@ class InvestmentRecommendation:
     net_co2e_kg: float
     lead_time_band: str
     responsible_actor: str
+    scope: str = "Scope requires local definition"
     dependencies: tuple[str, ...] = field(default_factory=tuple)
     comparison_cost_base: float | None = None
     cost_basis: str = "Unspecified planning cost"
