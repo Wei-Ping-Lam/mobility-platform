@@ -5,7 +5,8 @@
 - Contract: `0.3.0`
 - Intended release: competition-ready planning MVP
 - Current state: Rice and public-source pipelines, contract-0.3 transportation
-  models, and all four dashboard workspaces are integrated and tested
+  models, and the Portfolio and City action plan workspaces are integrated and tested;
+  Scenario Explorer and Methods are retained in code but deferred from public navigation
 - Decision authority: advisory only; agencies retain operational and engineering
   responsibility
 

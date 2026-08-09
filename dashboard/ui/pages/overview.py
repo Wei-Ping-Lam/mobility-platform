@@ -74,12 +74,6 @@ def _priority_city(comparison: pd.DataFrame, selected_city: str | None) -> str:
     return str(comparison.sort_values("peak_demand_pph", ascending=False, na_position="last").iloc[0]["city"])
 
 
-def _open_explorer(city: str) -> None:
-    st.session_state["workspace"] = "Explorer"
-    st.session_state["city_focus"] = city
-    st.session_state["selected_city_context"] = city
-
-
 def _portfolio_chart(timeline: pd.DataFrame) -> go.Figure:
     figure = go.Figure()
     figure.add_trace(
@@ -171,13 +165,6 @@ def render_decision_brief(
         f"Representative match {match.match_id} at {match.venue}.",
         (match.stage, match.kickoff_local or "Kickoff unavailable", f"Readiness rank {row.get('strict_rank', '—')} of 11"),
     )
-    st.button(
-        f"Explore {city} maps and scenarios",
-        on_click=_open_explorer,
-        args=(city,),
-        key=f"brief_open_explorer_{city}",
-    )
-
     section_header("Access challenge", "Peak-hour demand and scheduled transit capacity for the representative match.", "Problem")
     _metric_row(
         [

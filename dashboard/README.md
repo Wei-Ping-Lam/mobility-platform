@@ -10,7 +10,7 @@ Contract `0.3.0` is frozen. The current branch implements Rice enrichment,
 the 78-match official schedule snapshot, match-specific movement scenarios,
 reconciled broad visitor-origin and venue-approach mode scenarios,
 physical access contracts, six intervention types, match-scoped nondominated option sets,
-four decision workspaces, and exact Methods downloads. Cited factor ranges are
+two public decision workspaces, and exact downloadable comparison tables. Cited factor ranges are
 integrated as scenario/estimated evidence.
 
 An independently versioned operational snapshot adds 33 official post-event
@@ -87,11 +87,10 @@ project interpreter directly: `.venv\Scripts\python.exe -m streamlit run dashboa
   direct link to the largest-gap action plan support drill-down without a map or city filter.
 - **City Action Plan:** a concise problem/why/action story with a defined measure scale,
   comparison cost, peak benefit, owner, lead time, dependencies, and evidence gate.
-- **Scenario Explorer:** official match selection, hourly movement, a modeled venue-area
-  traffic-pressure comparison, selectable Rice/GTFS/OSM layers, defined single measures,
-  advanced composite sensitivity tests, before/after timelines, and exact downloads.
-- **Methods:** source hashes, factors, network status, formulas, assumptions,
-  holdout validation, rank sensitivity, manifests, and downloads.
+
+Scenario Explorer and Methods are currently deferred from public navigation.
+Their implementation remains available for later product work; assumptions,
+equations, validation, and source records remain maintained in `docs/`.
 
 The current demand band is a planning scenario. Commercial visits are not match
 attendance. GTFS is scheduled-service evidence, not ridership or reliability.
@@ -110,10 +109,6 @@ The implemented product behavior is:
 - **City Action Plan** leads with the access challenge, readiness components,
   candidate investment, modeled outcome range, planning cost, lead time, and
   evidence quality. MRS is secondary.
-- **Scenario Explorer** shows hourly movement, GTFS routes/stops, OSM isochrones, Rice
-  heat/POI layers, and Baseline/Operational/Capital vehicle-trip pressure comparisons.
-- **Methods** traces every headline number to a contract field, formula,
-  source record, factor, validation result, and exact download.
 
 ## Canonical supplied data
 

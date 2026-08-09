@@ -1,4 +1,3 @@
-import json
 from pathlib import Path
 
 import pytest
@@ -14,8 +13,6 @@ from dashboard.viz.style import STATUS_COLORS
     [
         ("Overview", 5),
         ("City Brief", 0),
-        ("Explorer", 4),
-        ("Methods & QA", 4),
     ],
 )
 def test_every_workspace_renders_without_exception(mode, expected_tabs):
@@ -86,30 +83,15 @@ def test_native_streamlit_theme_matches_the_visual_system():
 
 
 @pytest.mark.parametrize("city", sorted(HOST_CITIES))
-def test_every_city_and_match_renders_across_workspaces(city):
-    schedule_path = Path(__file__).parents[3] / "data" / "snapshots" / "fifa" / "fifa_2026_us_schedule.json"
-    events = json.loads(schedule_path.read_text(encoding="utf-8"))["events"]
-    match_ids = [event["match_id"] for event in events if event["city"] == city]
-
+def test_every_city_renders_in_the_action_plan(city):
     app = AppTest.from_file("dashboard/app.py")
     app.run(timeout=30)
     workspace_selector = next(widget for widget in app.radio if widget.label == "Workspace")
-    workspace_selector.set_value("Explorer")
+    workspace_selector.set_value("City Brief")
     app.run(timeout=30)
     city_selector = next(widget for widget in app.selectbox if widget.label == "City focus")
     city_selector.set_value(city)
     app.run(timeout=30)
     assert not app.exception
-
-    for match_id in match_ids:
-        match_selector = next(widget for widget in app.selectbox if widget.label == "Match")
-        match_selector.set_value(match_id)
-        app.run(timeout=30)
-        assert not app.exception, f"{city} {match_id} failed Explorer AppTest"
-        assert len(app.tabs) == 4
-
-    workspace_selector = next(widget for widget in app.radio if widget.label == "Workspace")
-    workspace_selector.set_value("Methods & QA")
-    app.run(timeout=30)
-    assert not app.exception
-    assert len(app.tabs) == 4
+    assert city_selector.value == city
+    assert len(app.tabs) == 0

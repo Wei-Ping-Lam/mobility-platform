@@ -1,6 +1,6 @@
 # Mobility Platform Workstreams
 
-This repository uses isolated branches and Git worktrees so agents and people can work in parallel without editing the same files.
+This repository uses isolated branches and Git worktrees so agents and people can work in parallel without editing the same files. The dependency and integration-seam rules are documented in `docs/ARCHITECTURE.md`.
 
 ## Integration rules
 
@@ -12,22 +12,31 @@ This repository uses isolated branches and Git worktrees so agents and people ca
 - Raw data in `Rice WC Hack/` is local, read-only, and must never be staged.
 - Raw public pages in `data/raw/operations/` are local hash inputs and must never be staged.
 - Generated artifacts are owned by their ETL, GTFS, OSM, or factor pipeline only; do not hand-edit them.
-- Shared contracts must change first and require integrator review.
+- Shared contracts and integration seams must change first and require integrator review.
 - Every change must include focused tests and `git diff --check` output.
 
 ## Ownership matrix
 
 | Stream | Branch | Worktree | Owned paths | Depends on |
 | --- | --- | --- | --- | --- |
-| W0 Foundation | integration-owned | repository root | `pyproject.toml`, `uv.lock`, `.python-version`, CI, `dashboard/app.py`, shared contracts/source registry, fixtures, `.gitignore`, `WORKSTREAMS.md` | None |
+| W0 Foundation | integration-owned | repository root | `pyproject.toml`, `uv.lock`, `.python-version`, CI, `dashboard/app.py`, `dashboard/ui/workspaces.py`, shared contracts/source registry, fixtures, `.gitignore`, `WORKSTREAMS.md` | None |
 | W1 Public evidence | `work/<owner>/public` | `.worktrees/<owner>-public` | `dashboard/pipeline/gtfs/`, `dashboard/pipeline/public/`, `dashboard/tests/gtfs/`, `dashboard/tests/public/`, `data/snapshots/` including operational evidence | W0 contracts |
 | W2 Rice enrichment | `work/<owner>/etl` | `.worktrees/<owner>-etl` | `dashboard/pipeline/etl/`, `dashboard/pipeline/schemas/`, `dashboard/tests/etl/`, Rice-derived cache artifacts | W0 contracts |
-| W3 Movement/access and comparison | `work/<owner>/models` | `.worktrees/<owner>-models` | `dashboard/models/movement.py`, `dashboard/models/access.py`, `dashboard/domain/comparison.py`, movement/access/comparison tests under `dashboard/tests/models/` | W0 fixtures |
-| W4 Interventions and portfolio | `work/<owner>/interventions` | `.worktrees/<owner>-interventions` | `dashboard/models/interventions.py`, `dashboard/domain/decision_support.py`, `dashboard/domain/portfolio.py`, `dashboard/tests/interventions/`, `dashboard/tests/models/test_portfolio.py` | W0 fixtures |
+| W3 Movement/access and comparison | `work/<owner>/models` | `.worktrees/<owner>-models` | `dashboard/models/movement.py`, `access.py`, `resilience.py`, `visitor_forecast.py`, `dashboard/domain/comparison.py`, matching tests under `dashboard/tests/models/` | W0 fixtures |
+| W4 Interventions and portfolio | `work/<owner>/interventions` | `.worktrees/<owner>-interventions` | `dashboard/models/interventions.py`, `dashboard/models/recommendation_policy.py`, `dashboard/domain/portfolio.py`, `dashboard/domain/overview.py`, `dashboard/tests/interventions/`, `dashboard/tests/models/test_portfolio.py` | W0 fixtures; integration owner wires `decision_support.py` |
 | W5 UI | `work/<owner>/ui` | `.worktrees/<owner>-ui` | `dashboard/ui/`, `dashboard/viz/`, `dashboard/tests/ui/` | W0 fixtures |
 | W6 QA/docs | `work/<owner>/qa-docs` | `.worktrees/<owner>-qa-docs` | `dashboard/tests/integration/`, `docs/`, `DATA_DOCUMENTATION.md`, `SUBMISSION_NARRATIVE.md`, `dashboard/README.md` | W1-W5 interfaces |
 
-`dashboard/app.py` becomes integration-owned after W0. Workstreams wire features through modules and do not edit the application shell.
+`dashboard/app.py`, `dashboard/ui/workspaces.py`, `dashboard/domain/decision_support.py`, shared contracts, and dependency lockfiles are integration-owned. Workstreams expose tested modules and do not edit those seams without an agreed integration handoff.
+
+## Recommended two-person split
+
+- Person A owns W1-W3 (evidence and analytics) for a given sprint.
+- Person B owns W4-W5 (decision support and product UI).
+- W0 integration seams and W6 release documentation are changed by one agreed
+  integrator in short follow-up commits after the owning feature commit lands.
+- Before starting, each person posts their branch and expected file list. If the
+  lists overlap, split the work by module before either person edits.
 
 ## Shared interfaces
 

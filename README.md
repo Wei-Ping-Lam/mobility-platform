@@ -20,7 +20,9 @@ The tracked compact artifacts support cache-only startup. Raw Rice, GTFS, and
 OSM downloads are not required to preview the dashboard and remain untracked.
 
 - [Dashboard and data documentation](dashboard/README.md)
+- [Project architecture](docs/ARCHITECTURE.md)
 - [Parallel workstream guide](WORKSTREAMS.md)
+- [Contribution workflow](CONTRIBUTING.md)
 - [Methodology](docs/METHODOLOGY.md)
 - [Validation](docs/VALIDATION.md)
 - [Source register](docs/SOURCE_REGISTER.md)

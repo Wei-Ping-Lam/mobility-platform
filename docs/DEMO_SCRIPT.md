@@ -7,20 +7,15 @@ Use current dashboard values; bracketed items are presenter prompts.
 1. Start in **Portfolio** with the readiness ranking, then use its criterion grid to
    explain why cities differ. State that readiness is a weighted relative screen—not
    the access gap or an investment recommendation.
-2. Open the task tabs. In **Access shortfall**, teal is event-hour scheduled transit
-   capacity and coral is the remaining peak gap. In **Traffic pressure**, the bars are
-   modeled venue-area vehicle trips with input-case whiskers—not roadway congestion. In
-   **Climate outcome**, compare base-case net CO2e avoided by the common qualified
-   added-frequency measure—not an observed reduction or city emissions inventory.
+2. Open the task tabs. Compare visitor origin/mode scenarios, scheduled capacity
+   versus the remaining first/last-mile gap, the city-specific investment screens,
+   and Access/Traffic/CO2e outcomes. State the limitation beside each chart.
    Then open the largest-gap **City Action Plan**.
 3. Show four things: the access challenge, readiness components, proposed investment
    scale, and delivery owner/dependencies. Keep composite model tests collapsed.
-4. Open **Scenario Explorer**. Show the hourly movement range, switch the modeled
-   traffic-pressure layer between Baseline and a composite sensitivity, then show concrete
-   investment options and the exact scenario download.
-5. Open **Methods** and trace one displayed result to its source, factor,
-   equation, and validation status.
-6. Close with: “For `[city]`, evaluate `[intervention]` because it addresses
+4. Expand the exact comparison table for the chosen objective and show the
+   scenario/evidence labels without leaving the decision flow.
+5. Close with: “For `[city]`, evaluate `[intervention]` because it addresses
    `[documented gap]`. The modeled outcome is `[range]`, planning cost is
    `[range]`, and implementation requires `[owner/dependency]`.”
 

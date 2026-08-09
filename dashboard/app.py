@@ -22,7 +22,12 @@ from dashboard.ui.data import load_artifacts  # noqa: E402
 from dashboard.ui.pages.home import render_home  # noqa: E402
 from dashboard.ui.pages.overview import render_decision_brief  # noqa: E402
 from dashboard.ui.theme import apply_theme, brand_block, sidebar_status  # noqa: E402
-from dashboard.ui.views import render_explorer, render_methods  # noqa: E402
+from dashboard.ui.workspaces import (  # noqa: E402
+    active_workspace_keys,
+    active_workspace_labels,
+    normalize_workspace,
+    workspace_is_city_scoped,
+)
 
 st.set_page_config(page_title="Mobility Readiness 2026", page_icon="🚇", layout="wide", initial_sidebar_state="expanded")
 apply_theme()
@@ -48,22 +53,20 @@ def _sync_city_context() -> None:
 with st.sidebar:
     brand_block()
     st.markdown("<div class='sidebar-kicker'>Workspace</div>", unsafe_allow_html=True)
-    mode_labels = {
-        "Overview": "Portfolio",
-        "City Brief": "City action plan",
-        "Explorer": "Scenario explorer",
-        "Methods & QA": "Methods",
-    }
+    mode_labels = active_workspace_labels()
+    st.session_state["workspace"] = normalize_workspace(
+        st.session_state.get("workspace")
+    )
     mode = st.radio(
         "Workspace",
-        list(mode_labels),
+        active_workspace_keys(),
         index=0,
         format_func=mode_labels.get,
         label_visibility="collapsed",
         key="workspace",
     )
     selected_city = None
-    if mode in {"City Brief", "Explorer"}:
+    if workspace_is_city_scoped(mode):
         st.markdown("<div class='sidebar-kicker'>City scope</div>", unsafe_allow_html=True)
         if st.session_state.get("city_focus") != st.session_state[city_context_key]:
             st.session_state["city_focus"] = st.session_state[city_context_key]
@@ -134,9 +137,5 @@ except ValueError as exc:
 
 if mode == "Overview":
     render_home(metrics, artifacts, weights)
-elif mode == "City Brief":
-    render_decision_brief(metrics, artifacts, selected_city=selected_city, weights=weights)
-elif mode == "Explorer":
-    render_explorer(metrics, artifacts, selected_city or str(metrics.iloc[0]["city"]), weights, include_estimates)
 else:
-    render_methods(metrics, artifacts)
+    render_decision_brief(metrics, artifacts, selected_city=selected_city, weights=weights)

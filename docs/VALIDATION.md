@@ -98,13 +98,10 @@ completed analytical result.
 - Portfolio separates physical access priority, strict readiness, and qualified single-measure screens.
   Cost per passenger for the common added-frequency measure is not used as a cross-city
   portfolio lens because the shared scale and national unit factors make it identical.
-- Scenario Explorer supports match selection and clearly labels Baseline, Operational Package, and
-  Capital Package as composite sensitivity tests, alongside modeled venue-area vehicle-trip pressure, routes,
-  stops, isochrones, UHI, POIs, and origin-context layers.
 - Every major visualization has labels, provenance, status, uncertainty where
   relevant, plain-language interpretation, and a table equivalent.
-- Scenario downloads reproduce displayed values exactly.
-- Missing GTFS/OSM layers show actionable warnings without breaking Rice views.
+- Portfolio downloads reproduce displayed comparison values exactly.
+- Missing GTFS/OSM evidence remains visible without breaking either public workspace.
 - All 11 cities pass desktop, narrow-layout, and AppTest checks.
 - Presentation metric names map to contract fields, and static checks reject
   prohibited positive claims about congestion, visitor prediction, ADA
@@ -146,8 +143,8 @@ completed analytical result.
   Its NOAA source hashes are `087e554002f51bff3fafe134bb9c494bdefcd5df031cf677b54251e1923d5772`
   and `01e1f9d724dfe4857d16595eec9803194153fc5ec747efc7745d7552399eb955`;
   its Landsat-derived source hash is `16470dd96ad77e4b271e0cbf17c80997a6eb70288d4d005254fac3681f0bb4bd`.
-- Streamlit AppTest: Portfolio, City Action Plan, Scenario Explorer, and Methods
-  render without an exception. All 78 movement timelines and before/after tables
+- Streamlit AppTest: Portfolio and City Action Plan render without an exception.
+  All 78 movement timelines and before/after tables
   pass nonempty, reconciliation, and peak-reduction checks.
 - Recommendation identity: all 260 nondominated records retain an exact
   `match_id`; 190 are evidence-qualified screening options and 70 are

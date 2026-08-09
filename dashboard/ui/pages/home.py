@@ -797,13 +797,6 @@ def _render_home_legacy(metrics: pd.DataFrame, artifacts: Mapping[str, Any], wei
         disabled=priority_city is None,
         width="stretch",
     )
-    st.button(
-        "Review methods, assumptions, and sources",
-        on_click=_navigate,
-        args=("Methods & QA",),
-        key="overview_open_methods",
-        width="stretch",
-    )
     st.download_button(
         "Download exact overview comparison CSV",
         frame[[column for column in frame.columns if not column.startswith("package_")]].to_csv(index=False),
@@ -1136,13 +1129,6 @@ def render_home(metrics: pd.DataFrame, artifacts: Mapping[str, Any], weights: Ma
         on_click=_navigate,
         args=("City Brief", priority_city),
         disabled=priority_city is None,
-        width="stretch",
-    )
-    st.button(
-        "Review methods, assumptions, and sources",
-        on_click=_navigate,
-        args=("Methods & QA",),
-        key="overview_open_methods",
         width="stretch",
     )
     st.download_button(

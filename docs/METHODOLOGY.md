@@ -34,7 +34,7 @@ flowchart LR
   G --> Q
   O --> Q
   X --> Q
-  P --> U[Portfolio, City Action Plan, and Scenario Explorer]
+  P --> U[Portfolio and City Action Plan]
 ```
 
 ## Evidence lifecycle
