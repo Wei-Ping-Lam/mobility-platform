@@ -9,9 +9,16 @@ An interactive Streamlit dashboard that predicts visitor movement, identifies fi
 ## Quick Start
 
 ```bash
-cd dashboard
-python -m pip install -r requirements.txt
-python -m streamlit run app.py
+# From the repo root — use a dedicated venv, not your global Python.
+# (pandas/numpy wheels are ABI-sensitive; a shared global interpreter with
+# other unrelated packages installed can easily end up with an incompatible
+# pandas/numpy pair and fail with a "binary incompatibility" ImportError.)
+python -m venv .venv
+.venv\Scripts\activate          # Windows (PowerShell: .venv\Scripts\Activate.ps1)
+# source .venv/bin/activate     # macOS/Linux
+
+pip install -r dashboard/requirements.txt
+streamlit run dashboard/app.py
 # Opens at http://localhost:8501
 ```
 
@@ -22,7 +29,15 @@ python -m streamlit run app.py
 ```
 Rice WC Hack/
 ├── dashboard/
-│   ├── app.py               # Main Streamlit application (single-file)
+│   ├── app.py               # Orchestrator: page config, data load, KPI header, tab dispatch
+│   ├── data.py              # Shared constants, data loaders, and scoring helpers
+│   ├── tabs/                # One file per tab — edit these independently
+│   │   ├── tab1_overview.py
+│   │   ├── tab2_demand.py
+│   │   ├── tab3_gaps.py
+│   │   ├── tab4_comparison.py
+│   │   ├── tab5_planner.py
+│   │   └── tab6_legacy.py
 │   ├── requirements.txt     # Python dependencies
 │   ├── README.md            # This file
 │   └── cache/               # Auto-created; Parquet cache for processed data
@@ -40,6 +55,7 @@ Rice WC Hack/
 ## Dashboard Tabs
 
 ### 1. City Overview Map
+- **Focus City** selector (local to this tab) filters the map, rankings, and radar to a single city
 - Interactive US map with all 11 host cities
 - Bubble **size** = number of matches hosted
 - Bubble **color** = composite Mobility Readiness Score (0–100; red → yellow → green)
@@ -80,12 +96,14 @@ Rice WC Hack/
 
 ---
 
-## Sidebar Controls
+## Global Controls
+
+There is no sidebar — each tab is self-contained so teammates can work on separate tabs without touching shared UI state. Two controls remain global (in `app.py`, above the tabs) because they affect every tab's data:
 
 | Control | Effect |
 |---|---|
-| **Focus City** | Filters Overview map and pre-selects city in other tabs |
-| **Score Weights** | Adjusts the relative contribution of each dimension to the composite score; recomputed live without reloading data |
+| **⚙️ Adjust Readiness Score Weights** (expander, collapsed by default) | Adjusts the relative contribution of each dimension to the composite score; recomputed live without reloading data |
+| **Focus City** (Tab 1 only) | Filters the Overview map/rankings/radar to a single city. Other tabs always show all 11 cities and have their own independent city selectors where relevant. |
 
 ---
 
@@ -100,7 +118,7 @@ The composite score (0–100) is a weighted sum of four dimensions:
 | Urban Heat Island | 15% | Mean UHI intensity from `urban-heat-index-rice` dataset |
 | Venue Accessibility | 30% | Expert-rated walkability/connectivity of venue approach |
 
-Weights are adjustable via the sidebar sliders and normalize automatically to sum to 1.
+Weights are adjustable via the "⚙️ Adjust Readiness Score Weights" expander above the tabs, and normalize automatically to sum to 1.
 
 ### Heat Safety Score Formula
 ```
