@@ -12,7 +12,7 @@ from dashboard.viz.style import STATUS_COLORS
 @pytest.mark.parametrize(
     ("mode", "expected_tabs"),
     [
-        ("Overview", 3),
+        ("Overview", 5),
         ("City Brief", 0),
         ("Explorer", 4),
         ("Methods & QA", 4),

@@ -33,6 +33,14 @@ EQUATIONS = (
         "Attendance and event response are scenarios, not observed ticket scans.",
     ),
     EquationDefinition(
+        "EQ-VISITOR-FLOW-01",
+        "World Cup attendee origin forecast",
+        "origin_attendees_case = attendance_case × stage_origin_share_case",
+        "domestic origin shares use the supplied commercial-origin context; international share is an explicit tournament-stage scenario",
+        "Allocates every hosted match attendance case to host-market, nearby U.S., long-distance U.S., and international/unobserved origin types.",
+        "Commercial origins are not FIFA fan observations, and international share is unobserved; this is a scenario forecast.",
+    ),
+    EquationDefinition(
         "EQ-CAPACITY-01",
         "Scheduled transit capacity",
         "capacity_h = departures_h × vehicle_capacity × usable_load_factor",
@@ -41,12 +49,28 @@ EQUATIONS = (
         "This is not observed ridership, delivered service, crowding, or reliability.",
     ),
     EquationDefinition(
+        "EQ-MODE-SPLIT-01",
+        "Broad venue-access mode demand",
+        "mode_attendees = origin_attendees × conditional_mode_share(readiness, scheduled_coverage, walking_path)",
+        "conditional shares cover scheduled transit, shuttle/coach, private vehicle/taxi, and walk/bike demand and sum to one within each origin type",
+        "Estimates broad venue-access mode demand under the current evidence and scenario inputs.",
+        "This is not calibrated mode choice, delivered service, exact route assignment, travel time, or observed roadway flow.",
+    ),
+    EquationDefinition(
         "EQ-GAP-01",
         "Residual access gap",
         "gap_h = max(demand_h − scheduled_capacity_h, 0)",
         "demand and capacity use the same hourly planning case",
         "Reports passengers per hour not covered by modeled scheduled capacity.",
         "It is not roadway congestion or a queue measurement.",
+    ),
+    EquationDefinition(
+        "EQ-RESILIENCE-01",
+        "Common access stress",
+        "stress_coverage = capacity_h × (1 − 0.20) ÷ (demand_h × (1 + 0.10))",
+        "the portfolio applies the same 10% demand surge and 20% scheduled-capacity loss to every representative match",
+        "Reports retained scheduled coverage and the remaining stressed gap in passengers per hour.",
+        "This is a sensitivity test, not a disruption probability, reliability forecast, or recovery model.",
     ),
     EquationDefinition(
         "EQ-SPREAD-01",
@@ -67,7 +91,7 @@ EQUATIONS = (
     EquationDefinition(
         "EQ-PARK-RIDE-01",
         "Park-and-ride throughput",
-        "park_pph = min(space_passengers / arrival_hours, feeder_departures_h Ã— passengers_per_bus Ã— usable_load_factor)",
+        "park_pph = min(space_passengers / arrival_hours, feeder_departures_h × passengers_per_bus × usable_load_factor)",
         "space passengers depend on lot spaces, vehicle occupancy, and utilization; feeder operations are separately specified and costed",
         "Prevents parking inventory from becoming passenger throughput without a feeder fleet.",
         "Remote-lot inventory, fleet availability, and travel time remain planning inputs requiring local verification.",

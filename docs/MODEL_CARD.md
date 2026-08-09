@@ -29,12 +29,21 @@ causal evaluation.
 | Transit | Pinned official agency GTFS | Departures, service span, route/stop evidence, capacity range | Scheduled supply, not observed operations |
 | Walking | Pinned OSM network | Network distance, isochrones, detour, tag coverage | Planning network; missing tags remain unknown |
 | Factors | Pinned EPA/FTA/FHWA references | Emissions and cost ranges | National/order-of-magnitude assumptions |
-| Models | All eligible layers plus editable assumptions | Hourly movement, access gap, package outcomes, tradeoffs | Scenario evidence unless validation says otherwise |
+| Models | All eligible layers plus editable assumptions | Hourly movement, broad visitor-flow mix, access gap, package outcomes, tradeoffs | Scenario evidence unless validation says otherwise |
 
 ## Output semantics
 
 - `MovementScenario` is low/base/high attendance and hourly flow with an explicit
-  uncertainty type.
+  uncertainty type. The portfolio shows arrival and post-match departure peaks
+  separately. It must be described as a planning scenario rather than a
+  validated prediction.
+- `VisitorFlowForecast` is a deterministic scenario artifact for all 78 official
+  matches. It allocates attendance to four broad origin types and four broad
+  venue-approach modes, then reports the reconciled low/base/high peak timing.
+  Its domestic mix uses commercial customer origins only as a prior; its
+  international share and mode response are explicit stage- and access-based
+  assumptions. It does not infer exact visitor origins, destinations, routes,
+  travel times, or observed mode choice.
 - `AccessGapResult` reports scenario demand, scheduled capacity range, residual
   passengers, network walk distance, service span, and route heat exposure.
 - `InterventionOutcome` reports gap resolved, venue-area vehicle trips, net VMT,
@@ -44,14 +53,25 @@ causal evaluation.
   status. It is not an agency commitment.
 - Operational and capital composites combine several measures only for sensitivity
   testing; they are not named investment recommendations.
+- The Portfolio uses five objective tabs: Resilience, Visitor movement,
+  First/last mile, Investments & strategies, and Outcomes. All 11 cities remain
+  visible in every comparison; exact values are disclosed in expandable tables.
+- The resilience comparison applies a common sensitivity of 10% more peak
+  movement and 20% less scheduled capacity. It is a transparent physical stress
+  test, not a disruption probability or reliability forecast.
 - MRS is a secondary sensitivity-tested index, not the primary decision result.
 - The portfolio does not rank cities by the added-frequency screen's cost per passenger.
   That ratio is useful for understanding one measure within an action plan, but the common
   six-departures-per-hour scale and national cost/capacity factors produce the same $11.31
   value across hosts, so it contains no cross-city decision information.
-- The Portfolio climate tab uses the same qualified added-frequency scale across hosts and
-  reports base-case net CO2e avoided. Values vary with modeled private trip distance; they
-  are scenario outputs, not observed reductions, certified inventories, or package forecasts.
+- The Portfolio chooses a priority screening measure from the evidence-qualified
+  option set using explicit bottleneck rules. Zero serving capacity screens a
+  shuttle; a long event-stop approach screens a shuttle connection; a hot
+  documented approach can screen a cooled walking corridor; low coverage on an
+  established route can screen added frequency. This is not an automatic optimum.
+- Access, venue-area vehicle trips avoided, and net CO2e are compared separately
+  in the Outcomes tab. They are scenario outputs, not observed mode shift,
+  measured roadway congestion relief, or a certified emissions inventory.
 
 ## Validation and uncertainty
 
@@ -69,6 +89,9 @@ are defined in `VALIDATION.md`.
   published GTFS does not establish whether special-event overlays will run.
 - The present event-demand band is generic and did not beat its comparator in
   both validation years; it remains a planning scenario.
+- Broad visitor origin and mode allocations are not calibrated to FIFA ticketing,
+  airport, hotel, mobile-device, parking, or passenger-count data. They are
+  decision scenarios for comparing the scale and composition of host-city demand.
 - Boston lacks eligible two-mile Rice UHI coverage; Miami and New York/New
   Jersey use weather stations beyond the current 30-mile evidence rule.
 - Dallas/Houston and Los Angeles/San Francisco have combined supplied markets

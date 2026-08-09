@@ -699,6 +699,8 @@ def pareto_recommendations(
                 evidence_qualified=evidence.screening_eligible,
                 evidence_reason=evidence.reason,
                 heat_person_hours_avoided=outcome.heat_exposure_person_hours_avoided,
+                venue_vehicle_trips_base=outcome.venue_vehicle_trips_base,
+                net_vmt_base=outcome.net_vmt_base,
                 equation_ids=equation_ids(),
             )
         )

@@ -54,6 +54,9 @@ behavior.
 | --- | --- | --- |
 | Match attendance | Low/base/high fractions of venue capacity | Not observed ticket scans or turnstile attendance |
 | Arrival profile | Generic normalized profile anchored to local kickoff | Candidate did not beat seasonal-naive in both validation years |
+| Domestic visitor-origin mix | Host, nearby, and long-distance U.S. shares from the supplied commercial customer-origin distribution | Context prior only; not a FIFA ticket-holder sample |
+| International/unobserved share | Low/base/high stage scenarios: group 10/20/30%; round of 32 12/22/32%; round of 16 14/24/34%; quarterfinal 16/27/38%; semifinal and bronze 18/30/42%; final 22/35/48% | Explicit scenario assumption; replace with ticketing, airport, hotel, or visitor-survey evidence |
+| Broad venue-approach mode mix | Bounded response to transit readiness, exact-hour scheduled coverage, residual gap, and network walk distance | Not observed FIFA fan mode share; no route or transfer assignment |
 | Private-vehicle share | Bounded function of the supplemental transit score | Not observed match mode share |
 | Vehicle occupancy | 2.2 passengers per vehicle | Replace with venue survey or parking-count evidence |
 | Private trip distance | 12–30 miles based on descriptive Rice origin dispersion | Rice origins are customer context, not ticket-holder origins |
@@ -84,6 +87,8 @@ behavior.
 ## Evidence gaps that cannot be solved by changing assumptions
 
 - Actual match attendance, arrival behavior, mode share, and vehicle occupancy.
+- FIFA ticket-holder origins, international share, accommodation location, and
+  origin-destination or route-choice behavior.
 - Special-event service overlays, delivered operations, ridership, crowding,
   reliability, fleet, and operator availability.
 - Curb inventory, throughput, enforcement capacity, queues, roadway volume, and

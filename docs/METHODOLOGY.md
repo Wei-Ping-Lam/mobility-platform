@@ -16,13 +16,18 @@ cost and lead time, and with what evidence quality?**
 flowchart LR
   R[Six Rice datasets] --> E[Offline evidence artifacts]
   F[Pinned FIFA schedule] --> M[Match-specific hourly scenario]
+  F --> V[Stage-conditioned visitor-flow scenario]
   G[Pinned agency GTFS] --> A[Physical access gap]
+  G --> V
   O[Pinned OSM network] --> A
+  E --> V
   E --> A
   M --> A
+  M --> V
   X[Pinned EPA/FTA/FHWA factors] --> I[Intervention accounting]
   D[Pinned post-event operations] --> Q[Methods and QA]
   A --> I
+  V --> U
   I --> P[Nondominated investment comparison]
   E --> Q[Methods and QA]
   F --> Q
@@ -40,17 +45,24 @@ flowchart LR
 2. **Build match scenarios.** `MatchEvent` provides local kickoff and venue.
    `MovementScenario` reconciles low/base/high attendance to hourly arrivals
    and departures. Rice activity informs context, not match attendance.
-3. **Measure the planning gap.** `AccessGapResult` compares scenario peak
+3. **Forecast broad visitor flow.** A deterministic scenario allocates every
+   official match's attendance to four broad origin types and four broad
+   venue-approach modes. Stage, commercial domestic-origin context, transit
+   readiness, scheduled peak coverage, and walking evidence change the mix;
+   exact origins, routes, and travel times are not inferred.
+4. **Measure the planning gap.** `AccessGapResult` compares scenario peak
    passengers with a range of scheduled transit capacity. It also reports
    network walk distance, post-match service span, and route heat exposure.
-4. **Account for interventions.** Packages model shuttle service, additional
+5. **Account for interventions.** Packages model shuttle service, additional
    transit, park-and-ride, bike/micromobility, cooled walking corridors, and
    arrival spreading. Added service emissions and upstream driving remain in
    the calculation.
-5. **Compare tradeoffs.** Recommendations show gap resolved, cost per passenger,
+6. **Compare tradeoffs.** Recommendations show gap resolved, cost per passenger,
    net CO2e, lead time, owner, dependencies, and evidence quality. They form a
    nondominated comparison, not an unsupported universal optimum.
-6. **Audit the claim.** A metric is presentation-ready only after its field,
+   The portfolio then applies a visible bottleneck rule to nominate which
+   evidence-qualified single measure each host should validate first.
+7. **Audit the claim.** A metric is presentation-ready only after its field,
    artifact status, source record, formula, and release test all pass.
 
 ## Operational benchmark boundary
@@ -109,6 +121,9 @@ Planetary Computer's public mirror; USGS remains the data publisher.
   management recur per event.
 - Every recommendation retains its exact `city` and `match_id`; the interface
   does not assign citywide recommendations to whichever match happens to be selected.
+- Operational and capital package labels stay in the advanced scenario explorer.
+  The portfolio compares concrete single measures and treats operating versus
+  capital as delivery/cost metadata rather than as the decision itself.
 
 ## Movement and validation
 
@@ -116,12 +131,32 @@ Planetary Computer's public mirror; USGS remains the data publisher.
 - Attendance and arrival profiles are editable planning ranges.
 - Hourly arrivals and departures must sum to scenario attendance within the
   published tolerance.
+- The fixed planning profiles place the base arrival peak one hour before
+  kickoff and the base departure peak two hours after kickoff (after the modeled
+  match duration). The portfolio reports both directions instead of calling the
+  larger combined peak an arrival forecast.
 - The commercial-activity baseline retains rolling 2023 and 2024 holdouts
   against a 364-day seasonal-naive comparator.
 - “Validated baseline” is allowed only where the candidate beats the comparator
   in both holdouts. Otherwise the interface uses “planning scenario.”
 - Customer-home-state summaries are descriptive commercial-origin context, not
   ticket-holder origins.
+- The visitor-flow artifact converts attendance into four broad origin types:
+  host market, nearby U.S., long-distance U.S., and international/unobserved.
+  Domestic proportions use the supplied commercial customer-origin distribution
+  only as a context prior. The international scenario increases by tournament
+  stage and remains independent of that commercial panel.
+- Broad venue-approach mode shares respond deterministically to transit readiness,
+  exact-hour scheduled capacity coverage, the residual access gap, and available
+  walking-distance evidence. They are scenario allocations, not measured FIFA
+  fan behavior or a calibrated mode-choice model.
+- All origin and mode rows reconcile exactly to low/base/high attendance. City
+  portfolio values sum every hosted match; the peak-timing label uses the match
+  with the greatest base non-host-market demand so later-round pressure is not
+  hidden by an arbitrary representative group match.
+- No artifact supports exact visitor origin zones, origin-destination pairs,
+  route choice, transfer choice, travel times, or roadway assignment. Those remain
+  explicit future data requirements rather than silently inferred outputs.
 
 ## Access and spatial methods
 
@@ -135,6 +170,19 @@ Planetary Computer's public mirror; USGS remains the data publisher.
 - Rice weather and UHI can characterize heat exposure where coverage is
   eligible; spatial jitter and station distance remain visible limitations.
 - The residual gap is a scenario passenger quantity, not roadway congestion.
+- First/last mile is presented as two venue-side checks: scheduled capacity in
+  the exact peak hour and direction, plus one event-relevant stop-to-venue network
+  path where available. For arrivals that path is the last mile; for departures
+  it is the first mile. It is not an end-to-end origin accessibility or safety audit.
+
+## Resilience sensitivity
+
+The portfolio stress test applies the same transparent shock to each city's
+representative match: modeled peak movement increases 10% and scheduled
+passenger capacity decreases 20%. Baseline and stressed coverage are capped at
+100%, and the remaining stressed gap stays in passengers per hour. This common
+sensitivity supports comparison but does not estimate disruption likelihood,
+recovery time, or service reliability.
 
 ## Intervention accounting
 
@@ -145,6 +193,9 @@ Planetary Computer's public mirror; USGS remains the data publisher.
   assumed to produce ordered outcome bounds.
 - Shuttle and added-transit capacity are capped by demand and include operating
   VMT and emissions.
+- Added frequency is evidence-qualified only when a serving event-hour route and
+  a capacity-qualified gap are both established. A zero-capacity event cannot be
+  converted into a frequency recommendation without a route-specific operating plan.
 - Park-and-ride preserves driving to remote lots and counts only venue-area VMT
   displaced. Passenger throughput is capped by explicitly scheduled feeder
   departures; feeder VMT and event operating cost are included.

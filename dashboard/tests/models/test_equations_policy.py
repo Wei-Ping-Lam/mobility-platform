@@ -5,7 +5,13 @@ from dashboard.models.recommendation_policy import MEASURE_POLICIES, policy_reco
 def test_equation_registry_has_stable_unique_ids_and_review_fields():
     records = equation_records()
     assert len(records) == len(EQUATIONS) == len(set(equation_ids()))
-    assert {"EQ-SPREAD-01", "EQ-COST-02", "EQ-PARETO-01"}.issubset(equation_ids())
+    assert {
+        "EQ-SPREAD-01",
+        "EQ-COST-02",
+        "EQ-PARETO-01",
+        "EQ-VISITOR-FLOW-01",
+        "EQ-MODE-SPLIT-01",
+    }.issubset(equation_ids())
     for row in records:
         assert all(row[key].strip() for key in ("equation_id", "equation", "variables", "interpretation", "evidence_limit"))
 

@@ -14,6 +14,17 @@ arrivals_h = attendance × normalized_arrival_share_h
 Hourly shares reconcile to the selected attendance scenario. Attendance and the
 arrival profile are planning scenarios, not observed ticket scans.
 
+## EQ-VISITOR-FLOW-01 — World Cup attendee origin forecast
+
+```text
+origin_attendees_case = attendance_case × stage_origin_share_case
+```
+
+Every hosted match is allocated to host-market, nearby U.S., long-distance U.S.,
+and international/unobserved origin types. The supplied spend-panel customer
+origins shape only the relative domestic prior. International share is an explicit
+low/base/high tournament-stage scenario. Neither input observes FIFA fans.
+
 ## EQ-CAPACITY-01 — scheduled transit capacity
 
 ```text
@@ -23,6 +34,21 @@ capacity_h = departures_h × vehicle_capacity × usable_load_factor
 Departures come from event-valid GTFS. Capacity and load factors are planning
 ranges. The result is potential throughput, not ridership or service reliability.
 
+## EQ-MODE-SPLIT-01 — broad venue-access mode demand
+
+```text
+mode_attendees = origin_attendees × conditional_mode_share(
+  transit_readiness,
+  scheduled_peak_coverage,
+  walking_path_evidence
+)
+```
+
+Conditional shares cover scheduled transit, event shuttle/coach, private
+vehicle/taxi, and walk/bike demand and reconcile to attendance. This is not
+calibrated mode choice, delivered service, exact route assignment, travel time,
+or observed roadway flow.
+
 ## EQ-GAP-01 — residual access gap
 
 ```text
@@ -31,6 +57,19 @@ gap_h = max(demand_h − scheduled_capacity_h, 0)
 
 This is a passenger-per-hour planning gap, not roadway congestion or a measured
 queue.
+
+## EQ-RESILIENCE-01 — common access stress
+
+```text
+stressed_demand = demand_h × 1.10
+stressed_capacity = capacity_h × 0.80
+stress_coverage = stressed_capacity ÷ stressed_demand
+stressed_gap = max(stressed_demand − stressed_capacity, 0)
+```
+
+The same sensitivity is applied to each representative match. Coverage is capped
+at 100%. This is not a disruption probability, reliability forecast, or recovery
+model.
 
 ## EQ-SPREAD-01 — effective arrival spreading
 

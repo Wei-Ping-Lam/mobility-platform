@@ -182,7 +182,13 @@ def render_decision_brief(
     _metric_row(
         [
             (f"#{int(row['strict_rank'])}" if pd.notna(row.get("strict_rank")) else "Not ranked", "Readiness rank", "derived", "Selected weight profile", "teal"),
-            (_number(access.peak_demand_per_hour, " / hr"), "Peak arrival demand", "scenario", "Base attendance scenario", "blue"),
+            (
+                _number(access.peak_demand_per_hour, " / hr"),
+                "Peak movement demand",
+                "scenario",
+                "Base attendance scenario; the representative peak may be a post-match departure",
+                "blue",
+            ),
             (_number(access.residual_passengers if access.capacity_qualified else None, " / hr"), "Unserved peak demand", access.transit_status, "After scheduled transit capacity", "coral"),
             (_number(access.transit_capacity_base if access.capacity_qualified else None, " / hr"), "Scheduled transit capacity", access.transit_status, "Event-window service", "amber"),
         ]

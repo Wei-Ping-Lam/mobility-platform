@@ -378,6 +378,29 @@ def test_recommendation_list_places_qualified_options_before_exploratory(event_i
     assert "curb-throughput" in arrival.evidence_reason
 
 
+def test_added_frequency_requires_an_established_serving_route(event_inputs):
+    match, movement, access, city = event_inputs
+    zero_service = replace(
+        access,
+        transit_capacity_low=0,
+        transit_capacity_base=0,
+        transit_capacity_high=0,
+        residual_passengers=access.peak_demand_per_hour,
+    )
+
+    recommendations = pareto_recommendations(match, movement, zero_service, city)
+    frequency = next(
+        item for item in recommendations if item.intervention == "Added transit frequency"
+    )
+    shuttle = next(
+        item for item in recommendations if item.intervention == "Shuttle service"
+    )
+
+    assert not frequency.evidence_qualified
+    assert "No serving scheduled route" in frequency.evidence_reason
+    assert shuttle.evidence_qualified
+
+
 def test_factor_ranges_and_city_inputs_validate_physical_bounds(event_inputs):
     with pytest.raises(ValueError):
         FactorRange(1, 3, 2)

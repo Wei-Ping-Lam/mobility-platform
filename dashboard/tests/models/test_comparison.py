@@ -128,6 +128,44 @@ def test_event_summary_exposes_objective_specific_choices_instead_of_one_winner(
     assert row["greatest_climate_intervention"] == "Added transit frequency"
 
 
+def test_priority_screen_matches_a_zero_service_bottleneck() -> None:
+    access = [
+        {
+            "city": "Complete",
+            "match_id": "A-1",
+            "status": "scenario",
+            "capacity_qualified": True,
+            "peak_demand_per_hour": 1400,
+            "transit_capacity_base": 0,
+            "residual_passengers": 1400,
+        }
+    ]
+    recommendations = [
+        {
+            "city": "Complete",
+            "match_id": "A-1",
+            "intervention": "Shuttle service",
+            "gap_resolved_passengers": 300,
+            "cost_per_passenger": 10,
+            "evidence_qualified": True,
+        },
+        {
+            "city": "Complete",
+            "match_id": "A-1",
+            "intervention": "Added transit frequency",
+            "gap_resolved_passengers": 600,
+            "cost_per_passenger": 2,
+            "evidence_qualified": False,
+        },
+    ]
+
+    row = build_city_comparison(_metrics().iloc[:1], access, recommendations).iloc[0]
+
+    assert row["top_intervention"] == "Shuttle service"
+    assert row["lowest_cost_intervention"] == "Shuttle service"
+    assert "No serving scheduled capacity" in row["priority_reason"]
+
+
 def test_access_priority_orders_capacity_qualified_physical_gaps_for_all_cities():
     access = [
         {"city": "Complete", "match_id": "A-1", "capacity_qualified": True, "peak_demand_per_hour": 1200, "residual_passengers": 900},

@@ -185,6 +185,8 @@ class InvestmentRecommendation:
     evidence_qualified: bool = False
     evidence_reason: str = "Evidence gate not evaluated."
     heat_person_hours_avoided: float = 0.0
+    venue_vehicle_trips_base: float | None = None
+    net_vmt_base: float | None = None
     equation_ids: tuple[str, ...] = field(default_factory=tuple)
 
     def to_dict(self) -> dict[str, Any]:

@@ -21,6 +21,7 @@ from dashboard.models.interventions import (
 )
 from dashboard.models.movement import build_movement_scenario, validation_label
 from dashboard.models.recommendation_policy import policy_records
+from dashboard.models.visitor_forecast import build_visitor_flow_forecast
 
 
 def _status(value: Any, default: EvidenceStatus = EvidenceStatus.UNAVAILABLE) -> EvidenceStatus:
@@ -153,9 +154,11 @@ def build_transportation_bundle(
     metric_rows = metrics.set_index("city").to_dict("index") if not metrics.empty else {}
     gtfs = artifacts.get("gtfs", {}) if isinstance(artifacts.get("gtfs"), Mapping) else {}
     walking = artifacts.get("walking_networks", {}) if isinstance(artifacts.get("walking_networks"), Mapping) else {}
+    origin_flows = artifacts.get("origin_flows", pd.DataFrame())
     validation = validation_metrics(artifacts.get("visits", pd.DataFrame()))
 
     movements = []
+    visitor_forecasts = []
     access_results = []
     outcomes = []
     recommendations = []
@@ -181,6 +184,13 @@ def build_transportation_bundle(
             walk_metrics,
             service_span_after_match_min=match_service.get("service_span_after_match_min"),
             route_heat_exposure_c=route_heat,
+        )
+        visitor_forecast = build_visitor_flow_forecast(
+            match,
+            movement,
+            origin_flows,
+            transit_score=city_metric.get("transit_score"),
+            access=access,
         )
 
         transit_score = city_metric.get("transit_score")
@@ -219,12 +229,14 @@ def build_transportation_bundle(
             ]
 
         movements.append(movement.to_dict())
+        visitor_forecasts.append(visitor_forecast)
         access_results.append(access.to_dict())
         outcomes.extend(item.to_dict() for item in city_outcomes)
         recommendations.extend(item.to_dict() for item in city_recommendations)
 
     return {
         "movement_scenarios": movements,
+        "visitor_flow_forecasts": visitor_forecasts,
         "access_gaps": access_results,
         "intervention_outcomes": outcomes,
         "investment_recommendations": recommendations,

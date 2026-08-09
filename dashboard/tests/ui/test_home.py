@@ -22,72 +22,71 @@ def test_default_landing_page_starts_with_all_city_portfolio():
     assert list(comparison.columns) == [
         "City",
         "Readiness rank",
-        "Combined readiness",
-        "Transit proximity",
-        "Heat safety",
-        "Urban heat safety",
-        "Venue support",
+        "Readiness score",
+        "Representative match",
+        "Baseline scheduled coverage",
+        "Stress-test coverage",
+        "Remaining stressed gap / hour",
     ]
     assert comparison["Readiness rank"].notna().all()
     assert list(comparison.sort_values("Readiness rank")["City"][:1]) == ["Seattle"]
-    access = app.dataframe[1].value
-    traffic = app.dataframe[2].value
-    climate = app.dataframe[3].value
-    assert list(access.columns) == [
-        "City",
-        "Representative match",
-        "Peak arrivals / hour",
-        "Scheduled transit capacity / hour",
-        "Scheduled coverage",
-        "Remaining peak gap / hour",
-    ]
-    assert list(traffic.columns) == [
-        "City",
-        "Representative match",
-        "Low input case",
-        "Base input case",
-        "High input case",
-    ]
-    assert list(climate.columns) == [
-        "City",
-        "Representative match",
-        "Qualified single measure",
-        "Proposed scale",
-        "Net CO2e avoided (kg)",
-        "Evidence quality",
-    ]
-    assert len(app.get("plotly_chart")) == 5
+    assert len(app.get("plotly_chart")) == 3
     assert [tab.label for tab in app.tabs] == [
-        ":material/train: Access shortfall",
-        ":material/traffic: Traffic pressure",
-        ":material/eco: Climate outcome",
+        ":material/health_and_safety: Resilience",
+        ":material/route: Visitor movement",
+        ":material/transfer_within_a_station: First/last mile",
+        ":material/construction: Investments & strategies",
+        ":material/monitoring: Outcomes",
     ]
     page_text = "\n".join(str(element.value) for element in app.markdown)
-    assert "How do hosts rank on overall readiness?" in page_text
-    assert "What drives the rank?" in page_text
-    assert "What does each transportation task show?" in page_text
-    assert page_text.index("How do hosts rank on overall readiness?") < page_text.index("What drives the rank?")
-    assert page_text.index("What drives the rank?") < page_text.index("What does each transportation task show?")
-    assert "Transit proximity" in page_text
-    assert "Urban heat safety" in page_text
-    assert "Planning evidence, not observed fan behavior" not in page_text
-    assert "What the platform delivers" not in page_text
-    assert "Competition outcomes and current limitations" not in page_text
-    assert "Priority case:" not in page_text
+    assert "Compare every Track 1 objective" in page_text
+    assert "How do hosts rank, and how much scheduled coverage survives a common stress?" in page_text
+    assert "Transportation stress test" in page_text
+    assert "City focus" not in page_text
 
 
-def test_portfolio_keeps_composite_scenarios_out_of_the_decision_view():
+def test_portfolio_tabs_make_every_track1_objective_explicit():
     app = _app()
     assert not [widget for widget in app.selectbox if widget.label == "Scenario package"]
-    page_text = "\n".join(str(element.value) for element in app.markdown)
+
+    app.session_state["track1_objective"] = ":material/route: Visitor movement"
+    app.run(timeout=60)
+    movement = app.dataframe[0].value
+    assert {
+        "Hosted matches",
+        "Peak forecast stage",
+        "Non-host-market attendees",
+        "International / unobserved share",
+        "Scheduled transit demand",
+        "Arrival peak base",
+        "Departure peak base",
+        "Validation status",
+    }.issubset(movement.columns)
+    assert next(
+        widget for widget in app.segmented_control if widget.label == "Forecast view"
+    ).value == "Origin mix"
     captions = "\n".join(str(element.value) for element in app.caption)
-    assert "Median scheduled coverage" in page_text
-    assert "Median base traffic pressure" in page_text
-    assert "Median modeled climate benefit" in page_text
-    assert "not measured roadway congestion" in captions
-    assert "not an observed reduction" in captions
+    assert "commercial customer origins shape only the U.S. prior" in captions
+    assert "Neither is observed FIFA fan behavior" in captions
+
+    app.session_state["track1_objective"] = ":material/transfer_within_a_station: First/last mile"
+    app.run(timeout=60)
+    access = app.dataframe[0].value
+    assert {"Peak direction", "Zero-capacity matches", "Network walk (m)", "Accessibility audit"}.issubset(access.columns)
+
+    app.session_state["track1_objective"] = ":material/construction: Investments & strategies"
+    app.run(timeout=60)
+    actions = app.dataframe[0].value
+    assert actions["Priority screen"].nunique() >= 3
+    assert {"Why this bottleneck", "Delivery owner", "Dependencies"}.issubset(actions.columns)
+
+    app.session_state["track1_objective"] = ":material/monitoring: Outcomes"
+    app.run(timeout=60)
+    outcomes = app.dataframe[0].value
+    assert {"Peak passengers addressed / hour", "Venue-area vehicle trips avoided", "Net CO2e avoided (kg)"}.issubset(outcomes.columns)
+    assert next(widget for widget in app.segmented_control if widget.label == "Outcome to compare").value == "Access"
+    page_text = "\n".join(str(element.value) for element in app.markdown)
     assert "Single-measure efficiency" not in page_text
-    assert "Median comparison cost / passenger" not in page_text
     assert "Operational Package" not in page_text
     assert "Capital Package" not in page_text
 

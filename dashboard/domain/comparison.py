@@ -68,6 +68,76 @@ def _screening_score(row: Mapping[str, Any], weights: Mapping[str, float]) -> di
     }
 
 
+def _candidate_by_name(
+    candidates: Sequence[Mapping[str, Any]], name: str
+) -> Mapping[str, Any] | None:
+    return next(
+        (row for row in candidates if str(row.get("intervention")) == name),
+        None,
+    )
+
+
+def _priority_recommendation(
+    candidates: Sequence[Mapping[str, Any]],
+    access: Mapping[str, Any],
+) -> tuple[Mapping[str, Any], str]:
+    """Choose a bottleneck-matched screen without presenting a universal optimum."""
+
+    if not candidates:
+        return {}, "No evidence-qualified intervention is available for this representative match."
+    demand = _number(access.get("peak_demand_per_hour")) or 0.0
+    capacity = _number(access.get("transit_capacity_base")) or 0.0
+    walk_m = _number(access.get("network_walk_distance_m"))
+    route_heat_c = _number(access.get("route_heat_exposure_c"))
+    coverage = capacity / demand if demand > 0 else 0.0
+
+    if capacity <= 0:
+        shuttle = _candidate_by_name(candidates, "Shuttle service")
+        if shuttle is not None:
+            return shuttle, (
+                "No serving scheduled capacity is established in the modeled peak hour; "
+                "screen a dedicated event shuttle before assuming an existing route can add frequency."
+            )
+    if walk_m is not None and walk_m >= 800:
+        shuttle = _candidate_by_name(candidates, "Shuttle service")
+        if shuttle is not None:
+            return shuttle, (
+                f"The modeled event-stop approach is {walk_m:,.0f} m; screen a shuttle connection "
+                "while local teams validate the walking route."
+            )
+    if (
+        walk_m is not None
+        and walk_m >= 400
+        and route_heat_c is not None
+        and route_heat_c >= 42
+    ):
+        cooling = _candidate_by_name(candidates, "Cooled walking corridors")
+        if cooling is not None:
+            return cooling, (
+                f"The modeled {walk_m:,.0f} m event-stop approach reaches {route_heat_c:.1f}°C; "
+                "screen corridor cooling and shade subject to field verification."
+            )
+    if coverage < 0.60:
+        frequency = _candidate_by_name(candidates, "Added transit frequency")
+        if frequency is not None:
+            return frequency, (
+                f"Scheduled service covers {coverage:.0%} of the modeled peak; screen route-specific "
+                "added frequency where a serving route is established."
+            )
+
+    fallback = min(
+        candidates,
+        key=lambda row: (
+            _number(row.get("cost_per_passenger")) or float("inf"),
+            str(row.get("intervention") or ""),
+        ),
+    )
+    return fallback, (
+        "No special bottleneck rule changed the ordering; this is the lowest modeled comparison-cost "
+        "qualified screen, not an approved investment."
+    )
+
+
 def _event_summary(
     city: str,
     access_rows: Sequence[Mapping[str, Any]],
@@ -99,7 +169,7 @@ def _event_summary(
     ]
     eligible_candidates = [row for row in candidates if bool(row.get("evidence_qualified"))]
     screening_pool = eligible_candidates or candidates
-    recommendation = min(
+    lowest_cost = min(
         screening_pool,
         key=lambda row: (
             _number(row.get("cost_per_passenger")) or float("inf"),
@@ -107,6 +177,12 @@ def _event_summary(
         ),
         default={},
     )
+    recommendation, priority_reason = _priority_recommendation(
+        eligible_candidates,
+        peak_row,
+    )
+    if not recommendation:
+        recommendation = lowest_cost
     fastest = min(
         screening_pool,
         key=lambda row: (
@@ -144,7 +220,8 @@ def _event_summary(
             _number(peak_row.get("residual_passengers")) if peak_row in qualified else None
         ),
         "top_intervention": recommendation.get("intervention"),
-        "lowest_cost_intervention": recommendation.get("intervention"),
+        "priority_reason": priority_reason,
+        "lowest_cost_intervention": lowest_cost.get("intervention"),
         "fastest_intervention": fastest.get("intervention"),
         "greatest_relief_intervention": greatest_relief.get("intervention"),
         "greatest_climate_intervention": greatest_climate.get("intervention"),

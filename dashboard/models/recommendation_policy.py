@@ -50,7 +50,7 @@ MEASURE_POLICIES = {
         ("Fleet and operator availability", "Event-window timetable"),
         "Per-event operating cost",
         None,
-        "Requires a capacity-qualified access gap; added fleet capacity remains a scenario range.",
+        "Requires a capacity-qualified access gap and a serving event-hour route; added fleet capacity remains a scenario range.",
     ),
     "Park-and-ride feeder service": MeasurePolicy(
         "Park-and-ride feeder service",
@@ -122,7 +122,7 @@ def measure_policy(name: str) -> MeasurePolicy:
 
 
 def assess_evidence(name: str, access: AccessGapResult) -> EvidenceAssessment:
-    if name in {"Shuttle service", "Added transit frequency"}:
+    if name == "Shuttle service":
         eligible = bool(access.capacity_qualified)
         return EvidenceAssessment(
             eligible,
@@ -130,6 +130,15 @@ def assess_evidence(name: str, access: AccessGapResult) -> EvidenceAssessment:
             "Capacity-qualified scheduled-service gap is available; capacity, uptake, fleet, and operations remain scenarios."
             if eligible
             else "Event transit capacity is not qualified.",
+        )
+    if name == "Added transit frequency":
+        eligible = bool(access.capacity_qualified and access.transit_capacity_base > 0)
+        return EvidenceAssessment(
+            eligible,
+            "medium" if eligible else "low",
+            "A serving event-hour route and capacity-qualified gap are available; fleet, loading, and operations remain scenarios."
+            if eligible
+            else "No serving scheduled route is established in the modeled peak hour; frequency requires a route-specific operating plan.",
         )
     if name == "Cooled walking corridors":
         eligible = (

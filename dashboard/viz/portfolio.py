@@ -55,7 +55,7 @@ def portfolio_access_chart(frame: pd.DataFrame) -> go.Figure:
             customdata=customdata,
             hovertemplate=(
                 "<b>%{y}</b><br>Representative match: %{customdata[0]}"
-                "<br>Modeled peak arrivals: %{customdata[1]:,.0f}/hour"
+                "<br>Modeled peak movement: %{customdata[1]:,.0f}/hour"
                 "<br>Scheduled transit capacity: %{customdata[2]:,.0f}/hour"
                 "<br>Scheduled coverage: %{customdata[4]:.1f}%<extra></extra>"
             ),
@@ -74,7 +74,7 @@ def portfolio_access_chart(frame: pd.DataFrame) -> go.Figure:
             customdata=customdata,
             hovertemplate=(
                 "<b>%{y}</b><br>Representative match: %{customdata[0]}"
-                "<br>Modeled peak arrivals: %{customdata[1]:,.0f}/hour"
+                "<br>Modeled peak movement: %{customdata[1]:,.0f}/hour"
                 "<br>Remaining peak gap: %{customdata[3]:,.0f}/hour"
                 "<br>Scheduled coverage: %{customdata[4]:.1f}%<extra></extra>"
             ),
@@ -83,6 +83,277 @@ def portfolio_access_chart(frame: pd.DataFrame) -> go.Figure:
     figure.update_layout(barmode="stack", uniformtext_minsize=9, uniformtext_mode="hide")
     figure.update_xaxes(title="Passengers per representative peak hour", rangemode="tozero")
     return style_figure(figure, 510, margin=dict(l=18, r=18, t=42, b=38))
+
+
+def portfolio_resilience_chart(frame: pd.DataFrame) -> go.Figure:
+    """Compare scheduled coverage before and after a common access stress."""
+
+    chart = frame.copy()
+    chart["_baseline"] = _numeric(chart, "scheduled_coverage_pct")
+    chart["_stress"] = _numeric(chart, "stress_coverage_pct")
+    chart = chart.dropna(subset=["_baseline", "_stress"]).sort_values(
+        ["_stress", "city"]
+    )
+    customdata = np.column_stack(
+        [
+            chart["representative_match_id"].fillna("Not available"),
+            _numeric(chart, "stress_gap_pph"),
+        ]
+    )
+    figure = go.Figure()
+    figure.add_trace(
+        go.Bar(
+            y=chart["city"],
+            x=chart["_baseline"],
+            orientation="h",
+            name="Baseline scheduled coverage",
+            marker_color=COLORS["teal_light"],
+            customdata=customdata,
+            hovertemplate=(
+                "<b>%{y}</b><br>Representative match: %{customdata[0]}"
+                "<br>Baseline scheduled coverage: %{x:.1f}%<extra></extra>"
+            ),
+        )
+    )
+    figure.add_trace(
+        go.Bar(
+            y=chart["city"],
+            x=chart["_stress"],
+            orientation="h",
+            name="Coverage after common stress",
+            marker_color=COLORS["coral"],
+            customdata=customdata,
+            hovertemplate=(
+                "<b>%{y}</b><br>Coverage after stress: %{x:.1f}%"
+                "<br>Remaining stressed gap: %{customdata[1]:,.0f}/hour<extra></extra>"
+            ),
+        )
+    )
+    figure.update_layout(barmode="group")
+    figure.update_xaxes(title="Scheduled coverage of modeled peak movement", range=[0, 105])
+    return style_figure(figure, 520, margin=dict(l=18, r=18, t=42, b=38))
+
+
+def portfolio_movement_chart(frame: pd.DataFrame) -> go.Figure:
+    """Separate modeled arrival and departure peaks for every host."""
+
+    chart = frame.copy()
+    forecast_fields = "forecast_arrival_peak_base" in chart.columns
+    prefix = "forecast_" if forecast_fields else ""
+    match_column = (
+        "forecast_anchor_match_id"
+        if "forecast_anchor_match_id" in chart.columns
+        else "representative_match_id"
+    )
+    chart["_arrival"] = _numeric(chart, f"{prefix}arrival_peak_base")
+    chart["_departure"] = _numeric(chart, f"{prefix}departure_peak_base")
+    chart = chart.dropna(subset=["_arrival", "_departure"]).sort_values(
+        ["_departure", "city"]
+    )
+    customdata = np.column_stack(
+        [
+            chart[match_column].fillna("Not available"),
+            _numeric(chart, f"{prefix}arrival_peak_low"),
+            _numeric(chart, f"{prefix}arrival_peak_high"),
+            _numeric(chart, f"{prefix}arrival_peak_offset_hours"),
+            _numeric(chart, f"{prefix}departure_peak_low"),
+            _numeric(chart, f"{prefix}departure_peak_high"),
+            _numeric(chart, f"{prefix}departure_peak_offset_hours"),
+        ]
+    )
+    figure = go.Figure()
+    figure.add_trace(
+        go.Bar(
+            y=chart["city"],
+            x=chart["_arrival"],
+            orientation="h",
+            name="Arrival peak",
+            marker_color=COLORS["blue"],
+            customdata=customdata,
+            hovertemplate=(
+                "<b>%{y}</b><br>Peak forecast match: %{customdata[0]}"
+                "<br>Arrival peak: %{x:,.0f}/hour"
+                "<br>Planning range: %{customdata[1]:,.0f}–%{customdata[2]:,.0f}/hour"
+                "<br>Peak time: %{customdata[3]:+.0f} h from kickoff<extra></extra>"
+            ),
+        )
+    )
+    figure.add_trace(
+        go.Bar(
+            y=chart["city"],
+            x=chart["_departure"],
+            orientation="h",
+            name="Departure peak",
+            marker_color=COLORS["violet"],
+            customdata=customdata,
+            hovertemplate=(
+                "<b>%{y}</b><br>Departure peak: %{x:,.0f}/hour"
+                "<br>Planning range: %{customdata[4]:,.0f}–%{customdata[5]:,.0f}/hour"
+                "<br>Peak time: %{customdata[6]:+.0f} h from kickoff<extra></extra>"
+            ),
+        )
+    )
+    figure.update_layout(barmode="group")
+    figure.update_xaxes(title="Modeled passengers per peak hour", rangemode="tozero")
+    return style_figure(figure, 530, margin=dict(l=18, r=18, t=42, b=38))
+
+
+def portfolio_visitor_forecast_chart(
+    frame: pd.DataFrame, view: str
+) -> go.Figure:
+    """Compare one auditable visitor-flow forecast dimension across all hosts."""
+
+    if view == "Peak timing":
+        return portfolio_movement_chart(frame)
+    settings = {
+        "Origin mix": (
+            [
+                ("Host market", "origin_host_market_share_pct", "origin_host_market_attendees_base", "teal"),
+                ("Nearby U.S.", "origin_nearby_us_share_pct", "origin_nearby_us_attendees_base", "blue"),
+                ("Long-distance U.S.", "origin_long_distance_us_share_pct", "origin_long_distance_us_attendees_base", "violet"),
+                ("International / unobserved", "origin_international_share_pct", "origin_international_attendees_base", "amber"),
+            ],
+            "forecast_non_host_share_pct",
+        ),
+        "Mode mix": (
+            [
+                ("Scheduled transit demand", "mode_scheduled_transit_share_pct", "mode_scheduled_transit_attendees_base", "teal"),
+                ("Shuttle / coach demand", "mode_shuttle_coach_share_pct", "mode_shuttle_coach_attendees_base", "blue"),
+                ("Private vehicle / taxi demand", "mode_private_taxi_share_pct", "mode_private_taxi_attendees_base", "coral"),
+                ("Walk / bike demand", "mode_walk_bike_share_pct", "mode_walk_bike_attendees_base", "amber"),
+            ],
+            "mode_scheduled_transit_share_pct",
+        ),
+    }
+    series, sort_column = settings.get(view, settings["Origin mix"])
+    chart = frame.copy()
+    chart["_sort"] = _numeric(chart, sort_column)
+    chart = chart.dropna(subset=["_sort"]).sort_values(["_sort", "city"])
+    figure = go.Figure()
+    for name, share_column, count_column, color in series:
+        share = _numeric(chart, share_column)
+        counts = _numeric(chart, count_column)
+        labels = share.map(
+            lambda value: f"{value:.0f}%" if pd.notna(value) and value >= 7 else ""
+        )
+        figure.add_trace(
+            go.Bar(
+                y=chart["city"],
+                x=share,
+                orientation="h",
+                name=name,
+                marker_color=COLORS[color],
+                text=labels,
+                textposition="inside",
+                insidetextanchor="middle",
+                customdata=np.column_stack(
+                    [
+                        _numeric(chart, "forecast_match_count"),
+                        counts,
+                        _numeric(chart, "forecast_attendance_base"),
+                    ]
+                ),
+                hovertemplate=(
+                    "<b>%{y}</b><br>Hosted matches: %{customdata[0]:,.0f}"
+                    f"<br>{name}: %{{customdata[1]:,.0f}} attendees"
+                    "<br>Share of base attendance: %{x:.1f}%"
+                    "<br>Base tournament attendance: %{customdata[2]:,.0f}<extra></extra>"
+                ),
+            )
+        )
+    figure.update_layout(
+        barmode="stack",
+        uniformtext_minsize=9,
+        uniformtext_mode="hide",
+    )
+    figure.update_xaxes(
+        title="Share of base attendance scenario",
+        range=[0, 100],
+        ticksuffix="%",
+    )
+    return style_figure(figure, 540, margin=dict(l=18, r=18, t=42, b=38))
+
+
+def portfolio_actions_chart(frame: pd.DataFrame) -> go.Figure:
+    """Show the physical benefit and named priority screen for each host."""
+
+    chart = frame.copy()
+    chart["_resolved"] = _numeric(chart, "top_gap_resolved")
+    chart = chart.dropna(subset=["_resolved"]).sort_values(["_resolved", "city"])
+    figure = go.Figure(
+        go.Bar(
+            y=chart["city"],
+            x=chart["_resolved"],
+            orientation="h",
+            marker_color=COLORS["teal"],
+            text=chart["top_intervention"].fillna("No qualified screen"),
+            textposition="inside",
+            customdata=np.column_stack(
+                [
+                    chart["representative_match_id"].fillna("Not available"),
+                    chart["top_intervention"].fillna("No qualified screen"),
+                    chart["top_scope"].fillna("Not defined"),
+                    _numeric(chart, "top_cost_base"),
+                    chart["top_lead_time"].fillna("Not defined"),
+                    chart["top_evidence_quality"].fillna("unavailable"),
+                ]
+            ),
+            hovertemplate=(
+                "<b>%{y}</b><br>Representative match: %{customdata[0]}"
+                "<br>Priority screen: %{customdata[1]}"
+                "<br>Scope: %{customdata[2]}"
+                "<br>Peak demand addressed: %{x:,.0f}/hour"
+                "<br>Total planning cost: $%{customdata[3]:,.0f}"
+                "<br>Lead time: %{customdata[4]}"
+                "<br>Evidence quality: %{customdata[5]}<extra></extra>"
+            ),
+            showlegend=False,
+        )
+    )
+    figure.update_xaxes(title="Modeled peak passengers addressed per hour", rangemode="tozero")
+    return style_figure(figure, 520, legend=False, margin=dict(l=18, r=18, t=28, b=38))
+
+
+def portfolio_outcome_chart(frame: pd.DataFrame, outcome: str) -> go.Figure:
+    """Compare one explicit outcome from each city's priority single measure."""
+
+    choices = {
+        "Access": ("top_gap_resolved", "Peak passengers addressed per hour", "teal"),
+        "Traffic": ("top_vehicle_trips_avoided", "Modeled venue-area vehicle trips avoided", "blue"),
+        "CO2e": ("top_net_co2e_kg", "Modeled net CO2e avoided (kg)", "violet"),
+    }
+    column, axis_title, color = choices.get(outcome, choices["Access"])
+    chart = frame.copy()
+    chart["_value"] = _numeric(chart, column)
+    chart = chart.dropna(subset=["_value"]).sort_values(["_value", "city"])
+    colors = chart["_value"].map(
+        lambda value: COLORS[color] if value >= 0 else COLORS["coral"]
+    )
+    figure = go.Figure(
+        go.Bar(
+            y=chart["city"],
+            x=chart["_value"],
+            orientation="h",
+            marker_color=colors,
+            text=chart["_value"],
+            texttemplate="%{text:,.0f}",
+            textposition="outside",
+            customdata=np.column_stack(
+                [
+                    chart["top_intervention"].fillna("No qualified screen"),
+                    chart["representative_match_id"].fillna("Not available"),
+                ]
+            ),
+            hovertemplate=(
+                "<b>%{y}</b><br>Priority screen: %{customdata[0]}"
+                "<br>Representative match: %{customdata[1]}"
+                "<br>" + axis_title + ": %{x:,.0f}<extra></extra>"
+            ),
+            showlegend=False,
+        )
+    )
+    figure.update_xaxes(title=axis_title, zeroline=True, zerolinecolor=COLORS["line"])
+    return style_figure(figure, 520, legend=False, margin=dict(l=18, r=58, t=28, b=38))
 
 
 def portfolio_traffic_chart(frame: pd.DataFrame) -> go.Figure:

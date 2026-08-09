@@ -8,6 +8,7 @@ source quality, assumptions, uncertainty, cost, and implementation constraints.
 
 Contract `0.3.0` is frozen. The current branch implements Rice enrichment,
 the 78-match official schedule snapshot, match-specific movement scenarios,
+reconciled broad visitor-origin and venue-approach mode scenarios,
 physical access contracts, six intervention types, match-scoped nondominated option sets,
 four decision workspaces, and exact Methods downloads. Cited factor ranges are
 integrated as scenario/estimated evidence.
@@ -78,10 +79,12 @@ project interpreter directly: `.venv\Scripts\python.exe -m streamlit run dashboa
 
 ## Current product behavior
 
-- **Portfolio Overview:** a fixed all-city funnel that starts with combined readiness,
-  immediately explains the four normalized criteria behind that rank, then narrows into
-  separate access-shortfall, baseline traffic-pressure, and climate-outcome tabs. Exact tables and a direct
-  link to the largest-gap action plan support drill-down without a map or city filter.
+- **Portfolio Overview:** five objective tabs keep all 11 cities visible: Resilience,
+  Visitor movement, First/last mile, Investments & strategies, and Outcomes. The
+  default starts with readiness and a common physical stress test. Visitor movement
+  compares city-tournament origin mix, approach-mode mix, and peak timing without
+  implying exact visitor locations or routes; exact tables and a
+  direct link to the largest-gap action plan support drill-down without a map or city filter.
 - **City Action Plan:** a concise problem/why/action story with a defined measure scale,
   comparison cost, peak benefit, owner, lead time, dependencies, and evidence gate.
 - **Scenario Explorer:** official match selection, hourly movement, a modeled venue-area
@@ -98,9 +101,12 @@ Current pressure outputs do not measure roadway congestion.
 
 The implemented product behavior is:
 
-- **Portfolio Overview** keeps all 11 cities visible at once. It moves from high-level
-  readiness to its drivers and then to task-specific evidence, keeping access capacity and
-  modeled vehicle-trip pressure, and single-measure net CO2e in separate tabs with explicit units and limitations.
+- **Portfolio Overview** keeps all 11 cities visible at once and maps each tab directly
+  to a Track 1 objective. Movement forecasts broad origin and approach-mode scenarios
+  across every hosted match and separates arrival and departure scenario peaks;
+  first/last mile combines exact-hour scheduled capacity with event-stop walking evidence;
+  recommendations show bottleneck-matched concrete measures; and Access, Traffic, and
+  CO2e outcomes remain separately selectable with explicit units and limitations.
 - **City Action Plan** leads with the access challenge, readiness components,
   candidate investment, modeled outcome range, planning cost, lead time, and
   evidence quality. MRS is secondary.

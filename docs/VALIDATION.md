@@ -56,6 +56,12 @@ completed analytical result.
 
 - Hourly arrivals and departures reconcile to each attendance scenario; zero
   matches create zero event demand.
+- Every match-level visitor-flow origin allocation and mode allocation reconciles
+  exactly to low/base/high attendance; city-tournament totals equal the sum of
+  that city's hosted matches.
+- A later-stage international scenario is never lower than the corresponding
+  group-stage scenario. Higher transit readiness or scheduled coverage cannot,
+  all else equal, reduce the scheduled-transit scenario share.
 - Higher attendance cannot reduce peak demand or the access gap.
 - More eligible scheduled capacity cannot increase the transit gap.
 - Longer network distance or higher heat cannot improve access.
@@ -74,16 +80,19 @@ completed analytical result.
   net VMT and net CO2e may be negative when a package performs poorly.
 - Identical packages produce different outcomes for fixture cities with
   different schedules, networks, service, heat, or demand.
-- Forecast language is blocked unless both holdout years beat seasonal-naive.
+- Observed, calibrated, validated, or predictive-accuracy language is blocked
+  unless both holdout years beat seasonal-naive and fan-specific origin/mode
+  calibration evidence is supplied. The permitted label is “scenario forecast.”
 - All named MRS profiles publish weight sensitivity and rank stability; missing
   transit makes transportation-weighted profiles unrankable.
 
 ## Release UI and presentation gates
 
 - Portfolio starts with all 11 cities and has no city filter or map. It leads with the
-  readiness ranking and its four criterion scores, then separates event-hour access
-  capacity, baseline venue-area vehicle trips, and single-measure net CO2e into their own
-  tabs with exact tables and explicit claim boundaries.
+  readiness ranking and its four criterion scores, then separates visitor movement,
+  first/last mile, investment screens, and Access/Traffic/CO2e outcomes into their own
+  tabs with exact tables and explicit claim boundaries. Visitor movement uses one
+  compact segmented view for origin mix, mode mix, and peak timing.
 - City Action Plan answers the access challenge, readiness drivers, candidate investment, modeled outcome, cost,
   lead time, evidence quality, and evidence-gated time horizons.
 - Portfolio separates physical access priority, strict readiness, and qualified single-measure screens.

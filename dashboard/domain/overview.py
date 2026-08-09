@@ -120,18 +120,37 @@ def build_portfolio_overview(
         outcome = _package_outcome(city, match_id, package_name, outcome_rows)
         package_cost = _number(outcome.get("cost_base"))
         package_gap = _number(outcome.get("gap_resolved_passengers"))
+        baseline_vehicle_trips = _number(baseline.get("venue_vehicle_trips_base"))
+        recommendation_vehicle_trips = _number(recommendation.get("venue_vehicle_trips_base"))
         additions.append(
             {
                 "top_cost_low": _number(recommendation.get("cost_low")),
                 "top_cost_base": _number(recommendation.get("cost_base")),
                 "top_cost_high": _number(recommendation.get("cost_high")),
                 "top_scope": str(recommendation.get("scope") or "Not defined"),
+                "top_gap_resolved": _number(recommendation.get("gap_resolved_passengers")),
+                "top_vehicle_trips_base": recommendation_vehicle_trips,
+                "top_vehicle_trips_avoided": (
+                    max(baseline_vehicle_trips - recommendation_vehicle_trips, 0.0)
+                    if baseline_vehicle_trips is not None and recommendation_vehicle_trips is not None
+                    else None
+                ),
+                "top_net_vmt_base": _number(recommendation.get("net_vmt_base")),
+                "top_responsible_actor": str(
+                    recommendation.get("responsible_actor") or "Local delivery owner not assigned"
+                ),
+                "top_dependencies": "; ".join(
+                    str(value) for value in recommendation.get("dependencies", [])
+                ) or "Local implementation plan",
+                "top_cost_basis": str(
+                    recommendation.get("cost_basis") or "Unspecified planning cost"
+                ),
                 "top_option_qualified": bool(recommendation.get("evidence_qualified", False)),
                 "top_evidence_quality": str(recommendation.get("evidence_quality") or "unavailable"),
                 "qualified_interventions": _option_set(city, match_id, recommendation_rows, qualified=True),
                 "exploratory_interventions": _option_set(city, match_id, recommendation_rows, qualified=False),
                 "baseline_vehicle_trips_low": _number(baseline.get("venue_vehicle_trips_low")),
-                "baseline_vehicle_trips_base": _number(baseline.get("venue_vehicle_trips_base")),
+                "baseline_vehicle_trips_base": baseline_vehicle_trips,
                 "baseline_vehicle_trips_high": _number(baseline.get("venue_vehicle_trips_high")),
                 "package_name": package_name,
                 "package_status": str(outcome.get("status") or "unavailable"),

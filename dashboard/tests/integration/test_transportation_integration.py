@@ -70,6 +70,7 @@ def test_compact_evidence_composes_match_decisions_with_repaired_event_gtfs():
     artifacts, metrics = _loaded()
     bundle = build_transportation_bundle(metrics, artifacts)
     assert len(bundle["movement_scenarios"]) == 78
+    assert len(bundle["visitor_flow_forecasts"]) == 78
     assert len(bundle["access_gaps"]) == 78
     assert len(bundle["intervention_outcomes"]) == 78 * 3
     assert bundle["investment_recommendations"]
@@ -78,6 +79,11 @@ def test_compact_evidence_composes_match_decisions_with_repaired_event_gtfs():
     assert all(row.get("equation_ids") for row in bundle["investment_recommendations"])
     valid_matches = {row["match_id"] for row in artifacts["match_events"]}
     assert all(row.get("match_id") in valid_matches for row in bundle["investment_recommendations"])
+    for forecast in bundle["visitor_flow_forecasts"]:
+        for case in ("low", "base", "high"):
+            attendance = forecast[f"attendance_{case}"]
+            assert sum(row[f"attendees_{case}"] for row in forecast["origin_rows"]) == attendance
+            assert sum(row[f"attendees_{case}"] for row in forecast["mode_rows"]) == attendance
     access_by_city = {row["city"]: row for row in bundle["access_gaps"]}
     for city in ("Kansas City", "Philadelphia"):
         city_access = [row for row in bundle["access_gaps"] if row["city"] == city]
