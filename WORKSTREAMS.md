@@ -24,10 +24,16 @@ This repository uses isolated branches and Git worktrees so agents and people ca
 | W2 Rice enrichment | `work/<owner>/etl` | `.worktrees/<owner>-etl` | `dashboard/pipeline/etl/`, `dashboard/pipeline/schemas/`, `dashboard/tests/etl/`, Rice-derived cache artifacts | W0 contracts |
 | W3 Movement/access and comparison | `work/<owner>/models` | `.worktrees/<owner>-models` | `dashboard/models/movement.py`, `access.py`, `resilience.py`, `visitor_forecast.py`, `dashboard/domain/comparison.py`, matching tests under `dashboard/tests/models/` | W0 fixtures |
 | W4 Interventions and portfolio | `work/<owner>/interventions` | `.worktrees/<owner>-interventions` | `dashboard/models/interventions.py`, `dashboard/models/recommendation_policy.py`, `dashboard/domain/portfolio.py`, `dashboard/domain/overview.py`, `dashboard/tests/interventions/`, `dashboard/tests/models/test_portfolio.py` | W0 fixtures; integration owner wires `decision_support.py` |
-| W5 UI | `work/<owner>/ui` | `.worktrees/<owner>-ui` | `dashboard/ui/`, `dashboard/viz/`, `dashboard/tests/ui/` | W0 fixtures |
+| W5 UI | `work/<owner>/ui` | `.worktrees/<owner>-ui` | One or more objective renderers under `dashboard/ui/portfolio/`, matching `dashboard/viz/` and UI tests; coordinate before editing shared `context.py`, `tables.py`, or `page.py` | W0 fixtures |
 | W6 QA/docs | `work/<owner>/qa-docs` | `.worktrees/<owner>-qa-docs` | `dashboard/tests/integration/`, `docs/`, `DATA_DOCUMENTATION.md`, `SUBMISSION_NARRATIVE.md`, `dashboard/README.md` | W1-W5 interfaces |
 
 `dashboard/app.py`, `dashboard/ui/workspaces.py`, `dashboard/domain/decision_support.py`, shared contracts, and dependency lockfiles are integration-owned. Workstreams expose tested modules and do not edit those seams without an agreed integration handoff.
+
+Within W5, contributors may independently own Resilience, Visitor movement,
+First/last mile, Investments, or Outcomes. The tab renderer and its focused
+tests are the normal change surface. `dashboard/ui/portfolio/context.py` and
+`page.py` remain integration-owned because every objective consumes them;
+coordinate changes to the shared formatting and table adapters as well.
 
 ## Recommended two-person split
 

@@ -21,6 +21,8 @@ two worktrees at the same branch.
 
 1. Claim one ownership row in `WORKSTREAMS.md` with your colleague.
 2. List the files you expect to change.
+   For Portfolio work, claim a specific objective renderer under
+   `dashboard/ui/portfolio/` rather than the whole page.
 3. If an integration seam is required, agree who edits it and land that edit as
    a small separate commit.
 4. Rebase from `origin/integration/rigor-upgrade` before opening a pull request.

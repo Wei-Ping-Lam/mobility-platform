@@ -31,6 +31,25 @@ not contain analytical formulas.
 | `dashboard/ui/` | Streamlit presentation, page state, and navigation policy | `dashboard/tests/ui/` |
 | `dashboard/app.py` | Cache-only composition root and public application shell | AppTest and release gates |
 
+### Portfolio objective ownership
+
+The Portfolio is composed from independently owned modules under
+`dashboard/ui/portfolio/`:
+
+| Objective | Renderer |
+| --- | --- |
+| Resilience | `resilience.py` |
+| Visitor movement | `visitor_movement.py` |
+| First/last mile | `first_last_mile.py` |
+| Investments & strategies | `investments.py` |
+| Outcomes | `outcomes.py` |
+
+`context.py` is the only analytics-to-UI adapter, `tables.py` owns exact-value
+display schemas, and `page.py` only creates tabs and the page-level drill-down.
+Objective renderers must not import models/domain modules or one another. This
+lets separate contributors edit different objectives without touching the same
+file or duplicating analytical formulas.
+
 ## Public and deferred workspaces
 
 `dashboard/ui/workspaces.py` is the single navigation policy seam. The public
@@ -51,7 +70,9 @@ The lowest-conflict split is:
 The following are integration seams and should have only one active editor at a
 time: `dashboard/app.py`, `dashboard/ui/workspaces.py`,
 `dashboard/mobility_platform/contracts.py`,
-`dashboard/domain/decision_support.py`, `pyproject.toml`, and `uv.lock`.
+`dashboard/domain/decision_support.py`, `dashboard/ui/portfolio/context.py`,
+`dashboard/ui/portfolio/page.py`, `dashboard/ui/portfolio/shared.py`,
+`dashboard/ui/portfolio/tables.py`, `pyproject.toml`, and `uv.lock`.
 
 When an analytics change needs UI exposure, the analytics owner first lands a
 pure model plus tests. A short follow-up integration commit wires its output into
