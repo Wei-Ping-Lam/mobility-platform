@@ -428,7 +428,7 @@ def portfolio_visitor_forecast_chart(
             ],
             "forecast_non_host_share_pct",
         ),
-        "Mode mix": (
+        "Transportation Mode Mix": (
             [
                 ("Scheduled transit demand", "mode_scheduled_transit_share_pct", "mode_scheduled_transit_attendees_base", "teal"),
                 ("Shuttle / coach demand", "mode_shuttle_coach_share_pct", "mode_shuttle_coach_attendees_base", "blue"),
@@ -487,92 +487,56 @@ def portfolio_visitor_forecast_chart(
     return style_figure(figure, 540, margin=dict(l=18, r=18, t=42, b=38))
 
 
-def portfolio_actions_chart(frame: pd.DataFrame) -> go.Figure:
-    """Show the physical benefit and named priority screen for each host."""
+def portfolio_custom_scenario_chart(
+    outcome: Mapping[str, Any], baseline_vehicle_trips: float | None
+) -> go.Figure:
+    """Baseline vs. a live-evaluated custom intervention scenario, for one city.
 
-    chart = frame.copy()
-    chart["_resolved"] = _numeric(chart, "top_gap_resolved")
-    chart = chart.dropna(subset=["_resolved"]).sort_values(["_resolved", "city"])
-    figure = go.Figure(
-        go.Bar(
-            y=chart["city"],
-            x=chart["_resolved"],
-            orientation="h",
-            marker_color=COLORS["teal"],
-            text=chart["top_intervention"].fillna("No qualified screen"),
-            textposition="inside",
-            customdata=np.column_stack(
-                [
-                    chart["representative_match_id"].fillna("Not available"),
-                    chart["top_intervention"].fillna("No qualified screen"),
-                    chart["top_scope"].fillna("Not defined"),
-                    _numeric(chart, "top_cost_base"),
-                    chart["top_lead_time"].fillna("Not defined"),
-                    chart["top_evidence_quality"].fillna("unavailable"),
-                ]
-            ),
-            hovertemplate=(
-                "<b>%{y}</b><br>Representative match: %{customdata[0]}"
-                "<br>Priority screen: %{customdata[1]}"
-                "<br>Scope: %{customdata[2]}"
-                "<br>Peak demand addressed: %{x:,.0f}/hour"
-                "<br>Total planning cost: $%{customdata[3]:,.0f}"
-                "<br>Lead time: %{customdata[4]}"
-                "<br>Evidence quality: %{customdata[5]}<extra></extra>"
-            ),
-            showlegend=False,
-        )
-    )
-    figure.update_xaxes(title="Modeled peak passengers addressed per hour", rangemode="tozero")
-    return style_figure(figure, 520, legend=False, margin=dict(l=18, r=18, t=28, b=38))
-
-
-def portfolio_package_benefit_chart(city_row: Mapping[str, Any]) -> go.Figure:
-    """Compare the Operational and Capital packages' modeled benefit for one host.
-
-    Baseline is omitted from the bars - by definition it resolves zero gap,
-    avoids zero vehicle trips, and avoids zero CO2e, so plotting it would only
-    restate zero three times. Cost lives on a separate axis (dollars, not
-    passengers/trips/kg) and is reported alongside the chart instead of on it.
+    Baseline bars are genuinely zero here, since no intervention resolves zero
+    gap, avoids zero vehicle trips, and avoids zero CO2e by definition - seeing
+    "0 -> evaluated value" for a scenario the user just built with sliders is
+    the point of this view. Cost is reported separately (different unit), not
+    plotted here.
     """
 
-    def _value(prefix: str, field: str) -> float | None:
-        value = city_row.get(f"{prefix}_{field}")
-        return float(value) if value is not None and pd.notna(value) else None
-
-    baseline_trips = _value("baseline", "vehicle_trips_base")
-    metrics = [
-        ("Peak passengers\naddressed / hr", "gap_resolved", None),
-        ("Vehicle trips\navoided", "vehicle_trips_base", baseline_trips),
-        ("Net CO2e\navoided (kg)", "net_co2e_base", None),
+    categories = [
+        "Peak passengers\naddressed / hr",
+        "Vehicle trips\navoided",
+        "Net CO2e\navoided (kg)",
     ]
-    categories = [label for label, _, _ in metrics]
+    gap_resolved = float(outcome.get("gap_resolved_passengers") or 0)
+    custom_trips = outcome.get("venue_vehicle_trips_base")
+    trips_avoided = (
+        max(float(baseline_vehicle_trips) - float(custom_trips), 0.0)
+        if baseline_vehicle_trips is not None and custom_trips is not None
+        else 0.0
+    )
+    co2e_avoided = float(outcome.get("net_co2e_kg_base") or 0)
+    values = [gap_resolved, trips_avoided, co2e_avoided]
 
     figure = go.Figure()
-    for package_key, name, color in (
-        ("operational", "Operational Package", COLORS["blue"]),
-        ("capital", "Capital Package", COLORS["violet"]),
-    ):
-        values = []
-        for _, field, baseline in metrics:
-            raw = _value(package_key, field)
-            if raw is None:
-                values.append(None)
-            elif baseline is not None:
-                values.append(max(baseline - raw, 0.0))
-            else:
-                values.append(raw)
-        figure.add_trace(
-            go.Bar(
-                x=categories,
-                y=values,
-                name=name,
-                marker_color=color,
-                text=[f"{v:,.0f}" if v is not None else "N/A" for v in values],
-                textposition="outside",
-                hovertemplate=f"<b>{name}</b><br>%{{x}}: %{{y:,.0f}}<extra></extra>",
-            )
+    figure.add_trace(
+        go.Bar(
+            x=categories,
+            y=[0, 0, 0],
+            name="Baseline",
+            marker_color=COLORS["slate"],
+            text=["0", "0", "0"],
+            textposition="outside",
+            hovertemplate="<b>Baseline</b><br>%{x}: 0 (no intervention)<extra></extra>",
         )
+    )
+    figure.add_trace(
+        go.Bar(
+            x=categories,
+            y=values,
+            name="Custom scenario",
+            marker_color=COLORS["blue"],
+            text=[f"{v:,.0f}" for v in values],
+            textposition="outside",
+            hovertemplate="<b>Custom scenario</b><br>%{x}: %{y:,.0f}<extra></extra>",
+        )
+    )
     figure.update_layout(barmode="group", uniformtext_minsize=9, uniformtext_mode="hide")
     figure.update_yaxes(title="Modeled benefit (mixed units - see axis groups)", rangemode="tozero")
     return style_figure(figure, 420, margin=dict(l=18, r=18, t=42, b=38))

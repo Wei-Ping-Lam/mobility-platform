@@ -156,45 +156,6 @@ def access_table(frame: pd.DataFrame) -> pd.DataFrame:
     return display
 
 
-def actions_table(frame: pd.DataFrame) -> pd.DataFrame:
-    display = frame.sort_values(["top_gap_resolved", "city"], ascending=[False, True]).copy()
-    display = display[
-        [
-            "city",
-            "representative_match_id",
-            "top_intervention",
-            "priority_reason",
-            "top_scope",
-            "top_gap_resolved",
-            "top_cost_low",
-            "top_cost_base",
-            "top_cost_high",
-            "top_lead_time",
-            "top_responsible_actor",
-            "top_dependencies",
-            "top_evidence_quality",
-            "exploratory_interventions",
-        ]
-    ]
-    display.columns = [
-        "City",
-        "Representative match",
-        "Priority screen",
-        "Why this bottleneck",
-        "Proposed scale",
-        "Peak demand addressed / hour",
-        "Cost low",
-        "Cost base",
-        "Cost high",
-        "Lead time",
-        "Delivery owner",
-        "Dependencies",
-        "Evidence quality",
-        "Exploratory alternatives",
-    ]
-    return display
-
-
 def traffic_management_table(frame: pd.DataFrame) -> pd.DataFrame:
     display = frame.sort_values(["traffic_buses_base", "city"], ascending=[False, True]).copy()
     display = display[

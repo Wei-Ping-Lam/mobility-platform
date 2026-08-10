@@ -1,145 +1,120 @@
-"""Investments and strategies objective renderer."""
+"""Investments and transit objective renderer."""
 
 from __future__ import annotations
+
+from collections.abc import Mapping
+from typing import Any
 
 import pandas as pd
 import streamlit as st
 
-from dashboard.ui.portfolio.shared import (
-    intervention_package_levers,
-    metric_grid,
-    number,
-)
-from dashboard.ui.portfolio.tables import actions_table
-from dashboard.viz.portfolio import portfolio_actions_chart, portfolio_package_benefit_chart
-
-PACKAGE_OPTIONS = ("Operational Package", "Capital Package")
-_PACKAGE_KEY = {"Operational Package": "operational", "Capital Package": "capital"}
+from dashboard.ui.portfolio.shared import evaluate_custom_package, number
+from dashboard.viz.portfolio import portfolio_custom_scenario_chart
 
 
-def render(frame: pd.DataFrame) -> None:
-    actions = frame.dropna(subset=["top_gap_resolved"]).sort_values(
-        "top_gap_resolved", ascending=False
-    )
-    highest_action = actions.iloc[0] if not actions.empty else None
-    distinct_actions = int(frame["top_intervention"].dropna().nunique())
-    qualified_action_cities = int(frame["top_option_qualified"].fillna(False).sum())
-
-    st.markdown("#### What concrete measure should each host validate first?")
-    metric_grid(
-        [
-            (
-                f"{distinct_actions} measure types",
-                "Bottleneck-matched priority screens",
-                "scenario",
-                "Zero service, long approaches, heat, and existing route capacity trigger different screens",
-                "teal",
-            ),
-            (
-                f"{qualified_action_cities} of {len(frame)}",
-                "Cities with a qualified priority screen",
-                "scenario",
-                number(highest_action["top_gap_resolved"], " / hr")
-                + " is the largest modeled single-measure benefit"
-                if highest_action is not None
-                else "No qualified benefit available",
-                "blue",
-            ),
-        ]
-    )
-    st.plotly_chart(
-        portfolio_actions_chart(frame),
-        width="stretch",
-        config={"displayModeBar": False},
-        key="portfolio_priority_actions",
-    )
+def render(frame: pd.DataFrame, metrics: pd.DataFrame, artifacts: Mapping[str, Any]) -> None:
+    st.markdown("#### Model a mobility intervention scenario for one host")
     st.caption(
-        "The priority is a transparent bottleneck-matched screening measure, not an automatic winner or agency commitment. "
-        "Operational/capital packages are compared directly, per city, below."
-    )
-    with st.expander(
-        "Exact investment and strategy values", icon=":material/table_chart:"
-    ):
-        st.dataframe(
-            actions_table(frame),
-            hide_index=True,
-            width="stretch",
-            height=455,
-        )
-
-    st.divider()
-    st.markdown("##### Mobility intervention scenario planner")
-    st.caption(
-        "Compare the two named, pre-evaluated intervention packages for one host against its own scheduled baseline. "
-        "Levers and outcomes are the real InterventionPackage definitions and evaluate_intervention() results already "
-        "computed for that host's representative match - not a live formula driven by these controls."
+        "The sliders below build a real InterventionPackage and run it live through this app's own "
+        "evaluate_intervention() model - the same equation and factor registry (FTA/NACTO-style shuttle, "
+        "park-ride, bike-hub, and cooled-walkway cost/capacity ranges) used everywhere else in this app. "
+        "This is not a fabricated formula reacting to the sliders."
     )
 
     cities = sorted(frame["city"].dropna().unique().tolist())
-    default_city = str(highest_action["city"]) if highest_action is not None and highest_action["city"] in cities else cities[0]
-    selected_city = st.selectbox(
-        "Select host city",
-        cities,
-        index=cities.index(default_city),
-        key="investments_planner_city",
-    )
-    package_name = st.segmented_control(
-        "Intervention package",
-        list(PACKAGE_OPTIONS),
-        default="Operational Package",
-        required=True,
-        key="investments_planner_package",
-        width="stretch",
-    )
-    package_key = _PACKAGE_KEY[str(package_name)]
+    selected_city = st.selectbox("Select host city", cities, key="investments_planner_city")
     city_row = frame[frame["city"] == selected_city].iloc[0]
+    match_id = str(city_row.get("representative_match_id") or "")
 
-    col_levers, col_impact = st.columns([1, 1])
-    with col_levers:
-        st.markdown("**Package levers**")
-        levers = intervention_package_levers().get(str(package_name), [])
-        if levers:
-            for label, value in levers:
-                st.markdown(f"- {label}: **{value}**")
-        else:
-            st.caption("No levers defined for this package.")
-        st.caption(
-            f"Evidence status: {city_row.get(f'{package_key}_status', 'unavailable')} - "
-            "a planning scenario, not an agency commitment or observed outcome."
+    col_sliders, col_impact = st.columns([1, 1])
+    with col_sliders:
+        st.markdown("**Proposed interventions**")
+        shuttle_freq = st.slider(
+            ":material/directions_bus: Event shuttle frequency (buses/hour)",
+            0, 60, 10, 5,
+            help="Dedicated shuttle service to/from the venue on match days.",
         )
+        bike_stations = st.slider(
+            ":material/directions_bike: Bike-share stations near venue",
+            0, 50, 5, 5,
+            help="New bike-share docking stations within the venue-area walk.",
+        )
+        park_ride = st.slider(
+            ":material/local_parking: Park & Ride capacity (spaces)",
+            0, 20_000, 2_000, 1_000,
+            help="Park-and-ride spaces served by dedicated feeder transit.",
+        )
+        pedestrian_pct = st.slider(
+            ":material/directions_walk: Pedestrian infrastructure upgrade (%)",
+            0, 100, 20, 10,
+            help="Cooled/shaded walkway coverage on the venue-area walking corridor (100% = about 3 km covered).",
+        )
+        # Real InterventionPackage levers derived from the sliders above.
+        cooled_walkway_km = round(pedestrian_pct / 100 * 3.0, 2)
+        feeder_departures = round(park_ride / 80) if park_ride > 0 else 0
+
+    outcome = evaluate_custom_package(
+        selected_city,
+        match_id,
+        metrics,
+        artifacts,
+        shuttle_buses_per_hour=shuttle_freq,
+        bike_hub_spaces=bike_stations,
+        park_ride_spaces=park_ride,
+        park_ride_feeder_departures_per_hour=feeder_departures,
+        cooled_walkway_km=cooled_walkway_km,
+    )
 
     with col_impact:
-        st.markdown("**Projected impact vs. baseline**")
-        gap_resolved = city_row.get(f"{package_key}_gap_resolved")
-        baseline_trips = city_row.get("baseline_vehicle_trips_base")
-        package_trips = city_row.get(f"{package_key}_vehicle_trips_base")
-        trips_avoided = (
-            max(float(baseline_trips) - float(package_trips), 0.0)
-            if pd.notna(baseline_trips) and pd.notna(package_trips)
-            else None
-        )
-        net_co2e = city_row.get(f"{package_key}_net_co2e_base")
-        cost_base = city_row.get(f"{package_key}_cost_base")
+        st.markdown("**Projected impact**")
+        if outcome is None:
+            st.info("No representative-match evidence is available for this city yet.")
+        else:
+            baseline_trips = city_row.get("baseline_vehicle_trips_base")
+            custom_trips = outcome.get("venue_vehicle_trips_base")
+            trips_avoided = (
+                max(float(baseline_trips) - float(custom_trips), 0.0)
+                if pd.notna(baseline_trips) and custom_trips is not None
+                else None
+            )
+            co2e_kg = outcome.get("net_co2e_kg_base")
+            cost = outcome.get("cost_base")
 
-        c1, c2 = st.columns(2)
-        with c1:
-            st.metric("Peak passengers addressed / hr", number(gap_resolved))
-            st.metric("Vehicle trips avoided", number(trips_avoided))
-        with c2:
-            st.metric("Net CO2e avoided (kg)", number(net_co2e))
+            c1, c2 = st.columns(2)
+            with c1:
+                st.metric("Peak passengers addressed / hr", number(outcome.get("gap_resolved_passengers")))
+                st.metric("Vehicle trips avoided", number(trips_avoided))
+            with c2:
+                st.metric(
+                    "Est. CO2e avoided",
+                    f"{co2e_kg / 1000:,.1f} tonnes" if co2e_kg is not None else "Not available",
+                )
             st.metric(
-                "Planning cost",
-                f"${float(cost_base):,.0f}" if pd.notna(cost_base) else "Not available",
+                "Planning cost (capital + operating)",
+                f"${float(cost):,.0f}" if cost is not None else "Not available",
             )
 
-    st.plotly_chart(
-        portfolio_package_benefit_chart(city_row),
-        width="stretch",
-        config={"displayModeBar": False},
-        key="portfolio_package_benefit",
-    )
-    st.caption(
-        "Baseline resolves zero gap, avoids zero vehicle trips, and avoids zero CO2e by definition, so it is omitted "
-        "from the chart rather than plotted as three zero bars. Cost is reported above, not on this chart, because it "
-        "is on a different unit (planning USD) than the three benefit measures shown here."
-    )
+    if outcome is not None:
+        st.plotly_chart(
+            portfolio_custom_scenario_chart(outcome, city_row.get("baseline_vehicle_trips_base")),
+            width="stretch",
+            config={"displayModeBar": False},
+            key="portfolio_custom_scenario",
+        )
+        st.caption(
+            "Baseline is zero by definition - no intervention resolves zero gap, avoids zero vehicle trips, and "
+            "avoids zero CO2e. There is no evidenced relationship in this model between these levers and the "
+            "Overview tab's Transit Score, Composite Readiness, or First/last-mile Gap Score, so those are not shown "
+            "here; inventing one would be exactly the kind of fabricated formula this app avoids."
+        )
+        with st.expander("Assumptions behind this scenario", icon=":material/fact_check:"):
+            st.markdown(
+                "- **Park & Ride feeder service** is assumed at roughly 1 departure per 80 spaces (matching this "
+                "app's Capital Package ratio); it is not an independent slider.\n"
+                "- **Pedestrian infrastructure upgrade (%)** maps to 0-3 km of cooled/shaded walkway coverage.\n"
+                "- This custom scenario covers only the four levers above - it does not include added scheduled "
+                "transit departures or arrival-time spreading, which the named Operational and Capital packages "
+                "elsewhere in this app's evidence base do include.\n"
+                "- Costs use the same FTA/NACTO/FHWA-style planning factor ranges (base case) as every other "
+                "evaluated package in this app - see `docs/ASSUMPTIONS.md` for the exact low/base/high ranges."
+            )

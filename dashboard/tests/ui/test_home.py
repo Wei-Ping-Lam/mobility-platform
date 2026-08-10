@@ -53,7 +53,9 @@ def test_portfolio_tabs_make_every_track1_objective_explicit():
 
     app.session_state["track1_objective"] = ":material/route: Visitor movement"
     app.run(timeout=60)
-    movement = app.dataframe[0].value
+    # index 0 is now the Attendee Origin assumptions table (stage percentages);
+    # the movement table is whichever dataframe actually has its columns.
+    movement = next(df.value for df in app.dataframe if "Hosted matches" in df.value.columns)
     assert {
         "Hosted matches",
         "Peak forecast stage",
@@ -68,10 +70,12 @@ def test_portfolio_tabs_make_every_track1_objective_explicit():
         widget for widget in app.segmented_control if widget.label == "Forecast view"
     )
     assert forecast_view.value == "Attendee Origin"
-    assert forecast_view.options == ["Attendee Origin", "Mode mix", "Peak timing"]
+    assert forecast_view.options == ["Attendee Origin", "Transportation Mode Mix", "Peak timing"]
     captions = "\n".join(str(element.value) for element in app.caption)
-    assert "commercial customer origins shape only the U.S. prior" in captions
     assert "Neither is observed FIFA fan behavior" in captions
+    assumptions_text = "\n".join(str(element.value) for element in app.markdown)
+    assert "not sourced from FIFA or any external data" in assumptions_text
+    assert "fifa.com" in assumptions_text
 
     app.session_state["track1_objective"] = ":material/transfer_within_a_station: First/last mile"
     app.run(timeout=60)
@@ -82,21 +86,22 @@ def test_portfolio_tabs_make_every_track1_objective_explicit():
 
     app.session_state["track1_objective"] = ":material/construction: Investments & transit"
     app.run(timeout=60)
-    actions = app.dataframe[0].value
-    assert actions["Priority screen"].nunique() >= 3
-    assert {"Why this bottleneck", "Delivery owner", "Dependencies"}.issubset(actions.columns)
     planner_city = next(w for w in app.selectbox if w.label == "Select host city")
-    assert planner_city.value in set(actions["City"])
-    package = next(w for w in app.segmented_control if w.label == "Intervention package")
-    assert package.value == "Operational Package"
-    assert package.options == ["Operational Package", "Capital Package"]
+    assert planner_city.value
+    slider_labels = {s.label for s in app.slider}
+    assert any("Event shuttle frequency" in label for label in slider_labels)
+    assert any("Bike-share stations" in label for label in slider_labels)
+    assert any("Park & Ride capacity" in label for label in slider_labels)
+    assert any("Pedestrian infrastructure upgrade" in label for label in slider_labels)
     metric_labels = {m.label for m in app.metric}
     assert {
         "Peak passengers addressed / hr",
         "Vehicle trips avoided",
-        "Net CO2e avoided (kg)",
-        "Planning cost",
+        "Est. CO2e avoided",
+        "Planning cost (capital + operating)",
     }.issubset(metric_labels)
+    scenario_text = "\n".join(str(element.value) for element in app.caption)
+    assert "not a fabricated formula" in scenario_text
 
     app.session_state["track1_objective"] = ":material/traffic: Traffic management"
     app.run(timeout=60)
