@@ -7,7 +7,12 @@ from typing import Any, Mapping
 
 import pandas as pd
 
-from dashboard.mobility_platform.contracts import EvidenceStatus, MatchEvent, SourceReference
+from dashboard.mobility_platform.contracts import (
+    EvidenceStatus,
+    InterventionPackage,
+    MatchEvent,
+    SourceReference,
+)
 from dashboard.models.access import build_access_gap_result
 from dashboard.models.demand import validation_metrics
 from dashboard.models.equations import equation_records
@@ -133,6 +138,121 @@ def _origin_share(artifacts: Mapping[str, Any], city: str) -> float:
             largest = pd.to_numeric(frame["city_customer_share"], errors="coerce").max()
             return max(0.0, min(1.0, 1.0 - float(largest))) if pd.notna(largest) else 0.25
     return 0.25
+
+
+def _match_context(
+    raw_event: Mapping[str, Any],
+    metric_rows: Mapping[str, Mapping[str, Any]],
+    gtfs: Mapping[str, Any],
+    walking: Mapping[str, Any],
+    artifacts: Mapping[str, Any],
+    validation: pd.DataFrame | None = None,
+) -> tuple[MatchEvent, Any, Any, CityInterventionInputs]:
+    """Build the match/movement/access/city-input evidence for one event.
+
+    Shared by the batch pipeline (build_transportation_bundle) and the live
+    custom-scenario evaluator (build_custom_intervention_outcome) so both use
+    identical inputs - a slider-driven package and a named package are scored
+    on the same footing. Pass a precomputed `validation` (a 2-year rolling
+    holdout over every city) when calling this repeatedly - e.g. once per
+    slider drag in a UI - to avoid recomputing it from raw visits every time.
+    """
+
+    match = _match(raw_event)
+    city_metric = metric_rows.get(match.city, {})
+    if validation is None:
+        validation = validation_metrics(artifacts.get("visits", pd.DataFrame()))
+    historical_label = validation_label(validation, city=match.city)
+    movement = build_movement_scenario(match, validation_status=historical_label)
+    city_walk = walking.get(match.city, {}) if isinstance(walking.get(match.city, {}), Mapping) else {}
+    route_heat = city_walk.get("route_heat_exposure_c") if city_walk.get("route_geometry") else None
+    walk_metrics = {
+        "network_walk_distance_m": city_walk.get("network_distance_m"),
+        "straight_line_distance_m": city_walk.get("straight_distance_m"),
+        "route_heat_exposure_c": route_heat,
+        "status": city_walk.get("status", EvidenceStatus.UNAVAILABLE.value),
+    }
+    city_gtfs = gtfs.get(match.city, {}) if isinstance(gtfs.get(match.city, {}), Mapping) else {}
+    match_service = (
+        city_gtfs.get("matches", {}).get(match.match_id, {})
+        if isinstance(city_gtfs.get("matches", {}), Mapping)
+        else {}
+    )
+    access = build_access_gap_result(
+        movement,
+        _event_service(city_gtfs, match.match_id),
+        walk_metrics,
+        service_span_after_match_min=match_service.get("service_span_after_match_min"),
+        route_heat_exposure_c=route_heat,
+    )
+    transit_score = city_metric.get("transit_score")
+    private_share = (
+        0.60
+        if transit_score is None or pd.isna(transit_score)
+        else max(0.25, min(0.75, 0.75 - float(transit_score) / 200))
+    )
+    external_share = _origin_share(artifacts, match.city)
+    average_trip = 12.0 + 18.0 * external_share
+    network_distance = float(city_walk.get("network_distance_m") or 1200.0)
+    city_inputs = CityInterventionInputs(
+        city=match.city,
+        match_id=match.match_id,
+        private_vehicle_share=private_share,
+        average_vehicle_occupancy=2.2,
+        average_private_trip_miles=average_trip,
+        venue_area_leg_miles=min(5.0, average_trip * 0.35),
+        shuttle_round_trip_miles=12.0 + 2.0 * network_distance / 1609.344,
+        transit_round_trip_miles=18.0,
+        park_ride_feeder_round_trip_miles=16.0,
+        bike_access_distance_m=max(network_distance, 250.0),
+        walk_corridor_length_km=max(1.0, network_distance * 3.0 / 1000.0),
+    )
+    return match, movement, access, city_inputs
+
+
+def build_custom_intervention_outcome(
+    city: str,
+    match_id: str,
+    package: InterventionPackage,
+    metrics: pd.DataFrame,
+    artifacts: Mapping[str, Any],
+    factor_registry: InterventionFactorRegistry | None = None,
+    validation: pd.DataFrame | None = None,
+) -> dict[str, Any] | None:
+    """Evaluate an arbitrary (e.g. slider-driven) InterventionPackage for one match.
+
+    Reuses the same match/movement/access/city-input construction as
+    build_transportation_bundle, so a custom scenario is directly comparable to
+    the named Baseline/Operational/Capital packages precomputed there. Returns
+    None only if the (city, match_id) pair has no matching official match event.
+    Pass a precomputed `validation` when calling this repeatedly (e.g. once per
+    slider drag) - see _match_context.
+    """
+
+    event_rows = artifacts.get("match_events", [])
+    raw_event = next(
+        (
+            row
+            for row in event_rows
+            if str(row.get("city")) == city and str(row.get("match_id")) == match_id
+        ),
+        None,
+    )
+    if raw_event is None:
+        return None
+    if factor_registry is None:
+        snapshot = artifacts.get("factor_snapshot")
+        if not isinstance(snapshot, Mapping):
+            raise ValueError("Validated production factor snapshot is required")
+        factor_registry = factor_registry_from_snapshot(snapshot)
+    metric_rows = metrics.set_index("city").to_dict("index") if not metrics.empty else {}
+    gtfs = artifacts.get("gtfs", {}) if isinstance(artifacts.get("gtfs"), Mapping) else {}
+    walking = artifacts.get("walking_networks", {}) if isinstance(artifacts.get("walking_networks"), Mapping) else {}
+    match, movement, access, city_inputs = _match_context(
+        raw_event, metric_rows, gtfs, walking, artifacts, validation=validation
+    )
+    outcome = evaluate_intervention(package, match, movement, access, city_inputs, factor_registry)
+    return outcome.to_dict()
 
 
 def build_transportation_bundle(

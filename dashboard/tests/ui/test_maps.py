@@ -4,11 +4,10 @@ from dashboard.ui.presentation import CityDecisionView, ScenarioView
 from dashboard.ui.views import _layer_map, _traffic_pressure_envelope, _traffic_pressure_table
 from dashboard.viz.portfolio import (
     portfolio_access_chart,
-    portfolio_actions_chart,
     portfolio_climate_chart,
+    portfolio_custom_scenario_chart,
     portfolio_gap_quadrant_chart,
     portfolio_movement_chart,
-    portfolio_package_benefit_chart,
     portfolio_resilience_chart,
     portfolio_stop_density_chart,
     portfolio_traffic_chart,
@@ -277,7 +276,7 @@ def test_portfolio_stop_density_chart_sorts_hosts_by_stops_within_one_mile() -> 
 
 def test_portfolio_visitor_forecast_compares_origin_and_mode_mix_without_extra_panels() -> None:
     origins = portfolio_visitor_forecast_chart(_portfolio_frame(), "Attendee Origin")
-    modes = portfolio_visitor_forecast_chart(_portfolio_frame(), "Mode mix")
+    modes = portfolio_visitor_forecast_chart(_portfolio_frame(), "Transportation Mode Mix")
 
     assert [trace.name for trace in origins.data] == [
         "Host market",
@@ -298,32 +297,21 @@ def test_portfolio_visitor_forecast_compares_origin_and_mode_mix_without_extra_p
             assert sum(float(trace.x[city_index]) for trace in figure.data) == 100.0
 
 
-def test_portfolio_actions_chart_uses_city_specific_priority_measures() -> None:
-    actions = portfolio_actions_chart(_portfolio_frame())
-
-    assert set(actions.data[0].text) == {"Shuttle service", "Added transit frequency"}
-    assert list(actions.data[0].x) == [630, 700]
-
-
-def test_portfolio_package_benefit_chart_omits_baseline_and_nets_vehicle_trips() -> None:
-    city_row = {
-        "baseline_vehicle_trips_base": 12_000,
-        "operational_gap_resolved": 500.0,
-        "operational_vehicle_trips_base": 10_000,
-        "operational_net_co2e_base": 800.0,
-        "capital_gap_resolved": 550.0,
-        "capital_vehicle_trips_base": 9_000,
-        "capital_net_co2e_base": 900.0,
+def test_portfolio_custom_scenario_chart_zeros_baseline_and_nets_vehicle_trips() -> None:
+    outcome = {
+        "gap_resolved_passengers": 500.0,
+        "venue_vehicle_trips_base": 10_000,
+        "net_co2e_kg_base": 800.0,
     }
-    figure = portfolio_package_benefit_chart(city_row)
+    figure = portfolio_custom_scenario_chart(outcome, baseline_vehicle_trips=12_000)
 
-    assert [trace.name for trace in figure.data] == ["Operational Package", "Capital Package"]
-    operational, capital = figure.data
-    # Vehicle trips avoided = baseline - package; the other two metrics are the
-    # package's own value (baseline is trivially zero for both, by definition).
-    assert list(operational.y) == [500.0, 2_000.0, 800.0]
-    assert list(capital.y) == [550.0, 3_000.0, 900.0]
-    assert list(operational.x) == [
+    assert [trace.name for trace in figure.data] == ["Baseline", "Custom scenario"]
+    baseline, scenario = figure.data
+    assert list(baseline.y) == [0, 0, 0]
+    # Vehicle trips avoided = baseline - scenario; the other two metrics are the
+    # scenario's own evaluated value (baseline is trivially zero, by definition).
+    assert list(scenario.y) == [500.0, 2_000.0, 800.0]
+    assert list(scenario.x) == [
         "Peak passengers\naddressed / hr",
         "Vehicle trips\navoided",
         "Net CO2e\navoided (kg)",

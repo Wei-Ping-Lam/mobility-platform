@@ -59,7 +59,7 @@ def render_portfolio(
         lambda: resilience.render(frame, metrics),
         lambda: visitor_movement.render(frame),
         lambda: first_last_mile.render(frame),
-        lambda: investments.render(frame),
+        lambda: investments.render(frame, metrics, artifacts),
         lambda: traffic_management.render(frame),
     )
     for tab, renderer in zip(tabs, renderers):

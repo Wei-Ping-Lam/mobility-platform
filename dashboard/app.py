@@ -93,19 +93,34 @@ with st.sidebar:
 # not here - read the last-set values before this run's tabs render.
 weights, include_estimates = resolve_weight_settings()
 
-metrics = build_city_metrics(
-    artifacts["visits"], artifacts["weather"], artifacts["uhi"], artifacts["poi"], artifacts["gtfs"],
-    weights=weights, include_estimates=include_estimates,
-)
-try:
-    artifacts.update(build_transportation_bundle(metrics, artifacts))
-except ValueError as exc:
-    st.error(
-        "The transportation evidence registry failed validation. "
-        "Rebuild the pinned factor artifact before using scenario results. "
-        f"Details: {exc}"
+# build_transportation_bundle evaluates all 78 matches x 3 packages plus a
+# traffic-strategy calibration per match (~4-5s). Streamlit reruns this whole
+# script on every widget interaction anywhere in the app, so without caching,
+# clicking an unrelated tab or dragging an unrelated slider paid that cost
+# every time. Only weights/include_estimates change what these two functions
+# return, so cache on that small key instead of re-hashing the full artifacts
+# dict every rerun.
+_METRICS_BUNDLE_CACHE_KEY = "_metrics_bundle_cache"
+_cache_key = (tuple(sorted(weights.items())), include_estimates)
+_cached = st.session_state.get(_METRICS_BUNDLE_CACHE_KEY)
+if _cached is not None and _cached[0] == _cache_key:
+    metrics, bundle = _cached[1], _cached[2]
+else:
+    metrics = build_city_metrics(
+        artifacts["visits"], artifacts["weather"], artifacts["uhi"], artifacts["poi"], artifacts["gtfs"],
+        weights=weights, include_estimates=include_estimates,
     )
-    st.stop()
+    try:
+        bundle = build_transportation_bundle(metrics, artifacts)
+    except ValueError as exc:
+        st.error(
+            "The transportation evidence registry failed validation. "
+            "Rebuild the pinned factor artifact before using scenario results. "
+            f"Details: {exc}"
+        )
+        st.stop()
+    st.session_state[_METRICS_BUNDLE_CACHE_KEY] = (_cache_key, metrics, bundle)
+artifacts.update(bundle)
 
 if mode == "Overview":
     render_home(metrics, artifacts, weights)

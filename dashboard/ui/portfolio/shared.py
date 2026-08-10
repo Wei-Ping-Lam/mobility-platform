@@ -2,49 +2,27 @@
 
 from __future__ import annotations
 
+from collections.abc import Mapping
 from typing import Any
 
 import pandas as pd
 import streamlit as st
 
+from dashboard.domain.decision_support import build_custom_intervention_outcome
 from dashboard.domain.scoring import DEFAULT_WEIGHTS, normalize_weights
+from dashboard.mobility_platform.contracts import InterventionPackage
 from dashboard.mobility_platform.sources import RICE_COLLECTION
-from dashboard.models.interventions import named_packages
+from dashboard.models.demand import validation_metrics
 from dashboard.ui.theme import metric_card
 
+
+@st.cache_data(show_spinner=False)
+def _cached_validation_metrics(visits: pd.DataFrame) -> pd.DataFrame:
+    """Cache the 2-year rolling holdout so every slider drag doesn't recompute it."""
+
+    return validation_metrics(visits)
+
 MetricItem = tuple[str, str, str, str, str]
-
-# (field name on InterventionPackage) -> (display label, unit)
-_PACKAGE_LEVER_FIELDS = (
-    ("shuttle_buses_per_hour", "Event shuttle frequency", "buses/hour"),
-    ("added_transit_departures_per_hour", "Added transit departures", "departures/hour"),
-    ("park_ride_spaces", "Park & Ride capacity", "spaces"),
-    ("park_ride_feeder_departures_per_hour", "Park & Ride feeder service", "departures/hour"),
-    ("bike_hub_spaces", "Bike-share stations near venue", "spaces"),
-    ("cooled_walkway_km", "Cooled walkway upgrade", "km"),
-    ("arrival_spreading_pct", "Arrival spreading", "%"),
-)
-
-
-def intervention_package_levers() -> dict[str, list[tuple[str, str]]]:
-    """Human-readable lever summary for each named intervention package.
-
-    Reads the real InterventionPackage definitions used by the evidence model
-    (dashboard/models/interventions.py) rather than duplicating their values,
-    so this never drifts from what evaluate_intervention actually evaluates.
-    """
-
-    levers_by_package: dict[str, list[tuple[str, str]]] = {}
-    for name, package in named_packages().items():
-        levers: list[tuple[str, str]] = []
-        for field, label, unit in _PACKAGE_LEVER_FIELDS:
-            value = getattr(package, field, 0)
-            if not value:
-                continue
-            formatted = f"{value:.0f}%" if unit == "%" else f"{value:,.0f} {unit}"
-            levers.append((label, formatted))
-        levers_by_package[name] = levers
-    return levers_by_package
 
 # Session-state keys shared between app.py (resolves weights before metrics are
 # built) and render_weight_settings (renders the interactive widgets inside the
@@ -157,3 +135,37 @@ def navigate(workspace: str, city: str | None = None) -> None:
     if city:
         st.session_state["city_focus"] = city
         st.session_state["selected_city_context"] = city
+
+
+def evaluate_custom_package(
+    city: str,
+    match_id: str,
+    metrics: pd.DataFrame,
+    artifacts: Mapping[str, Any],
+    *,
+    shuttle_buses_per_hour: float = 0.0,
+    bike_hub_spaces: float = 0.0,
+    park_ride_spaces: float = 0.0,
+    park_ride_feeder_departures_per_hour: float = 0.0,
+    cooled_walkway_km: float = 0.0,
+) -> dict[str, Any] | None:
+    """Live-evaluate a slider-driven InterventionPackage against the real model.
+
+    Unlike the two named packages (Operational/Capital), this scenario is built
+    fresh from whatever lever values the UI passes in, then run through the
+    same evaluate_intervention() equation used everywhere else in this app -
+    it is not a fabricated formula, just a different (custom) input package.
+    """
+
+    package = InterventionPackage(
+        name="Custom Scenario",
+        shuttle_buses_per_hour=int(round(shuttle_buses_per_hour)),
+        bike_hub_spaces=int(round(bike_hub_spaces)),
+        park_ride_spaces=int(round(park_ride_spaces)),
+        park_ride_feeder_departures_per_hour=int(round(park_ride_feeder_departures_per_hour)),
+        cooled_walkway_km=round(float(cooled_walkway_km), 2),
+    )
+    validation = _cached_validation_metrics(artifacts.get("visits", pd.DataFrame()))
+    return build_custom_intervention_outcome(
+        city, match_id, package, metrics, artifacts, validation=validation
+    )
