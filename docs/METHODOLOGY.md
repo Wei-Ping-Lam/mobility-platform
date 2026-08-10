@@ -193,9 +193,11 @@ recovery time, or service reliability.
   assumed to produce ordered outcome bounds.
 - Shuttle and added-transit capacity are capped by demand and include operating
   VMT and emissions.
-- Added frequency is evidence-qualified only when a serving event-hour route and
-  a capacity-qualified gap are both established. A zero-capacity event cannot be
-  converted into a frequency recommendation without a route-specific operating plan.
+- Added frequency remains exploratory even when nearby event-hour service and a
+  capacity-qualified gap are established. It becomes evidence-qualified only
+  after a route, direction, terminal or turnback, vehicle type, fleet, and
+  event-window timetable are assigned. Aggregate service by mode cannot be
+  converted into a route-specific frequency recommendation.
 - Park-and-ride preserves driving to remote lots and counts only venue-area VMT
   displaced. Passenger throughput is capped by explicitly scheduled feeder
   departures; feeder VMT and event operating cost are included.

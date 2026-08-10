@@ -7,7 +7,6 @@ TAB_MODULES = {
     "visitor_movement",
     "first_last_mile",
     "investments",
-    "traffic_management",
 }
 
 

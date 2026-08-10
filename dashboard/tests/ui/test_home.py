@@ -35,10 +35,10 @@ def test_default_landing_page_starts_with_all_city_portfolio():
         ":material/route: Visitor movement",
         ":material/transfer_within_a_station: First/last mile",
         ":material/construction: Investments & transit",
-        ":material/traffic: Traffic management",
     ]
     page_text = "\n".join(str(element.value) for element in app.markdown)
-    assert "Compare every Track 1 objective" in page_text
+    assert "Compare the portfolio-level objectives" in page_text
+    assert "Match-day traffic operations stay in each City action plan" in page_text
     assert "How do hosts rank, and how much scheduled coverage survives a common stress?" in page_text
     assert "Transportation stress test" in page_text
     assert "City focus" not in page_text
@@ -47,7 +47,7 @@ def test_default_landing_page_starts_with_all_city_portfolio():
     assert next(w for w in app.selectbox if w.label == "Weight profile").value == "balanced"
 
 
-def test_portfolio_tabs_make_every_track1_objective_explicit():
+def test_portfolio_tabs_make_cross_city_objectives_explicit():
     app = _app()
     assert not [widget for widget in app.selectbox if widget.label == "Scenario package"]
 
@@ -103,15 +103,6 @@ def test_portfolio_tabs_make_every_track1_objective_explicit():
     scenario_text = "\n".join(str(element.value) for element in app.caption)
     assert "not a fabricated formula" in scenario_text
 
-    app.session_state["track1_objective"] = ":material/traffic: Traffic management"
-    app.run(timeout=60)
-    traffic = app.dataframe[0].value
-    assert traffic["Engine strategy"].nunique() >= 5
-    assert {"Agreement", "Rule strength"}.issubset(traffic.columns)
-    assert set(traffic["Agreement"]) == {"Matches"}
-    traffic_detail = app.dataframe[1].value
-    assert {"Official benchmark", "Bus eq / hr"}.issubset(traffic_detail.columns)
-
 
 def test_priority_case_drills_into_the_same_city_action_plan():
     app = _app()
@@ -125,11 +116,13 @@ def test_priority_case_drills_into_the_same_city_action_plan():
     assert city_focus.value == "New York/NJ"
     page_text = "\n".join(str(element.value) for element in app.markdown)
     assert "New York/NJ: from access gap to action" in page_text
+    assert "Match-day traffic strategy" in page_text
+    assert "Planned operating footprint" in page_text
+    assert "Official benchmark" not in page_text
     assert "Competition evidence" not in page_text
     assert "Required deliverables" not in page_text
     assert len(app.get("plotly_chart")) == 3
-    tab_labels = {tab.label for tab in app.tabs}
-    assert {"Venue access overlap", "Operating overlap"}.issubset(tab_labels)
+    assert not app.tabs
     assert len(app.dataframe) == 4
     assert any("Candidate hub" in dataframe.value.columns for dataframe in app.dataframe)
     strategy = next(frame.value for frame in app.dataframe if "Phase" in frame.value.columns)
@@ -142,7 +135,8 @@ def test_priority_case_drills_into_the_same_city_action_plan():
     ]
     investment_screen = next(frame.value for frame in app.dataframe if "Decision" in frame.value.columns)
     assert set(investment_screen["Decision"]) >= {"Screen first"}
-    assert "Proposed scale" in investment_screen
+    assert "Scope and location" in investment_screen
+    assert {"Per-match screening cost", "Screening cost ratio"}.issubset(investment_screen.columns)
     composite_toggle = next(widget for widget in app.toggle if widget.label == "Show advanced composite model tests")
     assert composite_toggle.value is False
     assert not [button for button in app.button if "maps and scenarios" in button.label.lower()]

@@ -159,9 +159,6 @@ def _with_track1_metrics(frame: pd.DataFrame, artifacts: Mapping[str, Any]) -> p
         forecasts_by_city.setdefault(str(forecast_row.get("city")), []).append(forecast_row)
     access_rows = list(artifacts.get("access_gaps", []))
     access = {(str(row.get("city")), str(row.get("match_id"))): row for row in access_rows}
-    traffic_plans = {
-        (str(row.get("city")), str(row.get("match_id"))): row for row in artifacts.get("traffic_strategy_plans", [])
-    }
     walking = artifacts.get("walking_networks", {})
 
     additions: list[dict[str, Any]] = []
@@ -184,7 +181,6 @@ def _with_track1_metrics(frame: pd.DataFrame, artifacts: Mapping[str, Any]) -> p
                     movement_fields[f"{prefix}_peak_offset_hours"] = offset
 
         access_row = access.get((city, match_id), {})
-        traffic_plan = traffic_plans.get((city, match_id), {})
         peak_row = max(
             hourly,
             key=lambda item: float(item.get("total_movement_base") or 0),
@@ -235,29 +231,6 @@ def _with_track1_metrics(frame: pd.DataFrame, artifacts: Mapping[str, Any]) -> p
                 "stress_gap_pph": resilience["stressed_gap_pph"],
                 "stress_demand_pph": resilience["stressed_demand_pph"],
                 "stress_capacity_pph": resilience["stressed_capacity_pph"],
-                "traffic_primary_pattern": traffic_plan.get("primary_pattern"),
-                "traffic_predicted_pattern": traffic_plan.get("predicted_pattern"),
-                "traffic_prediction_strength": traffic_plan.get("prediction_strength"),
-                "traffic_prediction_reasons": " | ".join(traffic_plan.get("prediction_reasons", [])),
-                "traffic_benchmark_pattern": traffic_plan.get("benchmark_pattern"),
-                "traffic_benchmark_agreement": traffic_plan.get("benchmark_agreement"),
-                "traffic_benchmark_source_url": traffic_plan.get("benchmark_source_url"),
-                "traffic_benchmark_evidence_level": traffic_plan.get("benchmark_evidence_level"),
-                "traffic_strategy_basis": traffic_plan.get("strategy_basis"),
-                "traffic_status": str(traffic_plan.get("status") or "unavailable"),
-                "traffic_official_plan_available": bool(traffic_plan.get("official_plan_available", False)),
-                "traffic_regional_hub_name": traffic_plan.get("regional_hub_name"),
-                "traffic_regional_hub_status": traffic_plan.get("regional_hub_status"),
-                "traffic_buses_low": traffic_plan.get("required_buses_per_hour_low"),
-                "traffic_buses_base": traffic_plan.get("required_buses_per_hour_base"),
-                "traffic_buses_high": traffic_plan.get("required_buses_per_hour_high"),
-                "traffic_single_hub_feasibility": traffic_plan.get("single_hub_feasibility"),
-                "traffic_peak_passengers_addressed": traffic_plan.get("peak_passengers_addressed"),
-                "traffic_vehicle_trips_avoided": traffic_plan.get("venue_vehicle_trips_avoided"),
-                "traffic_net_co2e_kg_avoided": traffic_plan.get("net_co2e_kg_avoided"),
-                "traffic_arrival_window": traffic_plan.get("arrival_window"),
-                "traffic_egress_window": traffic_plan.get("egress_window"),
-                "traffic_evidence_gap_count": len(traffic_plan.get("evidence_gaps", [])),
             }
         )
     return pd.concat([result.reset_index(drop=True), pd.DataFrame(additions)], axis=1)

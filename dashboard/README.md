@@ -79,8 +79,8 @@ project interpreter directly: `.venv\Scripts\python.exe -m streamlit run dashboa
 
 ## Current product behavior
 
-- **Portfolio Overview:** five objective tabs keep all 11 cities visible: Overview,
-  Visitor movement, First/last mile, Investments & transit, and Traffic management. The
+- **Portfolio Overview:** four comparison tabs keep all 11 cities visible: Overview,
+  Visitor movement, First/last mile, and Investments & transit. The
   default starts with readiness and a common physical stress test. Visitor movement
   compares city-tournament origin mix, approach-mode mix, and peak timing without
   implying exact visitor locations or routes; exact tables and a
@@ -105,11 +105,11 @@ The implemented product behavior is:
   across every hosted match and separates arrival and departure scenario peaks;
   first/last mile combines exact-hour scheduled capacity with event-stop walking evidence;
   Investments & transit shows bottleneck-matched concrete measures alongside
-  named-package outcomes (Access, Traffic, and CO2e); and Traffic management compares
-  the evidence-driven strategy engine against reviewed official benchmarks.
-- **City Action Plan** leads with the access challenge, readiness components,
+  named-package outcomes (Access, Traffic, and CO2e).
+- **City Action Plan** leads with the access challenge and readiness components,
+  then keeps the time-phased traffic strategy, candidate hubs, overlap maps,
   candidate investment, modeled outcome range, planning cost, lead time, and
-  evidence quality. MRS is secondary.
+  evidence quality together. MRS is secondary.
 
 ## Canonical supplied data
 

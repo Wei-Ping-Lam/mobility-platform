@@ -1,4 +1,4 @@
-"""Exact-value table adapters for the six Portfolio objectives."""
+"""Exact-value table adapters for the Portfolio comparisons."""
 
 from __future__ import annotations
 
@@ -154,48 +154,3 @@ def access_table(frame: pd.DataFrame) -> pd.DataFrame:
         lambda value: f"{value:.1f}%" if pd.notna(value) else "Not available"
     )
     return display
-
-
-def traffic_management_table(frame: pd.DataFrame) -> pd.DataFrame:
-    display = frame.sort_values(["traffic_buses_base", "city"], ascending=[False, True]).copy()
-    display = display[
-        [
-            "city",
-            "traffic_predicted_pattern",
-            "traffic_benchmark_pattern",
-            "traffic_benchmark_agreement",
-            "traffic_prediction_strength",
-            "traffic_buses_low",
-            "traffic_buses_base",
-            "traffic_buses_high",
-        ]
-    ]
-    display.columns = [
-        "City",
-        "Engine strategy",
-        "Official benchmark",
-        "Agreement",
-        "Rule strength",
-        "Bus low",
-        "Bus base",
-        "Bus high",
-    ]
-    display["Agreement"] = display["Agreement"].map(
-        {"matches": "Matches", "differs": "Differs", "not benchmarked": "Not benchmarked"}
-    ).fillna("Not benchmarked")
-    display["Rule strength"] = display["Rule strength"].fillna("limited").str.capitalize()
-    display["Bus eq / hr"] = display.apply(
-        lambda row: f"{row['Bus low']:,.0f}–{row['Bus base']:,.0f}–{row['Bus high']:,.0f}",
-        axis=1,
-    )
-    display = display.drop(columns=["Bus low", "Bus base", "Bus high"])
-    return display[
-        [
-            "City",
-            "Engine strategy",
-            "Official benchmark",
-            "Agreement",
-            "Rule strength",
-            "Bus eq / hr",
-        ]
-    ]
