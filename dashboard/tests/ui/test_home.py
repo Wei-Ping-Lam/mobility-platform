@@ -15,7 +15,6 @@ def test_default_landing_page_starts_with_all_city_portfolio():
     assert workspace.options == ["Portfolio", "City action plan"]
     assert not [widget for widget in app.selectbox if widget.label in {"City focus", "Match"}]
     assert not app.multiselect
-    assert not [widget for widget in app.segmented_control if widget.label == "Outcome to compare"]
     comparison = app.dataframe[0].value
     assert len(comparison) == 11
     assert set(comparison["City"]) >= {"Atlanta", "Miami", "New York/NJ"}
@@ -32,17 +31,19 @@ def test_default_landing_page_starts_with_all_city_portfolio():
     assert list(comparison.sort_values("Readiness rank")["City"][:1]) == ["Seattle"]
     assert len(app.get("plotly_chart")) == 3
     assert [tab.label for tab in app.tabs] == [
-        ":material/health_and_safety: Resilience",
+        ":material/health_and_safety: Overview",
         ":material/route: Visitor movement",
         ":material/transfer_within_a_station: First/last mile",
         ":material/construction: Investments & strategies",
-        ":material/monitoring: Outcomes",
     ]
     page_text = "\n".join(str(element.value) for element in app.markdown)
     assert "Compare every Track 1 objective" in page_text
     assert "How do hosts rank, and how much scheduled coverage survives a common stress?" in page_text
     assert "Transportation stress test" in page_text
     assert "City focus" not in page_text
+    # Advanced comparison settings moved from the sidebar into the Overview tab.
+    assert "Advanced comparison settings" in [e.label for e in app.get("expander")]
+    assert next(w for w in app.selectbox if w.label == "Weight profile").value == "balanced"
 
 
 def test_portfolio_tabs_make_every_track1_objective_explicit():
@@ -62,9 +63,11 @@ def test_portfolio_tabs_make_every_track1_objective_explicit():
         "Departure peak base",
         "Validation status",
     }.issubset(movement.columns)
-    assert next(
+    forecast_view = next(
         widget for widget in app.segmented_control if widget.label == "Forecast view"
-    ).value == "Origin mix"
+    )
+    assert forecast_view.value == "Attendee Origin"
+    assert forecast_view.options == ["Attendee Origin", "Mode mix", "Peak timing"]
     captions = "\n".join(str(element.value) for element in app.caption)
     assert "commercial customer origins shape only the U.S. prior" in captions
     assert "Neither is observed FIFA fan behavior" in captions
@@ -79,16 +82,18 @@ def test_portfolio_tabs_make_every_track1_objective_explicit():
     actions = app.dataframe[0].value
     assert actions["Priority screen"].nunique() >= 3
     assert {"Why this bottleneck", "Delivery owner", "Dependencies"}.issubset(actions.columns)
-
-    app.session_state["track1_objective"] = ":material/monitoring: Outcomes"
-    app.run(timeout=60)
-    outcomes = app.dataframe[0].value
-    assert {"Peak passengers addressed / hour", "Venue-area vehicle trips avoided", "Net CO2e avoided (kg)"}.issubset(outcomes.columns)
-    assert next(widget for widget in app.segmented_control if widget.label == "Outcome to compare").value == "Access"
-    page_text = "\n".join(str(element.value) for element in app.markdown)
-    assert "Single-measure efficiency" not in page_text
-    assert "Operational Package" not in page_text
-    assert "Capital Package" not in page_text
+    planner_city = next(w for w in app.selectbox if w.label == "Select host city")
+    assert planner_city.value in set(actions["City"])
+    package = next(w for w in app.segmented_control if w.label == "Intervention package")
+    assert package.value == "Operational Package"
+    assert package.options == ["Operational Package", "Capital Package"]
+    metric_labels = {m.label for m in app.metric}
+    assert {
+        "Peak passengers addressed / hr",
+        "Vehicle trips avoided",
+        "Net CO2e avoided (kg)",
+        "Planning cost",
+    }.issubset(metric_labels)
 
 
 def test_priority_case_drills_into_the_same_city_action_plan():

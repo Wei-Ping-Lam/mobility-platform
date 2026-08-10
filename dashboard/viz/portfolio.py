@@ -2,6 +2,9 @@
 
 from __future__ import annotations
 
+from collections.abc import Mapping
+from typing import Any
+
 import numpy as np
 import pandas as pd
 import plotly.graph_objects as go
@@ -85,6 +88,115 @@ def portfolio_access_chart(frame: pd.DataFrame) -> go.Figure:
     return style_figure(figure, 510, margin=dict(l=18, r=18, t=42, b=38))
 
 
+def portfolio_gap_quadrant_chart(frame: pd.DataFrame) -> go.Figure:
+    """Plot transit readiness against the first/last-mile gap score, all hosts at once.
+
+    Bubble size is venue capacity; color is average summer temperature (heat
+    compounds the gap score - a hotter walk from the nearest stop matters more).
+    The dotted threshold lines are illustrative reference points chosen for this
+    branch's current score distribution, not an evidenced cutoff.
+    """
+
+    chart = frame.copy()
+    chart["_transit"] = _numeric(chart, "transit_score")
+    chart["_gap"] = _numeric(chart, "first_last_mile_gap")
+    chart["_temp"] = _numeric(chart, "avg_temp_c")
+    chart["_capacity"] = _numeric(chart, "capacity")
+    chart = chart.dropna(subset=["_transit", "_gap"])
+
+    max_capacity = float(chart["_capacity"].fillna(0).max())
+    sizeref = (2.0 * max_capacity / (46.0**2)) if max_capacity > 0 else 1.0
+
+    figure = go.Figure(
+        go.Scatter(
+            x=chart["_transit"],
+            y=chart["_gap"],
+            mode="markers+text",
+            text=chart["city"],
+            textposition="top center",
+            textfont=dict(size=10, color=COLORS["ink"]),
+            marker=dict(
+                size=chart["_capacity"],
+                sizemode="area",
+                sizeref=sizeref,
+                sizemin=10,
+                color=chart["_temp"],
+                colorscale=[[0, COLORS["teal"]], [0.5, COLORS["amber"]], [1, COLORS["coral"]]],
+                colorbar=dict(title="Avg summer<br>temp (°C)", thickness=12, len=0.7),
+                line=dict(width=1, color=COLORS["surface"]),
+            ),
+            customdata=np.column_stack([chart["_capacity"].fillna(0), chart["_temp"]]),
+            hovertemplate=(
+                "<b>%{text}</b><br>Transit score: %{x:.0f}/100"
+                "<br>First/last-mile gap score: %{y:.0f}"
+                "<br>Venue capacity: %{customdata[0]:,.0f}"
+                "<br>Avg summer temp: %{customdata[1]:.1f}°C<extra></extra>"
+            ),
+        )
+    )
+    figure.add_vline(
+        x=60, line_dash="dot", line_color=COLORS["muted"],
+        annotation_text="Low transit threshold", annotation_font=dict(size=10, color=COLORS["muted"]),
+    )
+    figure.add_hline(
+        y=85, line_dash="dot", line_color=COLORS["muted"],
+        annotation_text="High gap threshold", annotation_position="top left",
+        annotation_font=dict(size=10, color=COLORS["muted"]),
+    )
+    figure.add_annotation(
+        xref="paper", yref="paper", x=0.02, y=0.98, xanchor="left", yanchor="top",
+        text="Weak transit + high gap", showarrow=False, font=dict(size=10, color=COLORS["coral"]),
+    )
+    figure.add_annotation(
+        xref="paper", yref="paper", x=0.98, y=0.02, xanchor="right", yanchor="bottom",
+        text="Strong transit + low gap", showarrow=False, font=dict(size=10, color=COLORS["teal"]),
+    )
+    figure.update_xaxes(title="Transit infrastructure score (0-100)", range=[-5, 108])
+    figure.update_yaxes(title="First/last-mile gap score")
+    return style_figure(figure, 520, legend=False, margin=dict(l=18, r=18, t=42, b=38))
+
+
+def portfolio_stop_density_chart(frame: pd.DataFrame) -> go.Figure:
+    """Compare GTFS-observed transit-stop density around each venue, all hosts at once."""
+
+    chart = frame.copy()
+    chart["_0_5mi"] = _numeric(chart, "transit_stops_0_5mi")
+    chart["_1mi"] = _numeric(chart, "gtfs_stops_1mi")
+    chart["_2mi"] = _numeric(chart, "gtfs_stops_2mi")
+    chart = chart.dropna(subset=["_1mi"]).sort_values("_1mi", ascending=False)
+
+    nearest = _numeric(chart, "nearest_stop_mi")
+    agencies = chart.get("gtfs_agencies", pd.Series(dtype=object)).fillna("Not available")
+
+    figure = go.Figure()
+    bands = [
+        ("Within 0.5 mi", "_0_5mi", COLORS["teal"]),
+        ("Within 1 mi", "_1mi", COLORS["blue"]),
+        ("Within 2 mi", "_2mi", COLORS["violet"]),
+    ]
+    for name, column, color in bands:
+        figure.add_trace(
+            go.Bar(
+                x=chart["city"],
+                y=chart[column],
+                name=name,
+                marker_color=color,
+                text=chart[column],
+                texttemplate="%{text:,.0f}",
+                textposition="outside",
+                customdata=np.column_stack([nearest, agencies]),
+                hovertemplate=(
+                    f"<b>%{{x}}</b><br>{name}: %{{y:,.0f}} stops"
+                    "<br>Nearest stop: %{customdata[0]:.2f} mi"
+                    "<br>Agencies: %{customdata[1]}<extra></extra>"
+                ),
+            )
+        )
+    figure.update_layout(barmode="group", uniformtext_minsize=8, uniformtext_mode="hide")
+    figure.update_yaxes(title="Transit stops (GTFS)")
+    return style_figure(figure, 480, margin=dict(l=18, r=18, t=42, b=38))
+
+
 def portfolio_resilience_chart(frame: pd.DataFrame) -> go.Figure:
     """Compare scheduled coverage before and after a common access stress."""
 
@@ -135,7 +247,12 @@ def portfolio_resilience_chart(frame: pd.DataFrame) -> go.Figure:
 
 
 def portfolio_movement_chart(frame: pd.DataFrame) -> go.Figure:
-    """Separate modeled arrival and departure peaks for every host."""
+    """Dumbbell-compare modeled arrival and departure peaks for every host.
+
+    A connecting line highlights the arrival-to-departure swing per city,
+    which a grouped bar pair (two bars from zero) makes harder to read at a
+    glance than two dots joined by a line.
+    """
 
     chart = frame.copy()
     forecast_fields = "forecast_arrival_peak_base" in chart.columns
@@ -162,13 +279,28 @@ def portfolio_movement_chart(frame: pd.DataFrame) -> go.Figure:
         ]
     )
     figure = go.Figure()
+    line_x: list[float | None] = []
+    line_y: list[str | None] = []
+    for city, arrival, departure in zip(chart["city"], chart["_arrival"], chart["_departure"]):
+        line_x += [arrival, departure, None]
+        line_y += [city, city, None]
     figure.add_trace(
-        go.Bar(
-            y=chart["city"],
+        go.Scatter(
+            x=line_x,
+            y=line_y,
+            mode="lines",
+            line=dict(color=COLORS["slate"], width=4),
+            hoverinfo="skip",
+            showlegend=False,
+        )
+    )
+    figure.add_trace(
+        go.Scatter(
             x=chart["_arrival"],
-            orientation="h",
+            y=chart["city"],
+            mode="markers",
             name="Arrival peak",
-            marker_color=COLORS["blue"],
+            marker=dict(color=COLORS["blue"], size=13),
             customdata=customdata,
             hovertemplate=(
                 "<b>%{y}</b><br>Peak forecast match: %{customdata[0]}"
@@ -179,12 +311,12 @@ def portfolio_movement_chart(frame: pd.DataFrame) -> go.Figure:
         )
     )
     figure.add_trace(
-        go.Bar(
-            y=chart["city"],
+        go.Scatter(
             x=chart["_departure"],
-            orientation="h",
+            y=chart["city"],
+            mode="markers",
             name="Departure peak",
-            marker_color=COLORS["violet"],
+            marker=dict(color=COLORS["violet"], size=13),
             customdata=customdata,
             hovertemplate=(
                 "<b>%{y}</b><br>Departure peak: %{x:,.0f}/hour"
@@ -193,9 +325,90 @@ def portfolio_movement_chart(frame: pd.DataFrame) -> go.Figure:
             ),
         )
     )
-    figure.update_layout(barmode="group")
-    figure.update_xaxes(title="Modeled passengers per peak hour", rangemode="tozero")
+    data_min = float(min(chart["_arrival"].min(), chart["_departure"].min()))
+    data_max = float(max(chart["_arrival"].max(), chart["_departure"].max()))
+    pad = (data_max - data_min) * 0.08 or max(data_max * 0.05, 1.0)
+    figure.update_xaxes(
+        title="Modeled passengers per peak hour",
+        range=[data_min - pad, data_max + pad],
+    )
     return style_figure(figure, 530, margin=dict(l=18, r=18, t=42, b=38))
+
+
+def portfolio_transit_capacity_chart(frame: pd.DataFrame) -> go.Figure:
+    """Compare modeled transit demand against real scheduled capacity, per host.
+
+    Scheduled transit is the only mode with an evidenced capacity ceiling in the
+    supplied data (each host's real GTFS scheduled service). This applies each
+    host's own modeled Scheduled-transit demand share to its arrival and
+    departure peak volumes, then divides by that host's real scheduled
+    capacity. A log axis is used because the range is wide - some venues have
+    almost no nearby scheduled service, so modeled demand there reaches many
+    times capacity. Hosts with zero supplied scheduled capacity have no bar;
+    they're listed separately since a ratio against zero is undefined, not zero.
+    """
+
+    forecast_fields = "forecast_arrival_peak_base" in frame.columns
+    prefix = "forecast_" if forecast_fields else ""
+    arrival = _numeric(frame, f"{prefix}arrival_peak_base")
+    departure = _numeric(frame, f"{prefix}departure_peak_base")
+    share = _numeric(frame, "mode_scheduled_transit_share_pct") / 100.0
+    capacity = _numeric(frame, "scheduled_transit_capacity_pph")
+
+    chart = frame[["city"]].copy()
+    chart["_arrival_demand"] = arrival * share
+    chart["_departure_demand"] = departure * share
+    chart["_capacity"] = capacity
+    has_capacity = chart["_capacity"].notna() & (chart["_capacity"] > 0)
+    no_capacity_cities = sorted(chart.loc[~has_capacity, "city"].dropna().tolist())
+    chart = chart[has_capacity].copy()
+    chart["_arrival_pct"] = chart["_arrival_demand"] / chart["_capacity"] * 100
+    chart["_departure_pct"] = chart["_departure_demand"] / chart["_capacity"] * 100
+    chart = chart.dropna(subset=["_arrival_pct", "_departure_pct"]).sort_values(
+        "_departure_pct", ascending=False
+    )
+
+    figure = go.Figure()
+    figure.add_trace(
+        go.Bar(
+            x=chart["city"],
+            y=chart["_arrival_pct"],
+            name="Arrival peak",
+            marker_color=COLORS["blue"],
+            customdata=chart["_arrival_demand"],
+            hovertemplate=(
+                "<b>%{x}</b><br>Arrival: %{y:.0f}% of scheduled transit capacity"
+                "<br>Modeled transit demand: %{customdata:,.0f}/hour<extra></extra>"
+            ),
+        )
+    )
+    figure.add_trace(
+        go.Bar(
+            x=chart["city"],
+            y=chart["_departure_pct"],
+            name="Departure peak",
+            marker_color=COLORS["violet"],
+            customdata=chart["_departure_demand"],
+            hovertemplate=(
+                "<b>%{x}</b><br>Departure: %{y:.0f}% of scheduled transit capacity"
+                "<br>Modeled transit demand: %{customdata:,.0f}/hour<extra></extra>"
+            ),
+        )
+    )
+    figure.add_hline(
+        y=100, line_dash="dot", line_color=COLORS["coral"],
+        annotation_text="Full scheduled capacity", annotation_position="top left",
+        annotation_font=dict(size=10, color=COLORS["coral"]),
+    )
+    if no_capacity_cities:
+        figure.add_annotation(
+            xref="paper", yref="paper", x=0.5, y=1.12, showarrow=False,
+            text="No scheduled capacity in the supplied data: " + ", ".join(no_capacity_cities),
+            font=dict(size=10, color=COLORS["muted"]),
+        )
+    figure.update_layout(barmode="group")
+    figure.update_yaxes(title="% of scheduled transit capacity (log scale)", type="log")
+    return style_figure(figure, 530, margin=dict(l=18, r=18, t=58, b=38))
 
 
 def portfolio_visitor_forecast_chart(
@@ -206,7 +419,7 @@ def portfolio_visitor_forecast_chart(
     if view == "Peak timing":
         return portfolio_movement_chart(frame)
     settings = {
-        "Origin mix": (
+        "Attendee Origin": (
             [
                 ("Host market", "origin_host_market_share_pct", "origin_host_market_attendees_base", "teal"),
                 ("Nearby U.S.", "origin_nearby_us_share_pct", "origin_nearby_us_attendees_base", "blue"),
@@ -225,7 +438,7 @@ def portfolio_visitor_forecast_chart(
             "mode_scheduled_transit_share_pct",
         ),
     }
-    series, sort_column = settings.get(view, settings["Origin mix"])
+    series, sort_column = settings.get(view, settings["Attendee Origin"])
     chart = frame.copy()
     chart["_sort"] = _numeric(chart, sort_column)
     chart = chart.dropna(subset=["_sort"]).sort_values(["_sort", "city"])
@@ -314,46 +527,55 @@ def portfolio_actions_chart(frame: pd.DataFrame) -> go.Figure:
     return style_figure(figure, 520, legend=False, margin=dict(l=18, r=18, t=28, b=38))
 
 
-def portfolio_outcome_chart(frame: pd.DataFrame, outcome: str) -> go.Figure:
-    """Compare one explicit outcome from each city's priority single measure."""
+def portfolio_package_benefit_chart(city_row: Mapping[str, Any]) -> go.Figure:
+    """Compare the Operational and Capital packages' modeled benefit for one host.
 
-    choices = {
-        "Access": ("top_gap_resolved", "Peak passengers addressed per hour", "teal"),
-        "Traffic": ("top_vehicle_trips_avoided", "Modeled venue-area vehicle trips avoided", "blue"),
-        "CO2e": ("top_net_co2e_kg", "Modeled net CO2e avoided (kg)", "violet"),
-    }
-    column, axis_title, color = choices.get(outcome, choices["Access"])
-    chart = frame.copy()
-    chart["_value"] = _numeric(chart, column)
-    chart = chart.dropna(subset=["_value"]).sort_values(["_value", "city"])
-    colors = chart["_value"].map(
-        lambda value: COLORS[color] if value >= 0 else COLORS["coral"]
-    )
-    figure = go.Figure(
-        go.Bar(
-            y=chart["city"],
-            x=chart["_value"],
-            orientation="h",
-            marker_color=colors,
-            text=chart["_value"],
-            texttemplate="%{text:,.0f}",
-            textposition="outside",
-            customdata=np.column_stack(
-                [
-                    chart["top_intervention"].fillna("No qualified screen"),
-                    chart["representative_match_id"].fillna("Not available"),
-                ]
-            ),
-            hovertemplate=(
-                "<b>%{y}</b><br>Priority screen: %{customdata[0]}"
-                "<br>Representative match: %{customdata[1]}"
-                "<br>" + axis_title + ": %{x:,.0f}<extra></extra>"
-            ),
-            showlegend=False,
+    Baseline is omitted from the bars - by definition it resolves zero gap,
+    avoids zero vehicle trips, and avoids zero CO2e, so plotting it would only
+    restate zero three times. Cost lives on a separate axis (dollars, not
+    passengers/trips/kg) and is reported alongside the chart instead of on it.
+    """
+
+    def _value(prefix: str, field: str) -> float | None:
+        value = city_row.get(f"{prefix}_{field}")
+        return float(value) if value is not None and pd.notna(value) else None
+
+    baseline_trips = _value("baseline", "vehicle_trips_base")
+    metrics = [
+        ("Peak passengers\naddressed / hr", "gap_resolved", None),
+        ("Vehicle trips\navoided", "vehicle_trips_base", baseline_trips),
+        ("Net CO2e\navoided (kg)", "net_co2e_base", None),
+    ]
+    categories = [label for label, _, _ in metrics]
+
+    figure = go.Figure()
+    for package_key, name, color in (
+        ("operational", "Operational Package", COLORS["blue"]),
+        ("capital", "Capital Package", COLORS["violet"]),
+    ):
+        values = []
+        for _, field, baseline in metrics:
+            raw = _value(package_key, field)
+            if raw is None:
+                values.append(None)
+            elif baseline is not None:
+                values.append(max(baseline - raw, 0.0))
+            else:
+                values.append(raw)
+        figure.add_trace(
+            go.Bar(
+                x=categories,
+                y=values,
+                name=name,
+                marker_color=color,
+                text=[f"{v:,.0f}" if v is not None else "N/A" for v in values],
+                textposition="outside",
+                hovertemplate=f"<b>{name}</b><br>%{{x}}: %{{y:,.0f}}<extra></extra>",
+            )
         )
-    )
-    figure.update_xaxes(title=axis_title, zeroline=True, zerolinecolor=COLORS["line"])
-    return style_figure(figure, 520, legend=False, margin=dict(l=18, r=58, t=28, b=38))
+    figure.update_layout(barmode="group", uniformtext_minsize=9, uniformtext_mode="hide")
+    figure.update_yaxes(title="Modeled benefit (mixed units - see axis groups)", rangemode="tozero")
+    return style_figure(figure, 420, margin=dict(l=18, r=18, t=42, b=38))
 
 
 def portfolio_traffic_chart(frame: pd.DataFrame) -> go.Figure:

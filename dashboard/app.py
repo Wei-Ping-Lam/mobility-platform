@@ -14,13 +14,13 @@ if str(REPO_ROOT) not in sys.path:
     sys.path.insert(0, str(REPO_ROOT))
 
 from dashboard.domain.decision_support import build_transportation_bundle  # noqa: E402
-from dashboard.domain.scoring import DEFAULT_WEIGHTS, build_city_metrics, normalize_weights  # noqa: E402
+from dashboard.domain.scoring import build_city_metrics  # noqa: E402
 from dashboard.mobility_platform.config import project_paths  # noqa: E402
 from dashboard.mobility_platform.mappings import HOST_CITIES  # noqa: E402
-from dashboard.mobility_platform.sources import RICE_COLLECTION  # noqa: E402
 from dashboard.ui.data import load_artifacts  # noqa: E402
 from dashboard.ui.pages.home import render_home  # noqa: E402
 from dashboard.ui.pages.overview import render_decision_brief  # noqa: E402
+from dashboard.ui.portfolio.shared import resolve_weight_settings  # noqa: E402
 from dashboard.ui.theme import apply_theme, brand_block, sidebar_status  # noqa: E402
 from dashboard.ui.workspaces import (  # noqa: E402
     active_workspace_keys,
@@ -76,38 +76,6 @@ with st.sidebar:
             key="city_focus",
             on_change=_sync_city_context,
         )
-    with st.expander("Advanced comparison settings", expanded=False):
-        profile_labels = {
-            "balanced": "Balanced mobility",
-            "transit_access": "Transit and access",
-            "heat_resilience": "Heat resilience",
-            "sustainability": "Sustainability",
-            "rice_supplied_data": "Rice supplied-data lens",
-        }
-        profile_options = list(DEFAULT_WEIGHTS)
-        profile = st.selectbox(
-            "Weight profile",
-            profile_options,
-            index=profile_options.index("balanced"),
-            format_func=profile_labels.get,
-        )
-        weights = dict(DEFAULT_WEIGHTS[profile])
-        st.caption("Readiness gives the high-level orientation; task-specific evidence below should drive decisions.")
-        st.markdown("##### Tune score weights")
-        weights = {
-            "transit": st.slider("Transit", 0.0, 1.0, float(weights["transit"]), 0.05),
-            "heat": st.slider("Heat safety", 0.0, 1.0, float(weights["heat"]), 0.05),
-            "uhi": st.slider("UHI safety", 0.0, 1.0, float(weights["uhi"]), 0.05),
-            "access": st.slider("Venue support", 0.0, 1.0, float(weights["access"]), 0.05),
-        }
-        if profile == "rice_supplied_data":
-            st.caption(f"This lens uses only {RICE_COLLECTION} weather, UHI, and venue-support evidence; it does not score transit service.")
-        include_estimates = st.checkbox(
-            "Include estimated values",
-            value=False,
-            help="Strict mode excludes estimated components from rankings. Enable this only for sensitivity exploration.",
-        )
-    weights = normalize_weights(weights)
     st.markdown("<div class='sidebar-kicker'>Data state</div>", unsafe_allow_html=True)
     if paths.data_root:
         sidebar_status(
@@ -120,6 +88,10 @@ with st.sidebar:
             "Set MOBILITY_DATA_ROOT and run the offline ETL to rebuild complete versioned evidence.",
         )
     st.caption("Evidence statuses remain visible on every decision KPI.")
+
+# Advanced comparison settings render inside the Overview tab (see resilience.py),
+# not here - read the last-set values before this run's tabs render.
+weights, include_estimates = resolve_weight_settings()
 
 metrics = build_city_metrics(
     artifacts["visits"], artifacts["weather"], artifacts["uhi"], artifacts["poi"], artifacts["gtfs"],

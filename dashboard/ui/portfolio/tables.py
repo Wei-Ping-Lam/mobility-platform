@@ -126,6 +126,13 @@ def access_table(frame: pd.DataFrame) -> pd.DataFrame:
             "walk_detour_ratio",
             "walking_status",
             "accessibility_status",
+            "transit_score",
+            "first_last_mile_gap",
+            "transit_stops_0_5mi",
+            "gtfs_stops_1mi",
+            "gtfs_stops_2mi",
+            "nearest_stop_mi",
+            "gtfs_agencies",
         ]
     ]
     display.columns = [
@@ -145,6 +152,13 @@ def access_table(frame: pd.DataFrame) -> pd.DataFrame:
         "Walk detour ratio",
         "Walking evidence",
         "Accessibility audit",
+        "Transit score",
+        "First/last-mile gap score",
+        "Stops <=0.5mi",
+        "Stops <=1mi",
+        "Stops <=2mi",
+        "Nearest stop (mi)",
+        "GTFS agencies",
     ]
     display["Scheduled coverage"] = display["Scheduled coverage"].map(
         lambda value: f"{value:.1f}%" if pd.notna(value) else "Not available"
@@ -189,34 +203,5 @@ def actions_table(frame: pd.DataFrame) -> pd.DataFrame:
         "Dependencies",
         "Evidence quality",
         "Exploratory alternatives",
-    ]
-    return display
-
-
-def outcomes_table(frame: pd.DataFrame) -> pd.DataFrame:
-    display = frame.sort_values(
-        ["top_gap_resolved", "city"], ascending=[False, True]
-    ).copy()
-    display = display[
-        [
-            "city",
-            "top_intervention",
-            "top_gap_resolved",
-            "top_vehicle_trips_avoided",
-            "top_net_vmt_base",
-            "top_net_co2e_kg",
-            "top_cost_base",
-            "top_evidence_quality",
-        ]
-    ]
-    display.columns = [
-        "City",
-        "Priority single measure",
-        "Peak passengers addressed / hour",
-        "Venue-area vehicle trips avoided",
-        "Net VMT avoided",
-        "Net CO2e avoided (kg)",
-        "Planning cost",
-        "Evidence quality",
     ]
     return display

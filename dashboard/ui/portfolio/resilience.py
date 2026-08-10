@@ -5,7 +5,7 @@ from __future__ import annotations
 import pandas as pd
 import streamlit as st
 
-from dashboard.ui.portfolio.shared import metric_grid, number
+from dashboard.ui.portfolio.shared import metric_grid, number, render_weight_settings
 from dashboard.ui.portfolio.tables import resilience_table
 from dashboard.viz.portfolio import (
     portfolio_resilience_chart,
@@ -29,6 +29,7 @@ def render(frame: pd.DataFrame, metrics: pd.DataFrame) -> None:
     st.markdown(
         "#### How do hosts rank, and how much scheduled coverage survives a common stress?"
     )
+    render_weight_settings()
     metric_grid(
         [
             (
@@ -60,7 +61,7 @@ def render(frame: pd.DataFrame, metrics: pd.DataFrame) -> None:
         key="portfolio_readiness_rank",
     )
     st.caption(
-        "Readiness combines transit proximity, heat safety, urban heat safety, and venue support under the visible sidebar weights. "
+        "Readiness combines transit proximity, heat safety, urban heat safety, and venue support under the weights set above. "
         "It is orientation, not a transport disruption model or an investment ranking."
     )
     st.markdown("##### Transportation stress test")

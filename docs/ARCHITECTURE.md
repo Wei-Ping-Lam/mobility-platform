@@ -38,11 +38,10 @@ The Portfolio is composed from independently owned modules under
 
 | Objective | Renderer |
 | --- | --- |
-| Resilience | `resilience.py` |
+| Overview | `resilience.py` |
 | Visitor movement | `visitor_movement.py` |
 | First/last mile | `first_last_mile.py` |
 | Investments & strategies | `investments.py` |
-| Outcomes | `outcomes.py` |
 
 `context.py` is the only analytics-to-UI adapter, `tables.py` owns exact-value
 display schemas, and `page.py` only creates tabs and the page-level drill-down.
