@@ -69,6 +69,26 @@ def load_operational_snapshot(
     return snapshot
 
 
+def load_traffic_management_snapshot(
+    path: str | Path = "data/snapshots/operations/world_cup_2026_traffic_management.json",
+) -> dict[str, Any]:
+    snapshot = _load(path, "world_cup_traffic_management_plans")
+    from dashboard.pipeline.public.traffic_management import validate_snapshot
+
+    validate_snapshot(snapshot)
+    return snapshot
+
+
+def load_strategy_benchmark_snapshot(
+    path: str | Path = "data/snapshots/operations/world_cup_2026_strategy_benchmarks.json",
+) -> dict[str, Any]:
+    snapshot = _load(path, "world_cup_strategy_benchmarks")
+    from dashboard.pipeline.public.strategy_benchmarks import validate_snapshot
+
+    validate_snapshot(snapshot)
+    return snapshot
+
+
 def load_environment_snapshot(
     path: str | Path = "data/snapshots/environment/venue_environment.json",
 ) -> dict[str, Any]:

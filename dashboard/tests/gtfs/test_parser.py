@@ -148,6 +148,44 @@ def test_walking_route_uses_two_mile_stops_while_capacity_uses_half_mile():
     assert result["stop_routes"]["S1"] == ["Route 1"]
 
 
+def test_regional_hub_candidates_use_event_valid_connectivity_and_parent_stations():
+    payload = _feed(
+        {
+            "stops.txt": (
+                "stop_id,stop_name,stop_lat,stop_lon,location_type,parent_station\n"
+                "VENUE,Venue stop,33.7554,-84.4009,0,\n"
+                "HUB,Regional Central,33.8200,-84.4009,1,\n"
+                "HUB-A,Regional Central platform A,33.8201,-84.4009,0,HUB\n"
+                "HUB-B,Regional Central platform B,33.8199,-84.4009,0,HUB\n"
+            ),
+            "routes.txt": ("route_id,route_short_name,route_type\nR1,Blue,1\nR2,Gold,1\nR3,Airport,2\n"),
+            "trips.txt": ("route_id,service_id,trip_id\nR1,WK,T1\nR2,WK,T2\nR3,WK,T3\n"),
+            "stop_times.txt": (
+                "trip_id,arrival_time,departure_time,stop_id,stop_sequence\n"
+                "T1,15:00:00,15:00:00,HUB-A,1\n"
+                "T2,16:00:00,16:00:00,HUB-B,1\n"
+                "T3,17:00:00,17:00:00,HUB-A,1\n"
+            ),
+            "calendar.txt": (
+                "service_id,monday,tuesday,wednesday,thursday,friday,saturday,sunday,start_date,end_date\n"
+                "WK,1,1,1,1,1,1,1,20260101,20261231\n"
+            ),
+        }
+    )
+    event = {"match_id": "M004", "kickoff_local": "2026-06-12T18:00:00-04:00"}
+
+    result = extract_feed(payload, {"lat": 33.7554, "lon": -84.4009}, [event])
+
+    assert len(result["regional_hubs"]) == 1
+    hub = result["regional_hubs"][0]
+    assert hub["stop_id"] == "HUB"
+    assert hub["name"] == "Regional Central"
+    assert hub["route_count"] == 3
+    assert hub["modes"] == ["rail", "subway_metro"]
+    assert hub["event_valid_match_dates"] == 1
+    assert "not established" in hub["evidence_limit"]
+
+
 def test_pinned_sources_assign_non_overlapping_event_windows(monkeypatch):
     payload = _feed(
         {
@@ -170,7 +208,9 @@ def test_pinned_sources_assign_non_overlapping_event_windows(monkeypatch):
     digest = __import__("hashlib").sha256(payload).hexdigest()
     feeds = [
         GtfsFeedSource("Fixture", "https://example.invalid/first.zip", expected_sha256=digest, valid_to="2026-06-12"),
-        GtfsFeedSource("Fixture", "https://example.invalid/second.zip", expected_sha256=digest, valid_from="2026-06-13"),
+        GtfsFeedSource(
+            "Fixture", "https://example.invalid/second.zip", expected_sha256=digest, valid_from="2026-06-13"
+        ),
     ]
     events = [
         {"match_id": "M1", "kickoff_local": "2026-06-12T18:00:00-04:00"},

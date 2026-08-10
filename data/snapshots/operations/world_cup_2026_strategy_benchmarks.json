@@ -1,0 +1,158 @@
+{
+  "artifact_sha256": "720cd129cf2e9b277c7f425ae8db0f0d5748083aa99031a98b385eb0a80e4e6b",
+  "benchmarks": {
+    "Atlanta": {
+      "city": "Atlanta",
+      "evidence_level": "full operating",
+      "official_service_signals": [
+        "Five-minute match-day rail headways",
+        "Standby rapid-response buses",
+        "Specialized post-match egress trains"
+      ],
+      "publisher": "Metropolitan Atlanta Rapid Transit Authority",
+      "source_title": "Let MARTA drive you to FIFA World Cup 2026 matches and events",
+      "source_url": "https://itsmarta.com/let-marta-drive-you-to-fifa.aspx",
+      "strategy_family": "Direct high-capacity transit reinforcement"
+    },
+    "Boston": {
+      "city": "Boston",
+      "evidence_level": "full operating",
+      "official_service_signals": [
+        "More than 20 express-bus pickup points",
+        "Fourteen commuter-rail trains per match",
+        "Hotel and airport origins are connected directly to the stadium"
+      ],
+      "publisher": "Boston 26 Host Committee",
+      "source_title": "Boston Stadium Express bus service",
+      "source_url": "https://bostonfwc26.com/newsroom/the-boston-host-committee-for-fifa-world-cup-2026-announces-boston-stadium-express-bus-service-to-support-matchday-transportation/",
+      "strategy_family": "Distributed express bus and rail"
+    },
+    "Dallas": {
+      "city": "Dallas",
+      "evidence_level": "full operating",
+      "official_service_signals": [
+        "Regional rail to CentrePort",
+        "Charter-bus transfer to the stadium",
+        "Separated rideshare, shuttle, pedestrian, and private-vehicle channels"
+      ],
+      "publisher": "North Texas FIFA World Cup Organizing Committee",
+      "source_title": "Dallas Transportation and Mobility Plan",
+      "source_url": "https://www.dallasfwc26.com/dallas-2026/transportation-mobility/",
+      "strategy_family": "Regional rail to charter-bus bridge"
+    },
+    "Houston": {
+      "city": "Houston",
+      "evidence_level": "strong partial",
+      "official_service_signals": [
+        "METRORail connects downtown and Houston Stadium",
+        "Fannin South operates as a park-and-ride approach",
+        "The Green Corridor connects stadium, fan festival, and central districts"
+      ],
+      "publisher": "FIFA World Cup 26 Houston Host Committee",
+      "source_title": "Plan your Houston visit",
+      "source_url": "https://www.fwc26houston.com/visit",
+      "strategy_family": "Direct transit plus distributed egress"
+    },
+    "Kansas City": {
+      "city": "Kansas City",
+      "evidence_level": "full operating",
+      "official_service_signals": [
+        "Stadium Direct from four park-and-ride locations",
+        "Airport Direct between the airport and downtown",
+        "Region Direct links the fan festival with regional destinations"
+      ],
+      "publisher": "KC2026 Host Committee",
+      "source_title": "ConnectKC26 Regional Transportation Plan",
+      "source_url": "https://kansascityfwc26.com/kc2026-exceeds-fifa-requirements-with-connectkc26-regional-transportation-plan/",
+      "strategy_family": "Multi-hub stadium shuttle"
+    },
+    "Los Angeles": {
+      "city": "Los Angeles",
+      "evidence_level": "strategy level",
+      "official_service_signals": [
+        "Enhanced Metro service",
+        "Regional park-and-ride connections",
+        "Rideshare and secured parking remain supplemental approaches"
+      ],
+      "publisher": "Los Angeles World Cup 2026 Host Committee",
+      "source_title": "Los Angeles region-wide World Cup plans",
+      "source_url": "https://www.sofistadium.com/news/detail/los-angeles-marks-30-days-to-fifa-world-cup-2026-by-announcing-region-wide-plans-to-welcome-the-world",
+      "strategy_family": "Park-and-ride and shuttle hybrid"
+    },
+    "Miami": {
+      "city": "Miami",
+      "evidence_level": "full operating",
+      "official_service_signals": [
+        "Four named Game Day Express hubs",
+        "Direct shuttle trips without transfers",
+        "Continuous post-match return operations"
+      ],
+      "publisher": "Miami-Dade County",
+      "source_title": "Mobility: 2026 World Cup",
+      "source_url": "https://www.miamidade.gov/initiative/worldcup/mobility.page",
+      "strategy_family": "Multi-hub stadium shuttle"
+    },
+    "New York/NJ": {
+      "city": "New York/NJ",
+      "evidence_level": "full operating",
+      "official_service_signals": [
+        "Rail is the primary high-capacity approach",
+        "Direct stadium shuttles serve named New York and New Jersey origins",
+        "Ticketed capacity and restricted parking meter stadium access"
+      ],
+      "publisher": "New York New Jersey Host Committee and NJ TRANSIT",
+      "source_title": "Regional Stadium Mobility Plan",
+      "source_url": "https://nynjfwc26.com/press-releases/fifa-world-cup-2026-new-york-new-jersey-host-committee-and-nj-transit-announce-regional-stadium-mobility-plan/",
+      "strategy_family": "Capacity-managed rail plus shuttle"
+    },
+    "Philadelphia": {
+      "city": "Philadelphia",
+      "evidence_level": "strong partial",
+      "official_service_signals": [
+        "Broad Street Line serves the stadium directly",
+        "Late-night rail continues after matches",
+        "Rideshare is confined to designated FDR Park areas"
+      ],
+      "publisher": "City of Philadelphia",
+      "source_title": "City unveils transportation details for World Cup matches",
+      "source_url": "https://www.phila.gov/2026-06-10-city-unveils-transportation-and-other-details-for-world-cup-matches/",
+      "strategy_family": "Direct high-capacity transit reinforcement"
+    },
+    "San Francisco": {
+      "city": "San Francisco",
+      "evidence_level": "strong partial",
+      "official_service_signals": [
+        "BART connects to VTA at Milpitas",
+        "Caltrain connects to VTA at Mountain View",
+        "VTA light rail provides the stadium-area trunk"
+      ],
+      "publisher": "FIFA World Cup 26 San Francisco Bay Area Host Committee",
+      "source_title": "Transit and getting to the stadium",
+      "source_url": "https://www.sfbayareafwc26.com/transit",
+      "strategy_family": "Multimodal rail-transfer network"
+    },
+    "Seattle": {
+      "city": "Seattle",
+      "evidence_level": "strong partial",
+      "official_service_signals": [
+        "Downtown stadium supports walking and cycling",
+        "Light rail and buses stop near the stadium",
+        "Ferries expand the regional access network"
+      ],
+      "publisher": "Seattle FIFA World Cup 26 Host Committee",
+      "source_title": "Seattle transportation",
+      "source_url": "https://www.seattlefwc26.org/destination/transportation",
+      "strategy_family": "Downtown multimodal dispersal"
+    }
+  },
+  "contract_version": "0.3.0",
+  "generated_at_utc": "2026-08-09T00:00:00Z",
+  "label_policy": {
+    "exact_controls": "Benchmark labels contain broad strategy families only; exact hubs, windows, capacity, and controls require a content-pinned published overlay.",
+    "leakage_control": "The classifier must produce its prediction without reading the benchmark label.",
+    "status": "Analyst-coded from reviewed official public sources; source pages are linked but raw responses are not republished in this artifact."
+  },
+  "schema_version": "1.0.0",
+  "snapshot_kind": "world_cup_strategy_benchmarks",
+  "status": "partial"
+}

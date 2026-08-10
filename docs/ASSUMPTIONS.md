@@ -63,6 +63,12 @@ behavior.
 | Venue-area vehicle leg | Lesser of five miles or 35% of the assumed trip | Used only for the park-and-ride venue-area displacement |
 | Arrival window | Three hours | Used for per-hour capacity and event operating cost |
 | Service capacity | Exact event-peak-hour GTFS trip occurrences × vehicle range × usable load factor | Each static `trip_id` or expanded frequency occurrence counts once at its nearest eligible venue stop; potential scheduled throughput is not ridership or delivered service |
+| Regional transfer hub | Highest-ranked event-valid GTFS parent station within 0.5–40 miles, with rail/ferry connectivity favored; up to eight candidates are retained and the same rule applies to every city | A generated hub is a bounded network-connectivity candidate only and does not establish parking, curb, fleet, layover, ADA, emergency-access, or traffic-control feasibility |
+| Event-bus scale | Residual access gap divided by low/base/high usable bus capacity | Unconstrained bus equivalents per hour, not a fleet commitment or delivered throughput |
+| Single-hub review threshold | More than 60 base bus equivalents per hour triggers multi-hub or demand-spreading review | Transparent project heuristic; replace with local curb, layover, cycle-time, staffing, and dispatch evidence |
+| Strategy-family classifier | Ordered breakpoints use scheduled peak coverage, nearest-stop distance, half-mile stop density, walking-path length, route count, and regional rail-hub structure | Rules are calibrated to reviewed broad host-city families; strength is not a probability and agreement is not holdout accuracy |
+| Official-plan benchmark | One analyst-coded broad family per U.S. host, compared only after prediction | Does not authorize exact hubs, fleet, windows, capacity, or controls |
+| Named traffic controls | Included only from a content-hashed official operating-plan overlay | Never generated from GTFS, access gaps, or the intervention model |
 | Park-and-ride feeder | Lesser of parking-space passenger potential and explicit feeder departures × usable bus capacity | Feeder departures are required, included in VMT, and costed as event bus-hours |
 | Walking route | Pinned OSM network path to an event-relevant stop | OSM tags do not certify safety, condition, or accessibility |
 | Route heat | Rice weather/UHI over an eligible route | Unavailable when a route or local heat evidence is absent |
@@ -95,6 +101,8 @@ behavior.
   travel time.
 - Verified park-and-ride sites and safe bicycle/pedestrian connections.
 - Local procurement, labor, right-of-way, design, and construction costs.
+- Locally approved transfer, curb, parking, closure, and contingency controls
+  for every city; exact city-only overlays are excluded from the normalized comparison.
 
 These require new observations or agency/venue plans. Relaxing an evidence gate
 is not a substitute for collecting the data.
