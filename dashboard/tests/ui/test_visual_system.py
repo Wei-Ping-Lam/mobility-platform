@@ -11,7 +11,7 @@ from dashboard.viz.style import STATUS_COLORS
 @pytest.mark.parametrize(
     ("mode", "expected_tabs"),
     [
-        ("Overview", 5),
+        ("Overview", 6),
         ("City Brief", 0),
     ],
 )
@@ -54,7 +54,9 @@ def test_ui_sources_have_no_mojibake_or_retired_dark_theme():
             "ui/portfolio/resilience.py",
             "ui/portfolio/shared.py",
             "ui/portfolio/tables.py",
+            "ui/portfolio/traffic_management.py",
             "ui/portfolio/visitor_movement.py",
+            "ui/city/traffic_plan.py",
             "viz/portfolio.py",
             "viz/style.py",
         )

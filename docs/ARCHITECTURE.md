@@ -25,7 +25,7 @@ not contain analytical formulas.
 | --- | --- | --- |
 | `dashboard/pipeline/` | Offline ingestion, normalization, source gates, and snapshot generation | `dashboard/tests/etl/`, `gtfs/`, `public/` |
 | `dashboard/mobility_platform/` | Stable contracts, paths, source metadata, mappings, and quality types | contract and integration tests |
-| `dashboard/models/` | Pure movement, access, resilience, visitor-flow, and intervention calculations | `dashboard/tests/models/`, `interventions/` |
+| `dashboard/models/` | Pure movement, access, resilience, visitor-flow, intervention, traffic-strategy, and strategy-calibration calculations | `dashboard/tests/models/`, `interventions/` |
 | `dashboard/domain/` | Joins model outputs into city, match, and portfolio decision artifacts | model and integration tests |
 | `dashboard/viz/` | Chart construction from prepared frames; no data loading | `dashboard/tests/ui/test_maps.py` |
 | `dashboard/ui/` | Streamlit presentation, page state, and navigation policy | `dashboard/tests/ui/` |
@@ -41,7 +41,8 @@ The Portfolio is composed from independently owned modules under
 | Resilience | `resilience.py` |
 | Visitor movement | `visitor_movement.py` |
 | First/last mile | `first_last_mile.py` |
-| Investments & strategies | `investments.py` |
+| Investments & transit | `investments.py` |
+| Traffic management | `traffic_management.py` |
 | Outcomes | `outcomes.py` |
 
 `context.py` is the only analytics-to-UI adapter, `tables.py` owns exact-value
@@ -49,6 +50,13 @@ display schemas, and `page.py` only creates tabs and the page-level drill-down.
 Objective renderers must not import models/domain modules or one another. This
 lets separate contributors edit different objectives without touching the same
 file or duplicating analytical formulas.
+
+City-only traffic presentation lives in `dashboard/ui/city/traffic_plan.py`.
+It consumes the same serialized match plan as the Portfolio adapter, so the
+map, chronological actions, and exact controls do not introduce UI formulas.
+`dashboard/viz/strategy_overlap.py` separately owns the city overlap maps: one
+for the venue service screen against GTFS/walking evidence and one for the
+published-or-candidate transfer structure. The portfolio remains map-free.
 
 ## Public and deferred workspaces
 
@@ -90,3 +98,14 @@ the model, composition layer, and page.
 6. Update the equation/assumption/claim documentation when the metric is new.
 
 See `WORKSTREAMS.md` for branches, worktrees, path ownership, and handoff rules.
+
+## Strategy calibration boundary
+
+`dashboard/models/strategy_calibration.py` classifies a broad operating family
+from scheduled coverage, stop proximity, walking evidence, network scale, and
+regional-hub structure. It never reads a city name or official benchmark.
+`dashboard/domain/decision_support.py` performs the benchmark comparison only
+after prediction. The reviewed labels live in the separately validated
+`world_cup_2026_strategy_benchmarks.json` snapshot, while exact published hubs,
+windows, and controls remain in content-pinned operating-plan overlays. This
+separation prevents the official answer from becoming a hidden runtime rule.

@@ -1,4 +1,4 @@
-"""Exact-value table adapters for the five Portfolio objectives."""
+"""Exact-value table adapters for the six Portfolio objectives."""
 
 from __future__ import annotations
 
@@ -6,9 +6,7 @@ import pandas as pd
 
 
 def resilience_table(frame: pd.DataFrame) -> pd.DataFrame:
-    display = frame.sort_values(
-        ["stress_coverage_pct", "city"], ascending=[False, True]
-    ).copy()
+    display = frame.sort_values(["stress_coverage_pct", "city"], ascending=[False, True]).copy()
     display = display[
         [
             "city",
@@ -30,16 +28,12 @@ def resilience_table(frame: pd.DataFrame) -> pd.DataFrame:
         "Remaining stressed gap / hour",
     ]
     for column in ("Baseline scheduled coverage", "Stress-test coverage"):
-        display[column] = display[column].map(
-            lambda value: f"{value:.1f}%" if pd.notna(value) else "Not available"
-        )
+        display[column] = display[column].map(lambda value: f"{value:.1f}%" if pd.notna(value) else "Not available")
     return display
 
 
 def movement_table(frame: pd.DataFrame) -> pd.DataFrame:
-    display = frame.sort_values(
-        ["forecast_non_host_attendees_base", "city"], ascending=[False, True]
-    ).copy()
+    display = frame.sort_values(["forecast_non_host_attendees_base", "city"], ascending=[False, True]).copy()
     display = display[
         [
             "city",
@@ -98,16 +92,12 @@ def movement_table(frame: pd.DataFrame) -> pd.DataFrame:
         "Private vehicle / taxi demand",
         "Walk / bike demand",
     ):
-        display[column] = display[column].map(
-            lambda value: f"{value:.1f}%" if pd.notna(value) else "Not available"
-        )
+        display[column] = display[column].map(lambda value: f"{value:.1f}%" if pd.notna(value) else "Not available")
     return display
 
 
 def access_table(frame: pd.DataFrame) -> pd.DataFrame:
-    display = frame.sort_values(
-        ["capacity_qualified_gap_pph", "city"], ascending=[False, True]
-    ).copy()
+    display = frame.sort_values(["capacity_qualified_gap_pph", "city"], ascending=[False, True]).copy()
     display = display[
         [
             "city",
@@ -153,9 +143,7 @@ def access_table(frame: pd.DataFrame) -> pd.DataFrame:
 
 
 def actions_table(frame: pd.DataFrame) -> pd.DataFrame:
-    display = frame.sort_values(
-        ["top_gap_resolved", "city"], ascending=[False, True]
-    ).copy()
+    display = frame.sort_values(["top_gap_resolved", "city"], ascending=[False, True]).copy()
     display = display[
         [
             "city",
@@ -193,10 +181,53 @@ def actions_table(frame: pd.DataFrame) -> pd.DataFrame:
     return display
 
 
+def traffic_management_table(frame: pd.DataFrame) -> pd.DataFrame:
+    display = frame.sort_values(["traffic_buses_base", "city"], ascending=[False, True]).copy()
+    display = display[
+        [
+            "city",
+            "traffic_predicted_pattern",
+            "traffic_benchmark_pattern",
+            "traffic_benchmark_agreement",
+            "traffic_prediction_strength",
+            "traffic_buses_low",
+            "traffic_buses_base",
+            "traffic_buses_high",
+        ]
+    ]
+    display.columns = [
+        "City",
+        "Engine strategy",
+        "Official benchmark",
+        "Agreement",
+        "Rule strength",
+        "Bus low",
+        "Bus base",
+        "Bus high",
+    ]
+    display["Agreement"] = display["Agreement"].map(
+        {"matches": "Matches", "differs": "Differs", "not benchmarked": "Not benchmarked"}
+    ).fillna("Not benchmarked")
+    display["Rule strength"] = display["Rule strength"].fillna("limited").str.capitalize()
+    display["Bus eq / hr"] = display.apply(
+        lambda row: f"{row['Bus low']:,.0f}–{row['Bus base']:,.0f}–{row['Bus high']:,.0f}",
+        axis=1,
+    )
+    display = display.drop(columns=["Bus low", "Bus base", "Bus high"])
+    return display[
+        [
+            "City",
+            "Engine strategy",
+            "Official benchmark",
+            "Agreement",
+            "Rule strength",
+            "Bus eq / hr",
+        ]
+    ]
+
+
 def outcomes_table(frame: pd.DataFrame) -> pd.DataFrame:
-    display = frame.sort_values(
-        ["top_gap_resolved", "city"], ascending=[False, True]
-    ).copy()
+    display = frame.sort_values(["top_gap_resolved", "city"], ascending=[False, True]).copy()
     display = display[
         [
             "city",

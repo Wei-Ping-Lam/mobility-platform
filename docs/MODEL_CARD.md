@@ -30,7 +30,9 @@ causal evaluation.
 | Transit | Pinned official agency GTFS | Departures, service span, route/stop evidence, capacity range | Scheduled supply, not observed operations |
 | Walking | Pinned OSM network | Network distance, isochrones, detour, tag coverage | Planning network; missing tags remain unknown |
 | Factors | Pinned EPA/FTA/FHWA references | Emissions and cost ranges | National/order-of-magnitude assumptions |
-| Models | All eligible layers plus editable assumptions | Hourly movement, broad visitor-flow mix, access gap, package outcomes, tradeoffs | Scenario evidence unless validation says otherwise |
+| Published traffic plan | Content-hashed Dallas host-committee page | Exact transfer facilities, operating windows, and named controls | Observed facts for Dallas only; no cross-city inference |
+| Official-plan benchmark | Analyst-coded broad strategy families from 11 official host sources | Post-prediction family agreement | Calibration audit only; not an exact operating overlay or holdout accuracy |
+| Models | All eligible layers plus editable assumptions | Hourly movement, broad visitor-flow mix, access gap, intervention outcomes, and time-phased traffic strategies | Scenario evidence unless validation says otherwise |
 
 ## Output semantics
 
@@ -52,11 +54,23 @@ causal evaluation.
 - `InvestmentRecommendation` identifies a candidate intervention, proposed scale, rationale,
   cost-effectiveness, lead-time band, responsible actor, dependencies, and
   status. It is not an agency commitment.
+- `TrafficStrategyPlan` selects an evidence-responsive operating family from
+  scheduled coverage, stop proximity, walking evidence, network scale, and
+  regional-hub structure; translates the residual gap into low/base/high
+  unconstrained bus equivalents; and orders five actions from pre-match through
+  contingency. The official benchmark is compared only after prediction.
+  Published locations and controls override generated candidates only for the
+  city covered by a content-pinned official overlay.
 - Operational and capital composites combine several measures only for sensitivity
   testing; they are not named investment recommendations.
-- The Portfolio uses five objective tabs: Resilience, Visitor movement,
-  First/last mile, Investments & strategies, and Outcomes. All 11 cities remain
-  visible in every comparison; exact values are disclosed in expandable tables.
+- The Portfolio uses six objective tabs: Resilience, Visitor movement,
+  First/last mile, Investments & transit, Traffic management, and Outcomes.
+  All 11 cities remain visible in every comparison; exact values are disclosed
+  without adding a portfolio map or city filter.
+- Each City Action Plan provides two optional overlap maps. Venue access shows
+  the half-mile screening boundary against pinned GTFS and walking geometry;
+  operating overlap distinguishes content-pinned published hubs from generated
+  candidate hubs. Schematic links are not routing, capacity, or approval claims.
 - The resilience comparison applies a common sensitivity of 10% more peak
   movement and 20% less scheduled capacity. It is a transparent physical stress
   test, not a disruption probability or reliability forecast.
@@ -103,6 +117,13 @@ are defined in `VALIDATION.md`.
 - Five-mile OSM isochrones cover all venues, but event-relevant stop paths are
   unavailable for Boston, Dallas, and Miami; tag completeness varies by city.
 - GTFS cannot establish actual service delivery, ridership, crowding, or delay.
+- Generated regional hubs do not establish special-event access, parking,
+  loading, fleet, layover, staffing, emergency access, or control approval.
+- Dallas is the only city with an integrated content-pinned operating-plan
+  overlay. All 11 cities have reviewed broad strategy-family benchmarks, but
+  those labels do not make generated hubs, capacity, or controls official.
+- Current family agreement is an in-sample calibration check. It is not a
+  cross-city holdout result or evidence that exact operations were predicted.
 - National cost and emissions factors do not replace local fleet, procurement,
   labor, design, or construction evidence.
 

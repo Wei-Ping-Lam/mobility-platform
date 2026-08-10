@@ -29,6 +29,8 @@ EVENT_WINDOW_END = pd.Timestamp("2026-07-19")
 REQUIRED_FILES = ("stops.txt", "routes.txt", "trips.txt", "stop_times.txt")
 VENUE_RADIUS_MILES = 2.0
 SERVICE_RADIUS_MILES = 0.5
+REGIONAL_HUB_RADIUS_MILES = 40.0
+MAX_REGIONAL_HUBS = 8
 WINDOW_BEFORE_MIN = 240
 WINDOW_AFTER_MIN = 240
 ASSUMED_MATCH_MIN = 120
@@ -44,8 +46,7 @@ def _feed_payload(source: GtfsFeedSource) -> bytes:
         digest = hashlib.sha256(payload).hexdigest()
         if digest != source.expected_sha256:
             raise ValueError(
-                f"Cached GTFS hash mismatch for {source.agency}: "
-                f"expected {source.expected_sha256}, found {digest}"
+                f"Cached GTFS hash mismatch for {source.agency}: expected {source.expected_sha256}, found {digest}"
             )
         return payload
     response = requests.get(source.url, headers=HEADERS, timeout=120)
@@ -54,8 +55,7 @@ def _feed_payload(source: GtfsFeedSource) -> bytes:
     digest = hashlib.sha256(payload).hexdigest()
     if source.expected_sha256 and digest != source.expected_sha256:
         raise ValueError(
-            f"Pinned GTFS hash mismatch for {source.agency}: "
-            f"expected {source.expected_sha256}, found {digest}"
+            f"Pinned GTFS hash mismatch for {source.agency}: expected {source.expected_sha256}, found {digest}"
         )
     if cache_path:
         cache_path.parent.mkdir(parents=True, exist_ok=True)
@@ -87,11 +87,7 @@ def _nested_zips(zf: zipfile.ZipFile) -> list[zipfile.ZipFile]:
 def _find_member(zf: zipfile.ZipFile, filename: str) -> str | None:
     expected = filename.lower()
     return next(
-        (
-            name
-            for name in zf.namelist()
-            if name.replace("\\", "/").rsplit("/", 1)[-1].lower() == expected
-        ),
+        (name for name in zf.namelist() if name.replace("\\", "/").rsplit("/", 1)[-1].lower() == expected),
         None,
     )
 
@@ -174,7 +170,9 @@ def _venue_stop_ids(
     required = {"stop_id", "stop_lat", "stop_lon"}
     if stops.empty or not required.issubset(stops):
         return set(), pd.DataFrame(columns=["stop_id", "stop_lat", "stop_lon", "distance_mi"])
-    columns = [column for column in ("stop_id", "stop_name", "stop_lat", "stop_lon", "agency", "routes") if column in stops]
+    columns = [
+        column for column in ("stop_id", "stop_name", "stop_lat", "stop_lon", "agency", "routes") if column in stops
+    ]
     work = stops[columns].copy()
     work["stop_lat"] = pd.to_numeric(work["stop_lat"], errors="coerce")
     work["stop_lon"] = pd.to_numeric(work["stop_lon"], errors="coerce")
@@ -202,8 +200,7 @@ def _bounded_coordinates(frame: pd.DataFrame, maximum: int = 200) -> list[list[f
         indices = np.linspace(0, len(work) - 1, maximum, dtype=int)
         work = work.iloc[indices]
     return [
-        [round(float(row.shape_pt_lon), 6), round(float(row.shape_pt_lat), 6)]
-        for row in work.itertuples(index=False)
+        [round(float(row.shape_pt_lon), 6), round(float(row.shape_pt_lat), 6)] for row in work.itertuples(index=False)
     ]
 
 
@@ -222,22 +219,25 @@ def _event_route_shapes(
     required_trip = {"trip_id", "service_id", "route_id"}
     if not required_trip.issubset(trips) or not {"trip_id", "stop_id"}.issubset(stop_times):
         return [], {}
-    active_services = set().union(
-        *(services.get(datetime.fromisoformat(str(event["kickoff_local"])).date(), set()) for event in events)
-    ) if events else set().union(*services.values()) if services else set()
+    active_services = (
+        set().union(
+            *(services.get(datetime.fromisoformat(str(event["kickoff_local"])).date(), set()) for event in events)
+        )
+        if events
+        else set().union(*services.values())
+        if services
+        else set()
+    )
     catchment_times = stop_times[stop_times["stop_id"].astype(str).isin(venue_stop_ids)].copy()
     trip_ids = set(catchment_times["trip_id"].astype(str))
     eligible = trips[
-        trips["trip_id"].astype(str).isin(trip_ids)
-        & trips["service_id"].astype(str).isin(active_services)
+        trips["trip_id"].astype(str).isin(trip_ids) & trips["service_id"].astype(str).isin(active_services)
     ].copy()
     route_labels: dict[str, str] = {}
     if "route_id" in routes:
         for row in routes.to_dict("records"):
             route_id = str(row.get("route_id"))
-            route_labels[route_id] = str(
-                row.get("route_short_name") or row.get("route_long_name") or route_id
-            )
+            route_labels[route_id] = str(row.get("route_short_name") or row.get("route_long_name") or route_id)
     if not eligible.empty:
         eligible["trip_id"] = eligible["trip_id"].astype(str)
         eligible["route_id"] = eligible["route_id"].astype(str)
@@ -274,6 +274,154 @@ def _event_route_shapes(
     return results, stop_routes
 
 
+def _regional_hub_candidates(
+    stops: pd.DataFrame,
+    stop_times: pd.DataFrame,
+    trips: pd.DataFrame,
+    routes: pd.DataFrame,
+    services: dict[date, set[str]],
+    venue: dict[str, Any],
+    events: list[dict[str, Any]],
+) -> list[dict[str, Any]]:
+    """Return a bounded set of event-valid regional transfer-hub candidates.
+
+    These rows rank scheduled network connectivity; they do not establish
+    special-event operations, platform capacity, parking, or curb feasibility.
+    Parent stations consolidate platform-level GTFS stops where available.
+    """
+
+    needed_stops = {"stop_id", "stop_lat", "stop_lon"}
+    needed_times = {"trip_id", "stop_id"}
+    needed_trips = {"trip_id", "service_id", "route_id"}
+    if (
+        stops.empty
+        or stop_times.empty
+        or trips.empty
+        or not needed_stops.issubset(stops)
+        or not needed_times.issubset(stop_times)
+        or not needed_trips.issubset(trips)
+    ):
+        return []
+    event_dates = [datetime.fromisoformat(str(event["kickoff_local"])).date() for event in events]
+    active_services = (
+        set().union(*(services.get(event_date, set()) for event_date in event_dates)) if event_dates else set()
+    )
+    if not active_services:
+        return []
+
+    stop_info = stops.copy()
+    stop_info["stop_id"] = stop_info["stop_id"].astype(str)
+    stop_info["stop_lat"] = pd.to_numeric(stop_info["stop_lat"], errors="coerce")
+    stop_info["stop_lon"] = pd.to_numeric(stop_info["stop_lon"], errors="coerce")
+    stop_info = stop_info.dropna(subset=["stop_lat", "stop_lon"])
+    stop_ids = set(stop_info["stop_id"])
+    parent_map = {
+        str(row.stop_id): (
+            str(row.parent_station) if str(getattr(row, "parent_station", "") or "") in stop_ids else str(row.stop_id)
+        )
+        for row in stop_info.itertuples(index=False)
+    }
+    station_rows = stop_info.set_index("stop_id").to_dict("index")
+
+    eligible_trips = trips[trips["service_id"].astype(str).isin(active_services)].copy()
+    if eligible_trips.empty:
+        return []
+    eligible_trips["trip_id"] = eligible_trips["trip_id"].astype(str)
+    eligible_trips["route_id"] = eligible_trips["route_id"].astype(str)
+    eligible_trips["service_id"] = eligible_trips["service_id"].astype(str)
+    relevant = stop_times[stop_times["trip_id"].astype(str).isin(set(eligible_trips["trip_id"]))][
+        ["trip_id", "stop_id"]
+    ].copy()
+    relevant["trip_id"] = relevant["trip_id"].astype(str)
+    relevant["stop_id"] = relevant["stop_id"].astype(str)
+    relevant = relevant[relevant["stop_id"].isin(stop_ids)]
+    relevant["hub_stop_id"] = relevant["stop_id"].map(parent_map)
+    relevant = relevant.merge(
+        eligible_trips[["trip_id", "route_id", "service_id"]],
+        on="trip_id",
+        how="inner",
+    ).drop_duplicates(["hub_stop_id", "trip_id", "route_id"])
+    if relevant.empty:
+        return []
+
+    route_labels: dict[str, str] = {}
+    route_types: dict[str, int] = {}
+    if "route_id" in routes:
+        for row in routes.to_dict("records"):
+            route_id = str(row.get("route_id"))
+            route_labels[route_id] = str(row.get("route_short_name") or row.get("route_long_name") or route_id)
+            try:
+                route_types[route_id] = int(row.get("route_type", 3))
+            except (TypeError, ValueError):
+                route_types[route_id] = 3
+
+    candidates: list[dict[str, Any]] = []
+    for hub_stop_id, group in relevant.groupby("hub_stop_id", sort=False):
+        row = station_rows.get(str(hub_stop_id))
+        if not row:
+            continue
+        lat = float(row["stop_lat"])
+        lon = float(row["stop_lon"])
+        distance = float(haversine_miles(float(venue["lat"]), float(venue["lon"]), np.array([lat]), np.array([lon]))[0])
+        if not SERVICE_RADIUS_MILES < distance <= REGIONAL_HUB_RADIUS_MILES:
+            continue
+        route_ids = sorted(set(group["route_id"].astype(str)))
+        event_valid_dates = sum(
+            any(service_id in services.get(event_date, set()) for service_id in set(group["service_id"].astype(str)))
+            for event_date in event_dates
+        )
+        if not route_ids or event_valid_dates == 0:
+            continue
+        modes = sorted(
+            {
+                MODE_CAPACITY_RANGES.get(route_types.get(route_id, 3), MODE_CAPACITY_RANGES[3])["mode"]
+                for route_id in route_ids
+            }
+        )
+        service_events = int(group["trip_id"].nunique())
+        route_count = len(route_ids)
+        rail_priority = any(mode in {"tram_light_rail", "subway_metro", "rail", "ferry"} for mode in modes)
+        hub_score = (
+            (8_000 if rail_priority else 0)
+            + route_count * 500
+            + min(service_events, 999)
+            + event_valid_dates * 10
+            - distance
+        )
+        candidates.append(
+            {
+                "stop_id": str(hub_stop_id),
+                "name": str(row.get("stop_name") or "Unnamed station"),
+                "lat": round(lat, 6),
+                "lon": round(lon, 6),
+                "distance_mi": round(distance, 3),
+                "routes": [route_labels.get(route_id, route_id) for route_id in route_ids[:12]],
+                "route_count": route_count,
+                "modes": modes,
+                "rail_priority": rail_priority,
+                "event_valid_match_dates": event_valid_dates,
+                "event_valid_trip_patterns": service_events,
+                "hub_score": round(hub_score, 3),
+                "status": "observed",
+                "evidence_limit": "Scheduled connectivity candidate; special-event platform, parking, curb, and transfer capacity are not established.",
+            }
+        )
+    ordered = sorted(
+        candidates, key=lambda row: (-float(row["hub_score"]), float(row["distance_mi"]), str(row["name"]))
+    )
+    unique: list[dict[str, Any]] = []
+    names: set[str] = set()
+    for row in ordered:
+        name_key = str(row["name"]).strip().casefold()
+        if name_key in names:
+            continue
+        names.add(name_key)
+        unique.append(row)
+        if len(unique) >= MAX_REGIONAL_HUBS:
+            break
+    return unique
+
+
 def _event_departures(
     stop_times: pd.DataFrame,
     trips: pd.DataFrame,
@@ -291,19 +439,12 @@ def _event_departures(
     all_stop_times = stop_times.copy()
     all_stop_times["departure_seconds"] = all_stop_times["departure_time"].map(_gtfs_seconds)
     trip_start_seconds = (
-        all_stop_times.dropna(subset=["departure_seconds"])
-        .groupby("trip_id")["departure_seconds"]
-        .min()
-        .to_dict()
+        all_stop_times.dropna(subset=["departure_seconds"]).groupby("trip_id")["departure_seconds"].min().to_dict()
     )
-    relevant = all_stop_times[
-        all_stop_times["stop_id"].astype(str).isin(venue_stop_ids)
-    ].copy()
+    relevant = all_stop_times[all_stop_times["stop_id"].astype(str).isin(venue_stop_ids)].copy()
     relevant = relevant.dropna(subset=["departure_seconds"])
     relevant["departure_seconds"] = relevant["departure_seconds"].astype(int)
-    relevant["stop_distance_mi"] = relevant["stop_id"].astype(str).map(
-        venue_stop_distances
-    )
+    relevant["stop_distance_mi"] = relevant["stop_id"].astype(str).map(venue_stop_distances)
     relevant = relevant.merge(trips[list(needed_trips)], on="trip_id", how="inner")
     route_types = {}
     if {"route_id", "route_type"}.issubset(routes):
@@ -339,9 +480,7 @@ def _event_departures(
         sort_columns = ["trip_id", "stop_distance_mi", "departure_seconds"]
         if "stop_sequence" in candidates:
             sort_columns.append("stop_sequence")
-        trip_rows = candidates.sort_values(sort_columns, kind="stable").drop_duplicates(
-            "trip_id"
-        )
+        trip_rows = candidates.sort_values(sort_columns, kind="stable").drop_duplicates("trip_id")
         departure_occurrences: list[tuple[str, int, int]] = []
         for row in trip_rows.itertuples(index=False):
             seconds = int(row.departure_seconds)
@@ -353,12 +492,8 @@ def _event_departures(
                     occurrence = start + int(offset)
                     while occurrence < end + int(offset):
                         if window_start <= occurrence <= window_end:
-                            occurrence_id = (
-                                f"{row.trip_id}:frequency:{range_index}:{occurrence - offset}"
-                            )
-                            departure_occurrences.append(
-                                (occurrence_id, occurrence, int(row.route_type))
-                            )
+                            occurrence_id = f"{row.trip_id}:frequency:{range_index}:{occurrence - offset}"
+                            departure_occurrences.append((occurrence_id, occurrence, int(row.route_type)))
                         occurrence += headway
             elif window_start <= seconds <= window_end:
                 departure_occurrences.append((str(row.trip_id), seconds, int(row.route_type)))
@@ -367,14 +502,8 @@ def _event_departures(
         # serving several nearby stops from being counted more than once.
         departure_occurrences = sorted(set(departure_occurrences))
         match_end_seconds = kickoff_seconds + ASSUMED_MATCH_MIN * 60
-        after_match = [
-            seconds
-            for _, seconds, _ in departure_occurrences
-            if seconds >= match_end_seconds
-        ]
-        event_mode_counts: Counter[int] = Counter(
-            route_type for _, _, route_type in departure_occurrences
-        )
+        after_match = [seconds for _, seconds, _ in departure_occurrences if seconds >= match_end_seconds]
+        event_mode_counts: Counter[int] = Counter(route_type for _, _, route_type in departure_occurrences)
         mode_counts.update(event_mode_counts)
         event_capacity = {
             band: sum(
@@ -387,11 +516,7 @@ def _event_departures(
         hourly_counts: Counter[tuple[int, str, int]] = Counter()
         for _, seconds, route_type in departure_occurrences:
             direction = (
-                "arrival"
-                if seconds <= kickoff_seconds
-                else "departure"
-                if seconds >= match_end_seconds
-                else "both"
+                "arrival" if seconds <= kickoff_seconds else "departure" if seconds >= match_end_seconds else "both"
             )
             hourly_counts[(seconds // 3600 * 3600, direction, route_type)] += 1
         hourly_service = []
@@ -414,12 +539,12 @@ def _event_departures(
                 "kickoff_local": event["kickoff_local"],
                 "calendar_valid": bool(active),
                 "departures": len(departure_occurrences),
-                "latest_departure_seconds": max(
-                    (seconds for _, seconds, _ in departure_occurrences), default=None
-                ),
+                "latest_departure_seconds": max((seconds for _, seconds, _ in departure_occurrences), default=None),
                 "service_span_after_match_min": round(
                     (max(after_match) - kickoff_seconds - ASSUMED_MATCH_MIN * 60) / 60, 1
-                ) if after_match else 0.0,
+                )
+                if after_match
+                else 0.0,
                 "mode_departures": {
                     MODE_CAPACITY_RANGES.get(mode, MODE_CAPACITY_RANGES[3])["mode"]: count
                     for mode, count in sorted(event_mode_counts.items())
@@ -429,8 +554,7 @@ def _event_departures(
                 "capacity_high": event_capacity["high"],
                 "hourly_service": hourly_service,
                 "direction_basis": (
-                    "arrival through kickoff; departure from assumed match end; "
-                    "in-match service applies to both"
+                    "arrival through kickoff; departure from assumed match end; in-match service applies to both"
                 ),
             }
         )
@@ -455,6 +579,7 @@ def extract_feed(
     event_rows: list[dict[str, Any]] = []
     mode_counts: Counter[int] = Counter()
     route_shapes: list[dict[str, Any]] = []
+    regional_hubs: list[dict[str, Any]] = []
     stop_routes: dict[str, set[str]] = defaultdict(set)
     with zipfile.ZipFile(io.BytesIO(payload)) as outer:
         for zf in _nested_zips(outer):
@@ -477,9 +602,19 @@ def extract_feed(
             if details["calendar_end"]:
                 calendar_ends.append(details["calendar_end"])
             _, capacity_stops = _venue_stop_ids(stops, venue, SERVICE_RADIUS_MILES)
+            regional_hubs.extend(
+                _regional_hub_candidates(
+                    stops,
+                    stop_times,
+                    trips,
+                    routes,
+                    services,
+                    venue,
+                    events,
+                )
+            )
             capacity_stop_distances = {
-                str(row.stop_id): float(row.distance_mi)
-                for row in capacity_stops.itertuples(index=False)
+                str(row.stop_id): float(row.distance_mi) for row in capacity_stops.itertuples(index=False)
             }
             walking_stop_ids, _ = _venue_stop_ids(stops, venue, VENUE_RADIUS_MILES)
             shape_rows, stop_route_rows = _event_route_shapes(
@@ -506,10 +641,14 @@ def extract_feed(
             )
             event_rows.extend(rows)
             mode_counts.update(counts)
-    stops = pd.concat(aggregate_stops, ignore_index=True).drop_duplicates("stop_id") if aggregate_stops else pd.DataFrame()
+    stops = (
+        pd.concat(aggregate_stops, ignore_index=True).drop_duplicates("stop_id") if aggregate_stops else pd.DataFrame()
+    )
     venue_ids, nearby = _venue_stop_ids(stops, venue, SERVICE_RADIUS_MILES)
     capacity = {
-        band: sum(count * MODE_CAPACITY_RANGES.get(mode, MODE_CAPACITY_RANGES[3])[band] for mode, count in mode_counts.items())
+        band: sum(
+            count * MODE_CAPACITY_RANGES.get(mode, MODE_CAPACITY_RANGES[3])[band] for mode, count in mode_counts.items()
+        )
         for band in ("low", "base", "high")
     }
     if not events:
@@ -524,7 +663,9 @@ def extract_feed(
         "event_window_departures": event_departures,
         "event_departures_by_match": event_rows,
         "service_span_after_match_min": max((row["service_span_after_match_min"] for row in event_rows), default=None),
-        "calendar_validity": "valid" if "valid" in validities else ("outside_event_window" if validities else "unavailable"),
+        "calendar_validity": "valid"
+        if "valid" in validities
+        else ("outside_event_window" if validities else "unavailable"),
         "service_span": {
             "start_date": min(calendar_starts) if calendar_starts else None,
             "end_date": max(calendar_ends) if calendar_ends else None,
@@ -534,10 +675,12 @@ def extract_feed(
         "venue_stop_count": len(venue_ids),
         "nearest_stop_mi": round(float(nearby["distance_mi"].min()), 3) if not nearby.empty else None,
         "mode_departures": {
-            MODE_CAPACITY_RANGES.get(mode, MODE_CAPACITY_RANGES[3])["mode"]: count for mode, count in sorted(mode_counts.items())
+            MODE_CAPACITY_RANGES.get(mode, MODE_CAPACITY_RANGES[3])["mode"]: count
+            for mode, count in sorted(mode_counts.items())
         },
         "capacity": capacity,
         "route_shapes": route_shapes,
+        "regional_hubs": regional_hubs,
         "stop_routes": {stop_id: sorted(labels) for stop_id, labels in stop_routes.items()},
     }
 
@@ -553,7 +696,9 @@ def count_near_venue(stops: pd.DataFrame, venue: dict[str, Any]) -> dict[str, An
     work["stop_lat"] = pd.to_numeric(work["stop_lat"], errors="coerce")
     work["stop_lon"] = pd.to_numeric(work["stop_lon"], errors="coerce")
     work = work.dropna(subset=["stop_lat", "stop_lon"])
-    distances = haversine_miles(float(venue["lat"]), float(venue["lon"]), work["stop_lat"].to_numpy(), work["stop_lon"].to_numpy())
+    distances = haversine_miles(
+        float(venue["lat"]), float(venue["lon"]), work["stop_lat"].to_numpy(), work["stop_lon"].to_numpy()
+    )
     return {
         "stops_0_25mi": int((distances <= 0.25).sum()),
         "stops_0_5mi": int((distances <= 0.5).sum()),
@@ -606,6 +751,7 @@ def fetch_city(city: str, feeds: list[GtfsFeedSource], events: list[dict[str, An
     optional_presence: dict[str, bool] = defaultdict(bool)
     match_evidence: dict[str, dict[str, Any]] = {}
     route_shapes: list[dict[str, Any]] = []
+    regional_hubs: list[dict[str, Any]] = []
     for source in feeds:
         agency = source.agency
         url = source.url
@@ -628,9 +774,7 @@ def fetch_city(city: str, feeds: list[GtfsFeedSource], events: list[dict[str, An
             complete = all(extracted["required_files"].values())
             assigned_match_ids = {str(event["match_id"]) for event in assigned_events}
             valid_match_ids = {
-                str(row["match_id"])
-                for row in extracted["event_departures_by_match"]
-                if row["calendar_valid"]
+                str(row["match_id"]) for row in extracted["event_departures_by_match"] if row["calendar_valid"]
             }
             valid = bool(assigned_match_ids) and assigned_match_ids.issubset(valid_match_ids)
             status = "observed" if complete and valid else "partial"
@@ -651,11 +795,14 @@ def fetch_city(city: str, feeds: list[GtfsFeedSource], events: list[dict[str, An
             feed_stops = extracted["stops"].copy()
             if not feed_stops.empty:
                 feed_stops["agency"] = agency
-                feed_stops["routes"] = feed_stops["stop_id"].astype(str).map(
-                    lambda stop_id: tuple(extracted["stop_routes"].get(stop_id, ()))
+                feed_stops["routes"] = (
+                    feed_stops["stop_id"]
+                    .astype(str)
+                    .map(lambda stop_id: tuple(extracted["stop_routes"].get(stop_id, ())))
                 )
             all_stops.append(feed_stops)
             route_shapes.extend({**shape, "agency": agency} for shape in extracted["route_shapes"])
+            regional_hubs.extend({**hub, "agency": agency} for hub in extracted["regional_hubs"])
             route_keys.update((agency, str(route_id)) for route_id in extracted["route_ids"])
             scheduled_by_agency[agency] = max(
                 scheduled_by_agency.get(agency, 0), int(extracted["scheduled_departures"])
@@ -698,13 +845,13 @@ def fetch_city(city: str, feeds: list[GtfsFeedSource], events: list[dict[str, An
         except (requests.RequestException, zipfile.BadZipFile, OSError, ValueError) as exc:
             feed_results.append({**base, "error": str(exc)[:500]})
     stops = (
-        pd.concat(all_stops, ignore_index=True).drop_duplicates(["agency", "stop_id"])
-        if all_stops
-        else pd.DataFrame()
+        pd.concat(all_stops, ignore_index=True).drop_duplicates(["agency", "stop_id"]) if all_stops else pd.DataFrame()
     )
     status = (
-        "observed" if feed_results and all(feed["status"] == "observed" for feed in feed_results)
-        else "partial" if any(feed["status"] in {"observed", "partial"} for feed in feed_results)
+        "observed"
+        if feed_results and all(feed["status"] == "observed" for feed in feed_results)
+        else "partial"
+        if any(feed["status"] in {"observed", "partial"} for feed in feed_results)
         else "unavailable"
     )
     for row in match_evidence.values():
@@ -717,13 +864,19 @@ def fetch_city(city: str, feeds: list[GtfsFeedSource], events: list[dict[str, An
                 str(service.get("mode", "")),
             ),
         )
-    unique_shapes = {
-        (str(row["agency"]), str(row["route_id"]), str(row["shape_id"])): row
-        for row in route_shapes
-    }
+    unique_shapes = {(str(row["agency"]), str(row["route_id"]), str(row["shape_id"])): row for row in route_shapes}
     ordered_shapes = [unique_shapes[key] for key in sorted(unique_shapes)]
     omitted_shapes = max(len(ordered_shapes) - 100, 0)
     ordered_shapes = ordered_shapes[:100]
+    unique_hubs = {(str(row["agency"]), str(row["stop_id"])): row for row in regional_hubs}
+    ordered_hubs = sorted(
+        unique_hubs.values(),
+        key=lambda row: (
+            -float(row.get("hub_score", 0)),
+            float(row.get("distance_mi", math.inf)),
+            str(row.get("name", "")),
+        ),
+    )[:MAX_REGIONAL_HUBS]
     return {
         **count_near_venue(stops, venue),
         "city": city,
@@ -744,6 +897,7 @@ def fetch_city(city: str, feeds: list[GtfsFeedSource], events: list[dict[str, An
         "matches": match_evidence,
         "route_shapes": ordered_shapes,
         "route_shapes_omitted": omitted_shapes,
+        "regional_hubs": ordered_hubs,
         "capacity_status": "scenario" if status != "unavailable" else "unavailable",
         "feed_status": status,
         "feeds": feed_results,
@@ -769,7 +923,9 @@ def score_results(results: dict[str, dict[str, Any]]) -> dict[str, dict[str, Any
             + min(int(row.get("route_count", 0)), 20) * 2
         )
         row["raw_score"] = raw_values[city]
-    maximum = max((value for city, value in raw_values.items() if results[city].get("feed_status") != "unavailable"), default=0)
+    maximum = max(
+        (value for city, value in raw_values.items() if results[city].get("feed_status") != "unavailable"), default=0
+    )
     for city, row in results.items():
         status = str(row.get("feed_status", "unavailable"))
         if status == "unavailable":
@@ -797,6 +953,7 @@ def unavailable_fixture() -> dict[str, dict[str, Any]]:
             "event_capacity_base": None,
             "event_capacity_high": None,
             "capacity_status": "unavailable",
+            "regional_hubs": [],
             "feeds": [
                 {
                     "agency": source.agency,
@@ -822,9 +979,13 @@ def write_snapshot(results: dict[str, dict[str, Any]], output: Path, generated_a
         "contract_version": CONTRACT_VERSION,
         "snapshot_kind": "gtfs_venue_access",
         "generated_at_utc": generated_at,
-        "status": "unavailable" if fixture else (
-            "observed" if all(row["feed_status"] == "observed" for row in results.values())
-            else "partial" if any(row["feed_status"] != "unavailable" for row in results.values())
+        "status": "unavailable"
+        if fixture
+        else (
+            "observed"
+            if all(row["feed_status"] == "observed" for row in results.values())
+            else "partial"
+            if any(row["feed_status"] != "unavailable" for row in results.values())
             else "unavailable"
         ),
         "fixture": fixture,
@@ -841,6 +1002,9 @@ def write_snapshot(results: dict[str, dict[str, Any]], output: Path, generated_a
             "event_window_minutes": {"before": WINDOW_BEFORE_MIN, "after": WINDOW_AFTER_MIN},
             "venue_radius_miles": VENUE_RADIUS_MILES,
             "service_capacity_radius_miles": SERVICE_RADIUS_MILES,
+            "regional_hub_radius_miles": REGIONAL_HUB_RADIUS_MILES,
+            "regional_hub_limit": MAX_REGIONAL_HUBS,
+            "regional_hub_semantics": "event-valid scheduled connectivity candidates; not approved special-event transfer hubs",
         },
     }
     snapshot["artifact_sha256"] = artifact_hash(snapshot)
@@ -851,7 +1015,9 @@ def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
     mode = parser.add_mutually_exclusive_group(required=True)
     mode.add_argument("--refresh", action="store_true", help="Explicitly download and pin configured GTFS feeds")
-    mode.add_argument("--fixture", action="store_true", help="Write a deterministic unavailable fixture without network")
+    mode.add_argument(
+        "--fixture", action="store_true", help="Write a deterministic unavailable fixture without network"
+    )
     parser.add_argument("--schedule", type=Path, default=Path("data/snapshots/fifa/fifa_2026_us_schedule.json"))
     parser.add_argument("--output", type=Path, default=Path("data/snapshots/gtfs/gtfs_venue_access.json"))
     parser.add_argument(
@@ -861,7 +1027,9 @@ def main() -> None:
         help="Refresh only the selected city and preserve other cities from the current snapshot",
     )
     args = parser.parse_args()
-    generated_at = datetime.now(timezone.utc).isoformat().replace("+00:00", "Z") if args.refresh else "2026-08-01T00:00:00Z"
+    generated_at = (
+        datetime.now(timezone.utc).isoformat().replace("+00:00", "Z") if args.refresh else "2026-08-01T00:00:00Z"
+    )
     if args.fixture:
         results = unavailable_fixture()
     else:
@@ -874,15 +1042,14 @@ def main() -> None:
             results = dict(load_gtfs_snapshot(args.output)["cities"])
         else:
             results = unavailable_fixture()
-        results.update(
-            {
-                city: fetch_city(city, GTFS_FEEDS[city], by_city[city])
-                for city in selected
-            }
-        )
+        results.update({city: fetch_city(city, GTFS_FEEDS[city], by_city[city]) for city in selected})
         results = score_results(results)
     digest = write_snapshot(results, args.output, generated_at, fixture=args.fixture)
-    print(json.dumps({"output": str(args.output), "status": "fixture" if args.fixture else "refreshed", "file_sha256": digest}))
+    print(
+        json.dumps(
+            {"output": str(args.output), "status": "fixture" if args.fixture else "refreshed", "file_sha256": digest}
+        )
+    )
 
 
 if __name__ == "__main__":

@@ -18,11 +18,36 @@ retrieval time, version, license, coverage, and SHA-256 hash in a
 | NOAA Global Hourly | [NOAA NCEI Integrated Surface Database](https://www.ncei.noaa.gov/products/land-based-station/integrated-surface-database) | Venue-proximate June-July air temperature and dew-point-derived humidity | Station ID/location, venue distance, hourly coverage, retrieval time, raw hash, and formula | Integrated for Miami and New York/New Jersey only; 366 daily rows |
 | USGS Landsat surface temperature | [Landsat Collection 2 Surface Temperature](https://www.usgs.gov/landsat-missions/landsat-collection-2-surface-temperature) via [Planetary Computer public mirror](https://planetarycomputer.microsoft.com/dataset/group/landsat) | Boston venue-buffer surface-UHI supplement | Scene IDs/times, QA masks, buffer definitions, pixel coverage, versions, hashes, and semantic limits | Integrated from five valid 2022-2024 scenes; not air temperature or human exposure |
 | Official post-event operations | Host agencies and public authorities listed below | Observed tournament ridership, service, fleet, egress, funding, and throughput benchmarks | Raw response hash, publication version/date, coverage, metric locator, unit, granularity, permitted use, and explicit non-use | Integrated: 33 metrics across all 11 cities and 13 match records; no city is match-hour calibration-ready |
+| Dallas FIFA 2026 transportation plan | [Dallas Transportation & Mobility Plan](https://www.dallasfwc26.com/dallas-2026/transportation-mobility/) | Published transfer hubs, rail/charter pattern, operating windows, curb location, contingency language, and named controls | Raw response hash, review terms, source locators, retrieval time, coverage, and explicit city-only precedence | Integrated for Dallas; exact controls for the other ten cities remain unavailable |
+| Official-plan strategy benchmark | Official host and transit sources linked in `world_cup_2026_strategy_benchmarks.json` | Broad reviewed operating family for every U.S. host | Full city coverage, official HTTPS attribution, reviewed service signals, model/label separation, and artifact hash | Integrated as a calibration audit only; it is not a content-pinned exact operating overlay |
 
 Cost references are conceptual planning inputs, not bids or engineering
 estimates. EPA factors are planning factors, not a local fleet inventory or a
 MOVES analysis. GTFS represents scheduled service, not actual operations,
 ridership, crowding, or reliability.
+
+## Published traffic-management overlay
+
+The compact artifact is
+`data/snapshots/operations/world_cup_2026_traffic_management.json` (schema
+`1.0.0`). Its artifact SHA-256 is
+`07adb936dd0d532a43e6d0a1b517b6d854f8654c88b7536b4d01699bbf4e188b`.
+The raw Dallas page is retained in ignored `data/raw/operations/` storage and
+must contain the review terms `CentrePort`, `Dynamic Charter Buses`, and
+`Griffin Street`. The overlay has precedence only for Dallas. It does not make
+the generated candidate locations or controls for any other city official.
+
+## Official-plan strategy benchmark
+
+The compact artifact is
+`data/snapshots/operations/world_cup_2026_strategy_benchmarks.json` (schema
+`1.0.0`). Its artifact SHA-256 is
+`720cd129cf2e9b277c7f425ae8db0f0d5748083aa99031a98b385eb0a80e4e6b`.
+It contains one broad strategy-family label and an official source link for
+each U.S. host. The classifier is prohibited from reading these labels; the
+comparison occurs after prediction. Because raw responses are not republished
+in this artifact, the labels cannot authorize exact hub, capacity, window, or
+traffic-control claims.
 
 ## FIFA 2026 operational-outcome registry
 

@@ -39,16 +39,23 @@ def test_nested_public_and_rice_artifacts_load_for_all_host_cities():
     assert set(artifacts["map_layers"]) == set(HOST_CITIES)
     assert len(artifacts["operational_metrics"]) == 33
     assert len(artifacts["operational_event_records"]) == 13
-    assert set(artifacts["weather"].loc[artifacts["weather"]["city"].isin(["Miami", "New York/NJ"]), "source_dataset"]) == {"noaa-global-hourly-supplement"}
-    assert artifacts["uhi"].loc[artifacts["uhi"]["city"] == "Boston", "source_dataset"].iloc[0] == "usgs-landsat-surface-uhi-supplement"
+    assert set(
+        artifacts["weather"].loc[artifacts["weather"]["city"].isin(["Miami", "New York/NJ"]), "source_dataset"]
+    ) == {"noaa-global-hourly-supplement"}
+    assert (
+        artifacts["uhi"].loc[artifacts["uhi"]["city"] == "Boston", "source_dataset"].iloc[0]
+        == "usgs-landsat-surface-uhi-supplement"
+    )
     evidence = {
-        row.city: json.loads(row.evidence_json)
-        for row in metrics[["city", "evidence_json"]].itertuples(index=False)
+        row.city: json.loads(row.evidence_json) for row in metrics[["city", "evidence_json"]].itertuples(index=False)
     }
     assert evidence["Miami"]["heat"]["source"].startswith("NOAA NCEI")
     assert evidence["New York/NJ"]["heat"]["source"].startswith("NOAA NCEI")
     assert evidence["Boston"]["uhi"]["source"].startswith("USGS Landsat")
     assert set(artifacts["operational_coverage"]) == set(HOST_CITIES)
+    assert set(artifacts["traffic_management_coverage"]) == set(HOST_CITIES)
+    assert set(artifacts["published_traffic_plans"]) == {"Dallas"}
+    assert set(artifacts["strategy_benchmarks"]) == set(HOST_CITIES)
     assert not artifacts["uhi_points"].empty
     assert not artifacts["poi_points"].empty
     assert not artifacts["origin_flows"].empty
@@ -73,6 +80,7 @@ def test_compact_evidence_composes_match_decisions_with_repaired_event_gtfs():
     assert len(bundle["visitor_flow_forecasts"]) == 78
     assert len(bundle["access_gaps"]) == 78
     assert len(bundle["intervention_outcomes"]) == 78 * 3
+    assert len(bundle["traffic_strategy_plans"]) == 78
     assert bundle["investment_recommendations"]
     assert len(bundle["equation_registry"]) >= 9
     assert len(bundle["recommendation_policy"]) == 6
@@ -98,14 +106,37 @@ def test_compact_evidence_composes_match_decisions_with_repaired_event_gtfs():
     assert access_by_city["Miami"]["transit_capacity_base"] == 0
     assert access_by_city["Miami"]["status"] == "partial"
     for city in ("Kansas City", "Philadelphia"):
-        city_options = [
-            row for row in bundle["investment_recommendations"] if row["city"] == city
-        ]
+        city_options = [row for row in bundle["investment_recommendations"] if row["city"] == city]
         assert any(row["status"] == "scenario" and row["evidence_qualified"] for row in city_options)
         assert any(row["status"] == "partial" and not row["evidence_qualified"] for row in city_options)
     assert all(row["peak_demand_per_hour"] > 0 for row in bundle["access_gaps"])
     assert all(row["residual_passengers"] >= 0 for row in bundle["access_gaps"])
     assert any(row["residual_passengers"] > 0 for row in bundle["access_gaps"])
+    assert {row["predicted_pattern"] for row in bundle["traffic_strategy_plans"]} >= {
+        "Direct high-capacity transit reinforcement",
+        "Multi-hub stadium shuttle",
+        "Capacity-managed rail plus shuttle",
+        "Downtown multimodal dispersal",
+        "Multimodal rail-transfer network",
+        "Regional rail to charter-bus bridge",
+    }
+    assert all(row["benchmark_agreement"] == "matches" for row in bundle["traffic_strategy_plans"])
+    assert all(row["prediction_reasons"] for row in bundle["traffic_strategy_plans"])
+    assert all(
+        [action["phase"] for action in row["actions"]]
+        == [
+            "Before match",
+            "Arrival and transfer",
+            "Curb and last mile",
+            "Egress",
+            "Contingency",
+        ]
+        for row in bundle["traffic_strategy_plans"]
+    )
+    dallas = next(row for row in bundle["traffic_strategy_plans"] if row["city"] == "Dallas")
+    assert dallas["official_plan_available"] is True
+    assert dallas["regional_hub_name"] == "TRE CentrePort/DFW Airport Station"
+    assert dallas["published_controls"]
 
 
 def test_recommendations_are_scoped_to_exact_matches_without_citywide_bleed():
@@ -142,9 +173,7 @@ def test_recommendations_are_scoped_to_exact_matches_without_citywide_bleed():
 def test_same_package_responds_to_city_evidence():
     artifacts, metrics = _loaded()
     bundle = build_transportation_bundle(metrics, artifacts)
-    operational = [
-        row for row in bundle["intervention_outcomes"] if row["package"]["name"] == "Operational Package"
-    ]
+    operational = [row for row in bundle["intervention_outcomes"] if row["package"]["name"] == "Operational Package"]
     first_match_by_city = {}
     for row in operational:
         first_match_by_city.setdefault(row["city"], row)
@@ -179,10 +208,7 @@ def test_access_capacity_uses_exact_peak_hour_and_event_phase():
             if pd.Timestamp(row["hour_start_local"]).floor("h") == peak_hour
             and (direction == "both" or row["direction"] in {direction, "both"})
         ]
-        expected = sum(
-            float(row["departures_per_hour"]) * float(row["vehicle_capacity_base"])
-            for row in applicable
-        )
+        expected = sum(float(row["departures_per_hour"]) * float(row["vehicle_capacity_base"]) for row in applicable)
         assert access["transit_capacity_base"] == pytest.approx(expected)
 
 
@@ -196,7 +222,15 @@ def test_all_real_movement_timelines_render_and_operational_spreading_conserves_
             movement = decision.movement(match.match_id)
             figure, table = _movement_chart(movement)
             assert figure is not None and not table.empty
-            assert {"timestamp_local", "arrivals_low", "arrivals_base", "arrivals_high", "departures_low", "departures_base", "departures_high"}.issubset(table)
+            assert {
+                "timestamp_local",
+                "arrivals_low",
+                "arrivals_base",
+                "arrivals_high",
+                "departures_low",
+                "departures_base",
+                "departures_high",
+            }.issubset(table)
             operational = decision.scenario_set(match.match_id)[1]
             timeline = _before_after(movement, operational)
             assert not timeline.empty
@@ -217,7 +251,9 @@ def test_factor_provenance_is_required_and_changes_dependent_outputs():
     artifacts, metrics = _loaded()
     bundle = build_transportation_bundle(metrics, artifacts)
     digest = artifacts["factor_snapshot"]["artifact_sha256"]
-    assert all(any(digest in assumption for assumption in row["assumptions"]) for row in bundle["intervention_outcomes"])
+    assert all(
+        any(digest in assumption for assumption in row["assumptions"]) for row in bundle["intervention_outcomes"]
+    )
 
     missing = dict(artifacts)
     missing.pop("factor_snapshot")
@@ -229,7 +265,13 @@ def test_factor_provenance_is_required_and_changes_dependent_outputs():
     changed["factor_snapshot"]["artifact_sha256"] = artifact_hash(changed["factor_snapshot"])
     changed_bundle = build_transportation_bundle(metrics, changed)
     original = next(row for row in bundle["intervention_outcomes"] if row["package"]["name"] == "Operational Package")
-    revised = next(row for row in changed_bundle["intervention_outcomes"] if row["city"] == original["city"] and row["match_id"] == original["match_id"] and row["package"]["name"] == "Operational Package")
+    revised = next(
+        row
+        for row in changed_bundle["intervention_outcomes"]
+        if row["city"] == original["city"]
+        and row["match_id"] == original["match_id"]
+        and row["package"]["name"] == "Operational Package"
+    )
     assert revised["cost_base"] > original["cost_base"]
 
 

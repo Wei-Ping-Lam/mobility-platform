@@ -58,6 +58,22 @@ gap_h = max(demand_h − scheduled_capacity_h, 0)
 This is a passenger-per-hour planning gap, not roadway congestion or a measured
 queue.
 
+## EQ-TRAFFIC-SCALE-01 — unconstrained event-bus scale screen
+
+```text
+bus_equivalents_h = ceil(
+  max(demand_h - scheduled_capacity_h, 0)
+  / (bus_capacity * usable_load_factor)
+)
+```
+
+The low case couples low demand with high usable bus capacity; the base case
+uses base values; the high case couples high demand with low usable capacity.
+The result is an order-of-magnitude residual-gap translation, not a fleet
+recommendation. A base result above 60 buses/hour triggers a disclosed
+single-hub review signal; that threshold is a project planning heuristic, not
+an observed curb, layover, roadway, or dispatch limit.
+
 ## EQ-RESILIENCE-01 — common access stress
 
 ```text

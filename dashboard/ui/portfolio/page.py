@@ -13,6 +13,7 @@ from dashboard.ui.portfolio import (
     investments,
     outcomes,
     resilience,
+    traffic_management,
     visitor_movement,
 )
 from dashboard.ui.portfolio.context import build_portfolio_frame
@@ -23,7 +24,8 @@ TAB_LABELS = (
     ":material/health_and_safety: Resilience",
     ":material/route: Visitor movement",
     ":material/transfer_within_a_station: First/last mile",
-    ":material/construction: Investments & strategies",
+    ":material/construction: Investments & transit",
+    ":material/traffic: Traffic management",
     ":material/monitoring: Outcomes",
 )
 
@@ -39,7 +41,7 @@ def render_portfolio(
         "Compare resilience, modeled visitor movement, first/last-mile gaps, concrete actions, and decision outcomes across every U.S. host.",
         (
             "11 cities at once",
-            "5 Track 1 objectives",
+            "6 Track 1 objectives",
             "No portfolio map or city filter",
         ),
     )
@@ -60,6 +62,7 @@ def render_portfolio(
         lambda: visitor_movement.render(frame),
         lambda: first_last_mile.render(frame),
         lambda: investments.render(frame),
+        lambda: traffic_management.render(frame),
         lambda: outcomes.render(frame),
     )
     for tab, renderer in zip(tabs, renderers):
@@ -70,18 +73,14 @@ def render_portfolio(
     largest_gap = frame.dropna(subset=["capacity_qualified_gap_pph"]).sort_values(
         "capacity_qualified_gap_pph", ascending=False
     )
-    priority_city = (
-        str(largest_gap.iloc[0]["city"]) if not largest_gap.empty else None
-    )
+    priority_city = str(largest_gap.iloc[0]["city"]) if not largest_gap.empty else None
     section_header(
         "Open the priority case",
         "Continue from the all-city comparison to the representative match, concrete scope, delivery owner, dependencies, and evidence limits.",
         "Drill down",
     )
     st.button(
-        f"Open {priority_city} action plan"
-        if priority_city
-        else "Open priority city action plan",
+        f"Open {priority_city} action plan" if priority_city else "Open priority city action plan",
         key="overview_open_city",
         on_click=navigate,
         args=("City Brief", priority_city),
@@ -90,13 +89,7 @@ def render_portfolio(
     )
     st.download_button(
         "Download exact Track 1 comparison CSV",
-        frame[
-            [
-                column
-                for column in frame.columns
-                if not column.startswith("package_")
-            ]
-        ].to_csv(index=False),
+        frame[[column for column in frame.columns if not column.startswith("package_")]].to_csv(index=False),
         file_name="track-1-host-city-comparison.csv",
         mime="text/csv",
         width="stretch",

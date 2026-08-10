@@ -35,7 +35,8 @@ def test_default_landing_page_starts_with_all_city_portfolio():
         ":material/health_and_safety: Resilience",
         ":material/route: Visitor movement",
         ":material/transfer_within_a_station: First/last mile",
-        ":material/construction: Investments & strategies",
+        ":material/construction: Investments & transit",
+        ":material/traffic: Traffic management",
         ":material/monitoring: Outcomes",
     ]
     page_text = "\n".join(str(element.value) for element in app.markdown)
@@ -62,9 +63,7 @@ def test_portfolio_tabs_make_every_track1_objective_explicit():
         "Departure peak base",
         "Validation status",
     }.issubset(movement.columns)
-    assert next(
-        widget for widget in app.segmented_control if widget.label == "Forecast view"
-    ).value == "Origin mix"
+    assert next(widget for widget in app.segmented_control if widget.label == "Forecast view").value == "Origin mix"
     captions = "\n".join(str(element.value) for element in app.caption)
     assert "commercial customer origins shape only the U.S. prior" in captions
     assert "Neither is observed FIFA fan behavior" in captions
@@ -72,18 +71,31 @@ def test_portfolio_tabs_make_every_track1_objective_explicit():
     app.session_state["track1_objective"] = ":material/transfer_within_a_station: First/last mile"
     app.run(timeout=60)
     access = app.dataframe[0].value
-    assert {"Peak direction", "Zero-capacity matches", "Network walk (m)", "Accessibility audit"}.issubset(access.columns)
+    assert {"Peak direction", "Zero-capacity matches", "Network walk (m)", "Accessibility audit"}.issubset(
+        access.columns
+    )
 
-    app.session_state["track1_objective"] = ":material/construction: Investments & strategies"
+    app.session_state["track1_objective"] = ":material/construction: Investments & transit"
     app.run(timeout=60)
     actions = app.dataframe[0].value
     assert actions["Priority screen"].nunique() >= 3
     assert {"Why this bottleneck", "Delivery owner", "Dependencies"}.issubset(actions.columns)
 
+    app.session_state["track1_objective"] = ":material/traffic: Traffic management"
+    app.run(timeout=60)
+    traffic = app.dataframe[0].value
+    assert traffic["Engine strategy"].nunique() >= 5
+    assert {"Agreement", "Rule strength"}.issubset(traffic.columns)
+    assert set(traffic["Agreement"]) == {"Matches"}
+    traffic_detail = app.dataframe[1].value
+    assert {"Official benchmark", "Bus eq / hr"}.issubset(traffic_detail.columns)
+
     app.session_state["track1_objective"] = ":material/monitoring: Outcomes"
     app.run(timeout=60)
     outcomes = app.dataframe[0].value
-    assert {"Peak passengers addressed / hour", "Venue-area vehicle trips avoided", "Net CO2e avoided (kg)"}.issubset(outcomes.columns)
+    assert {"Peak passengers addressed / hour", "Venue-area vehicle trips avoided", "Net CO2e avoided (kg)"}.issubset(
+        outcomes.columns
+    )
     assert next(widget for widget in app.segmented_control if widget.label == "Outcome to compare").value == "Access"
     page_text = "\n".join(str(element.value) for element in app.markdown)
     assert "Single-measure efficiency" not in page_text
@@ -105,18 +117,24 @@ def test_priority_case_drills_into_the_same_city_action_plan():
     assert "New York/NJ: from access gap to action" in page_text
     assert "Competition evidence" not in page_text
     assert "Required deliverables" not in page_text
-    assert len(app.get("plotly_chart")) == 1
-    assert len(app.dataframe) == 2
-    investment_screen = app.dataframe[1].value
+    assert len(app.get("plotly_chart")) == 3
+    tab_labels = {tab.label for tab in app.tabs}
+    assert {"Venue access overlap", "Operating overlap"}.issubset(tab_labels)
+    assert len(app.dataframe) == 3
+    strategy = next(frame.value for frame in app.dataframe if "Phase" in frame.value.columns)
+    assert list(strategy["Phase"]) == [
+        "Before match",
+        "Arrival and transfer",
+        "Curb and last mile",
+        "Egress",
+        "Contingency",
+    ]
+    investment_screen = next(frame.value for frame in app.dataframe if "Decision" in frame.value.columns)
     assert set(investment_screen["Decision"]) >= {"Screen first"}
     assert "Proposed scale" in investment_screen
     composite_toggle = next(widget for widget in app.toggle if widget.label == "Show advanced composite model tests")
     assert composite_toggle.value is False
-    assert not [
-        button
-        for button in app.button
-        if "maps and scenarios" in button.label.lower()
-    ]
+    assert not [button for button in app.button if "maps and scenarios" in button.label.lower()]
 
 
 def test_advanced_composites_define_every_modeled_quantity():
@@ -127,7 +145,7 @@ def test_advanced_composites_define_every_modeled_quantity():
     app.run(timeout=60)
 
     assert not app.exception
-    composites = app.dataframe[2].value
+    composites = next(frame.value for frame in app.dataframe if "Composite" in frame.value.columns)
     operational = composites[composites["Composite"] == "Operational Package"].iloc[0]
     capital = composites[composites["Composite"] == "Capital Package"].iloc[0]
     assert operational["What it combines"] == (
@@ -142,9 +160,7 @@ def test_deferred_workspaces_have_no_navigation_or_calls_to_action():
     workspace = next(widget for widget in app.radio if widget.label == "Workspace")
     assert workspace.options == ["Portfolio", "City action plan"]
     assert not [
-        button
-        for button in app.button
-        if "methods" in button.label.lower() or "scenario" in button.label.lower()
+        button for button in app.button if "methods" in button.label.lower() or "scenario" in button.label.lower()
     ]
 
 

@@ -21,6 +21,8 @@ from dashboard.models.interventions import (
 )
 from dashboard.models.movement import build_movement_scenario, validation_label
 from dashboard.models.recommendation_policy import policy_records
+from dashboard.models.strategy_calibration import build_strategy_features
+from dashboard.models.traffic_strategy import build_traffic_strategy_plan
 from dashboard.models.visitor_forecast import build_visitor_flow_forecast
 
 
@@ -81,10 +83,12 @@ def _event_service(city_gtfs: Mapping[str, Any], match_id: str) -> list[dict[str
             for row in hourly_service
         ]
     departures = match_service.get("event_window_departures")
-    capacities = {
-        level: match_service.get(f"event_capacity_{level}") for level in ("low", "base", "high")
-    }
-    if status == EvidenceStatus.UNAVAILABLE or departures is None or any(value is None for value in capacities.values()):
+    capacities = {level: match_service.get(f"event_capacity_{level}") for level in ("low", "base", "high")}
+    if (
+        status == EvidenceStatus.UNAVAILABLE
+        or departures is None
+        or any(value is None for value in capacities.values())
+    ):
         return [
             {
                 "departures_per_hour": 0,
@@ -162,6 +166,7 @@ def build_transportation_bundle(
     access_results = []
     outcomes = []
     recommendations = []
+    traffic_strategy_plans = []
     intervention_inputs = []
     for raw_event in event_rows:
         match = _match(raw_event)
@@ -177,7 +182,11 @@ def build_transportation_bundle(
             "status": city_walk.get("status", EvidenceStatus.UNAVAILABLE.value),
         }
         city_gtfs = gtfs.get(match.city, {}) if isinstance(gtfs.get(match.city, {}), Mapping) else {}
-        match_service = city_gtfs.get("matches", {}).get(match.match_id, {}) if isinstance(city_gtfs.get("matches", {}), Mapping) else {}
+        match_service = (
+            city_gtfs.get("matches", {}).get(match.match_id, {})
+            if isinstance(city_gtfs.get("matches", {}), Mapping)
+            else {}
+        )
         access = build_access_gap_result(
             movement,
             _event_service(city_gtfs, match.match_id),
@@ -194,7 +203,11 @@ def build_transportation_bundle(
         )
 
         transit_score = city_metric.get("transit_score")
-        private_share = 0.60 if transit_score is None or pd.isna(transit_score) else max(0.25, min(0.75, 0.75 - float(transit_score) / 200))
+        private_share = (
+            0.60
+            if transit_score is None or pd.isna(transit_score)
+            else max(0.25, min(0.75, 0.75 - float(transit_score) / 200))
+        )
         external_share = _origin_share(artifacts, match.city)
         average_trip = 12.0 + 18.0 * external_share
         network_distance = float(city_walk.get("network_distance_m") or 1200.0)
@@ -228,11 +241,37 @@ def build_transportation_bundle(
                 for item in city_recommendations
             ]
 
+        published_plans = artifacts.get("published_traffic_plans", {})
+        official_plan = published_plans.get(match.city, {}) if isinstance(published_plans, Mapping) else {}
+        strategy_benchmarks = artifacts.get("strategy_benchmarks", {})
+        strategy_benchmark = (
+            strategy_benchmarks.get(match.city, {})
+            if isinstance(strategy_benchmarks, Mapping)
+            else {}
+        )
+        regional_hubs = city_gtfs.get("regional_hubs", [])
+        strategy_features = build_strategy_features(access, city_gtfs, city_walk)
+        traffic_plan = build_traffic_strategy_plan(
+            match,
+            movement,
+            access,
+            city_inputs,
+            factor_registry,
+            city_recommendations,
+            regional_hubs=(regional_hubs if isinstance(regional_hubs, list) else []),
+            official_plan=(official_plan if isinstance(official_plan, Mapping) else {}),
+            strategy_features=strategy_features,
+            strategy_benchmark=(
+                strategy_benchmark if isinstance(strategy_benchmark, Mapping) else {}
+            ),
+        )
+
         movements.append(movement.to_dict())
         visitor_forecasts.append(visitor_forecast)
         access_results.append(access.to_dict())
         outcomes.extend(item.to_dict() for item in city_outcomes)
         recommendations.extend(item.to_dict() for item in city_recommendations)
+        traffic_strategy_plans.append(traffic_plan.to_dict())
 
     return {
         "movement_scenarios": movements,
@@ -240,6 +279,7 @@ def build_transportation_bundle(
         "access_gaps": access_results,
         "intervention_outcomes": outcomes,
         "investment_recommendations": recommendations,
+        "traffic_strategy_plans": traffic_strategy_plans,
         "city_intervention_inputs": intervention_inputs,
         "movement_validation": validation.to_dict("records"),
         "equation_registry": equation_records(),
