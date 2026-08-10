@@ -1,5 +1,5 @@
 {
-  "artifact_sha256": "91295cc2fffe5fdf0d235cfdf9792abba4c51368d333729ccbb61d517fc2c846",
+  "artifact_sha256": "b4ae98eb762eb1b5ad7a37c7261cea668c5e1d119cdfe438e7960875afc30778",
   "cities": {
     "Atlanta": {
       "agencies": [
@@ -52,7 +52,7 @@
             "stops.txt": true,
             "trips.txt": true
           },
-          "retrieved_at_utc": "2026-08-05T20:40:59.873866Z",
+          "retrieved_at_utc": "2026-08-10T00:18:17.797731Z",
           "service_span": {
             "end_date": "2026-08-21",
             "start_date": "2026-04-18"
@@ -1465,6 +1465,184 @@
         "transfers.txt": false
       },
       "raw_score": 2151,
+      "regional_hubs": [
+        {
+          "agency": "MARTA",
+          "distance_mi": 0.941,
+          "event_valid_match_dates": 8,
+          "event_valid_trip_patterns": 492,
+          "evidence_limit": "Scheduled connectivity candidate; special-event platform, parking, curb, and transfer capacity are not established.",
+          "hub_score": 9571.059,
+          "lat": 33.756478,
+          "lon": -84.41723,
+          "modes": [
+            "subway_metro"
+          ],
+          "name": "ASHBY STATION",
+          "rail_priority": true,
+          "route_count": 2,
+          "routes": [
+            "BLUE",
+            "GREEN"
+          ],
+          "status": "observed",
+          "stop_id": "908963"
+        },
+        {
+          "agency": "MARTA",
+          "distance_mi": 0.542,
+          "event_valid_match_dates": 8,
+          "event_valid_trip_patterns": 474,
+          "evidence_limit": "Scheduled connectivity candidate; special-event platform, parking, curb, and transfer capacity are not established.",
+          "hub_score": 9553.458,
+          "lat": 33.748938,
+          "lon": -84.395545,
+          "modes": [
+            "subway_metro"
+          ],
+          "name": "GARNETT STATION",
+          "rail_priority": true,
+          "route_count": 2,
+          "routes": [
+            "GOLD",
+            "RED"
+          ],
+          "status": "observed",
+          "stop_id": "908600"
+        },
+        {
+          "agency": "MARTA",
+          "distance_mi": 0.551,
+          "event_valid_match_dates": 8,
+          "event_valid_trip_patterns": 474,
+          "evidence_limit": "Scheduled connectivity candidate; special-event platform, parking, curb, and transfer capacity are not established.",
+          "hub_score": 9553.449,
+          "lat": 33.754052,
+          "lon": -84.391452,
+          "modes": [
+            "subway_metro"
+          ],
+          "name": "FIVE POINTS STATION",
+          "rail_priority": true,
+          "route_count": 2,
+          "routes": [
+            "GOLD",
+            "RED"
+          ],
+          "status": "observed",
+          "stop_id": "908986"
+        },
+        {
+          "agency": "MARTA",
+          "distance_mi": 0.788,
+          "event_valid_match_dates": 8,
+          "event_valid_trip_patterns": 474,
+          "evidence_limit": "Scheduled connectivity candidate; special-event platform, parking, curb, and transfer capacity are not established.",
+          "hub_score": 9553.212,
+          "lat": 33.758189,
+          "lon": -84.387596,
+          "modes": [
+            "subway_metro"
+          ],
+          "name": "PEACHTREE CENTER STATION",
+          "rail_priority": true,
+          "route_count": 2,
+          "routes": [
+            "GOLD",
+            "RED"
+          ],
+          "status": "observed",
+          "stop_id": "908601"
+        },
+        {
+          "agency": "MARTA",
+          "distance_mi": 1.074,
+          "event_valid_match_dates": 8,
+          "event_valid_trip_patterns": 474,
+          "evidence_limit": "Scheduled connectivity candidate; special-event platform, parking, curb, and transfer capacity are not established.",
+          "hub_score": 9552.926,
+          "lat": 33.766236,
+          "lon": -84.387504,
+          "modes": [
+            "subway_metro"
+          ],
+          "name": "CIVIC CENTER STATION",
+          "rail_priority": true,
+          "route_count": 2,
+          "routes": [
+            "GOLD",
+            "RED"
+          ],
+          "status": "observed",
+          "stop_id": "908912"
+        },
+        {
+          "agency": "MARTA",
+          "distance_mi": 1.376,
+          "event_valid_match_dates": 8,
+          "event_valid_trip_patterns": 474,
+          "evidence_limit": "Scheduled connectivity candidate; special-event platform, parking, curb, and transfer capacity are not established.",
+          "hub_score": 9552.624,
+          "lat": 33.771741,
+          "lon": -84.387204,
+          "modes": [
+            "subway_metro"
+          ],
+          "name": "NORTH AVENUE STATION",
+          "rail_priority": true,
+          "route_count": 2,
+          "routes": [
+            "GOLD",
+            "RED"
+          ],
+          "status": "observed",
+          "stop_id": "907914"
+        },
+        {
+          "agency": "MARTA",
+          "distance_mi": 1.494,
+          "event_valid_match_dates": 8,
+          "event_valid_trip_patterns": 474,
+          "evidence_limit": "Scheduled connectivity candidate; special-event platform, parking, curb, and transfer capacity are not established.",
+          "hub_score": 9552.506,
+          "lat": 33.736564,
+          "lon": -84.413653,
+          "modes": [
+            "subway_metro"
+          ],
+          "name": "WEST END STATION",
+          "rail_priority": true,
+          "route_count": 2,
+          "routes": [
+            "GOLD",
+            "RED"
+          ],
+          "status": "observed",
+          "stop_id": "908704"
+        },
+        {
+          "agency": "MARTA",
+          "distance_mi": 1.978,
+          "event_valid_match_dates": 8,
+          "event_valid_trip_patterns": 474,
+          "evidence_limit": "Scheduled connectivity candidate; special-event platform, parking, curb, and transfer capacity are not established.",
+          "hub_score": 9552.022,
+          "lat": 33.781355,
+          "lon": -84.386353,
+          "modes": [
+            "subway_metro"
+          ],
+          "name": "MIDTOWN STATION",
+          "rail_priority": true,
+          "route_count": 2,
+          "routes": [
+            "GOLD",
+            "RED"
+          ],
+          "status": "observed",
+          "stop_id": "908375"
+        }
+      ],
       "route_count": 86,
       "route_shapes": [
         {
@@ -65685,7 +65863,7 @@
             "stops.txt": true,
             "trips.txt": true
           },
-          "retrieved_at_utc": "2026-08-05T20:41:06.721373Z",
+          "retrieved_at_utc": "2026-08-10T00:18:26.314573Z",
           "service_span": {
             "end_date": "2026-09-05",
             "start_date": "2026-05-28"
@@ -65799,6 +65977,278 @@
         "transfers.txt": true
       },
       "raw_score": 91,
+      "regional_hubs": [
+        {
+          "agency": "MBTA",
+          "distance_mi": 16.413,
+          "event_valid_match_dates": 7,
+          "event_valid_trip_patterns": 6531,
+          "evidence_limit": "Scheduled connectivity candidate; special-event platform, parking, curb, and transfer capacity are not established.",
+          "hub_score": 19052.587,
+          "lat": 42.300713,
+          "lon": -71.113943,
+          "modes": [
+            "bus",
+            "rail",
+            "subway_metro"
+          ],
+          "name": "Forest Hills",
+          "rail_priority": true,
+          "route_count": 20,
+          "routes": [
+            "16",
+            "21",
+            "30",
+            "31",
+            "32",
+            "33",
+            "34",
+            "34E",
+            "35",
+            "36",
+            "37",
+            "38"
+          ],
+          "status": "observed",
+          "stop_id": "place-forhl"
+        },
+        {
+          "agency": "MBTA",
+          "distance_mi": 17.302,
+          "event_valid_match_dates": 7,
+          "event_valid_trip_patterns": 2408,
+          "evidence_limit": "Scheduled connectivity candidate; special-event platform, parking, curb, and transfer capacity are not established.",
+          "hub_score": 17051.698,
+          "lat": 42.251809,
+          "lon": -71.005409,
+          "modes": [
+            "bus",
+            "rail",
+            "subway_metro"
+          ],
+          "name": "Quincy Center",
+          "rail_priority": true,
+          "route_count": 16,
+          "routes": [
+            "210",
+            "211",
+            "215",
+            "216",
+            "217",
+            "220",
+            "222",
+            "225",
+            "230",
+            "236",
+            "238",
+            "245"
+          ],
+          "status": "observed",
+          "stop_id": "place-qnctr"
+        },
+        {
+          "agency": "MBTA",
+          "distance_mi": 19.188,
+          "event_valid_match_dates": 7,
+          "event_valid_trip_patterns": 5362,
+          "evidence_limit": "Scheduled connectivity candidate; special-event platform, parking, curb, and transfer capacity are not established.",
+          "hub_score": 17049.812,
+          "lat": 42.336377,
+          "lon": -71.088961,
+          "modes": [
+            "bus",
+            "rail",
+            "subway_metro"
+          ],
+          "name": "Ruggles",
+          "rail_priority": true,
+          "route_count": 16,
+          "routes": [
+            "15",
+            "19",
+            "22",
+            "23",
+            "28",
+            "43",
+            "44",
+            "45",
+            "47",
+            "CT3",
+            "8",
+            "85"
+          ],
+          "status": "observed",
+          "stop_id": "place-rugg"
+        },
+        {
+          "agency": "MBTA",
+          "distance_mi": 25.153,
+          "event_valid_match_dates": 7,
+          "event_valid_trip_patterns": 2842,
+          "evidence_limit": "Scheduled connectivity candidate; special-event platform, parking, curb, and transfer capacity are not established.",
+          "hub_score": 16043.847,
+          "lat": 42.426632,
+          "lon": -71.07411,
+          "modes": [
+            "bus",
+            "rail",
+            "subway_metro"
+          ],
+          "name": "Malden Center",
+          "rail_priority": true,
+          "route_count": 14,
+          "routes": [
+            "101",
+            "104",
+            "105",
+            "106",
+            "108",
+            "131",
+            "132",
+            "137",
+            "411",
+            "430",
+            "97",
+            "99"
+          ],
+          "status": "observed",
+          "stop_id": "place-mlmnl"
+        },
+        {
+          "agency": "MBTA",
+          "distance_mi": 20.99,
+          "event_valid_match_dates": 7,
+          "event_valid_trip_patterns": 5120,
+          "evidence_limit": "Scheduled connectivity candidate; special-event platform, parking, curb, and transfer capacity are not established.",
+          "hub_score": 15548.01,
+          "lat": 42.352271,
+          "lon": -71.055242,
+          "modes": [
+            "bus",
+            "rail",
+            "subway_metro"
+          ],
+          "name": "South Station",
+          "rail_priority": true,
+          "route_count": 13,
+          "routes": [
+            "SL1",
+            "SL2",
+            "SL3",
+            "SLW",
+            "nan",
+            "nan",
+            "nan",
+            "nan",
+            "nan",
+            "nan",
+            "nan",
+            "nan"
+          ],
+          "status": "observed",
+          "stop_id": "place-sstat"
+        },
+        {
+          "agency": "MBTA",
+          "distance_mi": 16.863,
+          "event_valid_match_dates": 7,
+          "event_valid_trip_patterns": 3602,
+          "evidence_limit": "Scheduled connectivity candidate; special-event platform, parking, curb, and transfer capacity are not established.",
+          "hub_score": 15052.137,
+          "lat": 42.28452,
+          "lon": -71.063777,
+          "modes": [
+            "bus",
+            "subway_metro",
+            "tram_light_rail"
+          ],
+          "name": "Ashmont",
+          "rail_priority": true,
+          "route_count": 12,
+          "routes": [
+            "15",
+            "18",
+            "21",
+            "215",
+            "217",
+            "22",
+            "23",
+            "24",
+            "240",
+            "26",
+            "nan",
+            "nan"
+          ],
+          "status": "observed",
+          "stop_id": "place-asmnl"
+        },
+        {
+          "agency": "MBTA",
+          "distance_mi": 22.402,
+          "event_valid_match_dates": 7,
+          "event_valid_trip_patterns": 3077,
+          "evidence_limit": "Scheduled connectivity candidate; special-event platform, parking, curb, and transfer capacity are not established.",
+          "hub_score": 15046.598,
+          "lat": 42.383975,
+          "lon": -71.076994,
+          "modes": [
+            "bus",
+            "subway_metro"
+          ],
+          "name": "Sullivan Square",
+          "rail_priority": true,
+          "route_count": 12,
+          "routes": [
+            "101",
+            "105",
+            "109",
+            "85",
+            "89",
+            "89/93",
+            "90",
+            "91",
+            "92",
+            "93",
+            "95",
+            "nan"
+          ],
+          "status": "observed",
+          "stop_id": "place-sull"
+        },
+        {
+          "agency": "MBTA",
+          "distance_mi": 26.287,
+          "event_valid_match_dates": 7,
+          "event_valid_trip_patterns": 3463,
+          "evidence_limit": "Scheduled connectivity candidate; special-event platform, parking, curb, and transfer capacity are not established.",
+          "hub_score": 15042.713,
+          "lat": 42.41342,
+          "lon": -70.991648,
+          "modes": [
+            "bus",
+            "subway_metro"
+          ],
+          "name": "Wonderland",
+          "rail_priority": true,
+          "route_count": 12,
+          "routes": [
+            "110",
+            "116",
+            "411",
+            "424",
+            "426",
+            "439",
+            "441",
+            "441/442",
+            "442",
+            "450",
+            "455",
+            "nan"
+          ],
+          "status": "observed",
+          "stop_id": "place-wondl"
+        }
+      ],
       "route_count": 405,
       "route_shapes": [],
       "route_shapes_omitted": 0,
@@ -65903,7 +66353,7 @@
             "stops.txt": true,
             "trips.txt": true
           },
-          "retrieved_at_utc": "2026-08-05T20:41:18.816961Z",
+          "retrieved_at_utc": "2026-08-10T00:18:39.636759Z",
           "service_span": {
             "end_date": "2026-07-19",
             "start_date": "2026-06-08"
@@ -66043,6 +66493,200 @@
         "transfers.txt": false
       },
       "raw_score": 40,
+      "regional_hubs": [
+        {
+          "agency": "DART",
+          "distance_mi": 16.856,
+          "event_valid_match_dates": 9,
+          "event_valid_trip_patterns": 1742,
+          "evidence_limit": "Scheduled connectivity candidate; special-event platform, parking, curb, and transfer capacity are not established.",
+          "hub_score": 11072.144,
+          "lat": 32.780915,
+          "lon": -96.805443,
+          "modes": [
+            "tram_light_rail"
+          ],
+          "name": "WEST END STATION",
+          "rail_priority": true,
+          "route_count": 4,
+          "routes": [
+            "BLUE",
+            "GREEN",
+            "ORANGE",
+            "RED"
+          ],
+          "status": "observed",
+          "stop_id": "22749"
+        },
+        {
+          "agency": "DART",
+          "distance_mi": 17.142,
+          "event_valid_match_dates": 9,
+          "event_valid_trip_patterns": 1742,
+          "evidence_limit": "Scheduled connectivity candidate; special-event platform, parking, curb, and transfer capacity are not established.",
+          "hub_score": 11071.858,
+          "lat": 32.781893,
+          "lon": -96.800633,
+          "modes": [
+            "tram_light_rail"
+          ],
+          "name": "AKARD STATION",
+          "rail_priority": true,
+          "route_count": 4,
+          "routes": [
+            "BLUE",
+            "GREEN",
+            "ORANGE",
+            "RED"
+          ],
+          "status": "observed",
+          "stop_id": "22750"
+        },
+        {
+          "agency": "DART",
+          "distance_mi": 17.372,
+          "event_valid_match_dates": 9,
+          "event_valid_trip_patterns": 1742,
+          "evidence_limit": "Scheduled connectivity candidate; special-event platform, parking, curb, and transfer capacity are not established.",
+          "hub_score": 11071.628,
+          "lat": 32.784296,
+          "lon": -96.797026,
+          "modes": [
+            "tram_light_rail"
+          ],
+          "name": "ST PAUL STATION",
+          "rail_priority": true,
+          "route_count": 4,
+          "routes": [
+            "BLUE",
+            "GREEN",
+            "ORANGE",
+            "RED"
+          ],
+          "status": "observed",
+          "stop_id": "22751"
+        },
+        {
+          "agency": "DART",
+          "distance_mi": 17.552,
+          "event_valid_match_dates": 9,
+          "event_valid_trip_patterns": 1742,
+          "evidence_limit": "Scheduled connectivity candidate; special-event platform, parking, curb, and transfer capacity are not established.",
+          "hub_score": 11071.448,
+          "lat": 32.786618,
+          "lon": -96.79431,
+          "modes": [
+            "tram_light_rail"
+          ],
+          "name": "PEARL/ARTS DISTRICT STATION",
+          "rail_priority": true,
+          "route_count": 4,
+          "routes": [
+            "BLUE",
+            "GREEN",
+            "ORANGE",
+            "RED"
+          ],
+          "status": "observed",
+          "stop_id": "22752"
+        },
+        {
+          "agency": "DART",
+          "distance_mi": 17.876,
+          "event_valid_match_dates": 9,
+          "event_valid_trip_patterns": 681,
+          "evidence_limit": "Scheduled connectivity candidate; special-event platform, parking, curb, and transfer capacity are not established.",
+          "hub_score": 10753.124,
+          "lat": 32.785866,
+          "lon": -96.788532,
+          "modes": [
+            "tram_light_rail"
+          ],
+          "name": "DEEP ELLUM STATION",
+          "rail_priority": true,
+          "route_count": 4,
+          "routes": [
+            "BLUE",
+            "GREEN",
+            "ORANGE",
+            "RED"
+          ],
+          "status": "observed",
+          "stop_id": "32043"
+        },
+        {
+          "agency": "DART",
+          "distance_mi": 18.25,
+          "event_valid_match_dates": 9,
+          "event_valid_trip_patterns": 681,
+          "evidence_limit": "Scheduled connectivity candidate; special-event platform, parking, curb, and transfer capacity are not established.",
+          "hub_score": 10752.75,
+          "lat": 32.786495,
+          "lon": -96.782132,
+          "modes": [
+            "tram_light_rail"
+          ],
+          "name": "BAYLOR STATION",
+          "rail_priority": true,
+          "route_count": 4,
+          "routes": [
+            "BLUE",
+            "GREEN",
+            "ORANGE",
+            "RED"
+          ],
+          "status": "observed",
+          "stop_id": "32042"
+        },
+        {
+          "agency": "DART",
+          "distance_mi": 19.143,
+          "event_valid_match_dates": 9,
+          "event_valid_trip_patterns": 681,
+          "evidence_limit": "Scheduled connectivity candidate; special-event platform, parking, curb, and transfer capacity are not established.",
+          "hub_score": 10751.857,
+          "lat": 32.782058,
+          "lon": -96.765928,
+          "modes": [
+            "tram_light_rail"
+          ],
+          "name": "FAIR PARK STATION",
+          "rail_priority": true,
+          "route_count": 4,
+          "routes": [
+            "BLUE",
+            "GREEN",
+            "ORANGE",
+            "RED"
+          ],
+          "status": "observed",
+          "stop_id": "32041"
+        },
+        {
+          "agency": "DART",
+          "distance_mi": 16.542,
+          "event_valid_match_dates": 9,
+          "event_valid_trip_patterns": 1220,
+          "evidence_limit": "Scheduled connectivity candidate; special-event platform, parking, curb, and transfer capacity are not established.",
+          "hub_score": 10572.458,
+          "lat": 32.789607,
+          "lon": -96.812513,
+          "modes": [
+            "rail",
+            "tram_light_rail"
+          ],
+          "name": "VICTORY STATION",
+          "rail_priority": true,
+          "route_count": 3,
+          "routes": [
+            "GREEN",
+            "ORANGE",
+            "TRE"
+          ],
+          "status": "observed",
+          "stop_id": "28264"
+        }
+      ],
       "route_count": 92,
       "route_shapes": [],
       "route_shapes_omitted": 0,
@@ -66109,7 +66753,7 @@
             "stops.txt": true,
             "trips.txt": true
           },
-          "retrieved_at_utc": "2026-08-05T20:41:21.408233Z",
+          "retrieved_at_utc": "2026-08-10T00:18:44.306953Z",
           "service_span": {
             "end_date": "2026-07-25",
             "start_date": "2026-06-07"
@@ -67238,6 +67882,184 @@
         "transfers.txt": false
       },
       "raw_score": 1369,
+      "regional_hubs": [
+        {
+          "agency": "METRO Houston",
+          "distance_mi": 5.922,
+          "event_valid_match_dates": 7,
+          "event_valid_trip_patterns": 1362,
+          "evidence_limit": "Scheduled connectivity candidate; special-event platform, parking, curb, and transfer capacity are not established.",
+          "hub_score": 10063.078,
+          "lat": 29.763325,
+          "lon": -95.37026,
+          "modes": [
+            "tram_light_rail"
+          ],
+          "name": "Dwntwn Line End (No Service)",
+          "rail_priority": true,
+          "route_count": 2,
+          "routes": [
+            "800",
+            "900"
+          ],
+          "status": "observed",
+          "stop_id": "25088"
+        },
+        {
+          "agency": "METRO Houston",
+          "distance_mi": 5.896,
+          "event_valid_match_dates": 7,
+          "event_valid_trip_patterns": 705,
+          "evidence_limit": "Scheduled connectivity candidate; special-event platform, parking, curb, and transfer capacity are not established.",
+          "hub_score": 9769.104,
+          "lat": 29.753566,
+          "lon": -95.351947,
+          "modes": [
+            "tram_light_rail"
+          ],
+          "name": "Eado Stadium Stn WB",
+          "rail_priority": true,
+          "route_count": 2,
+          "routes": [
+            "800",
+            "900"
+          ],
+          "status": "observed",
+          "stop_id": "25058"
+        },
+        {
+          "agency": "METRO Houston",
+          "distance_mi": 5.893,
+          "event_valid_match_dates": 7,
+          "event_valid_trip_patterns": 699,
+          "evidence_limit": "Scheduled connectivity candidate; special-event platform, parking, curb, and transfer capacity are not established.",
+          "hub_score": 9763.107,
+          "lat": 29.753528,
+          "lon": -95.351979,
+          "modes": [
+            "tram_light_rail"
+          ],
+          "name": "Eado / Stadium Stn EB",
+          "rail_priority": true,
+          "route_count": 2,
+          "routes": [
+            "800",
+            "900"
+          ],
+          "status": "observed",
+          "stop_id": "25057"
+        },
+        {
+          "agency": "METRO Houston",
+          "distance_mi": 5.763,
+          "event_valid_match_dates": 7,
+          "event_valid_trip_patterns": 681,
+          "evidence_limit": "Scheduled connectivity candidate; special-event platform, parking, curb, and transfer capacity are not established.",
+          "hub_score": 9745.237,
+          "lat": 29.75472,
+          "lon": -95.357716,
+          "modes": [
+            "tram_light_rail"
+          ],
+          "name": "Convention District Rusk EB",
+          "rail_priority": true,
+          "route_count": 2,
+          "routes": [
+            "800",
+            "900"
+          ],
+          "status": "observed",
+          "stop_id": "25055"
+        },
+        {
+          "agency": "METRO Houston",
+          "distance_mi": 5.784,
+          "event_valid_match_dates": 7,
+          "event_valid_trip_patterns": 681,
+          "evidence_limit": "Scheduled connectivity candidate; special-event platform, parking, curb, and transfer capacity are not established.",
+          "hub_score": 9745.216,
+          "lat": 29.757693,
+          "lon": -95.362608,
+          "modes": [
+            "tram_light_rail"
+          ],
+          "name": "Central Station Rusk EB",
+          "rail_priority": true,
+          "route_count": 2,
+          "routes": [
+            "800",
+            "900"
+          ],
+          "status": "observed",
+          "stop_id": "25053"
+        },
+        {
+          "agency": "METRO Houston",
+          "distance_mi": 5.824,
+          "event_valid_match_dates": 7,
+          "event_valid_trip_patterns": 681,
+          "evidence_limit": "Scheduled connectivity candidate; special-event platform, parking, curb, and transfer capacity are not established.",
+          "hub_score": 9745.176,
+          "lat": 29.754992,
+          "lon": -95.356331,
+          "modes": [
+            "tram_light_rail"
+          ],
+          "name": "Convention District Capitol WB",
+          "rail_priority": true,
+          "route_count": 2,
+          "routes": [
+            "800",
+            "900"
+          ],
+          "status": "observed",
+          "stop_id": "25056"
+        },
+        {
+          "agency": "METRO Houston",
+          "distance_mi": 5.827,
+          "event_valid_match_dates": 7,
+          "event_valid_trip_patterns": 681,
+          "evidence_limit": "Scheduled connectivity candidate; special-event platform, parking, curb, and transfer capacity are not established.",
+          "hub_score": 9745.173,
+          "lat": 29.760751,
+          "lon": -95.367692,
+          "modes": [
+            "tram_light_rail"
+          ],
+          "name": "Theater District Rusk EB",
+          "rail_priority": true,
+          "route_count": 2,
+          "routes": [
+            "800",
+            "900"
+          ],
+          "status": "observed",
+          "stop_id": "25051"
+        },
+        {
+          "agency": "METRO Houston",
+          "distance_mi": 5.844,
+          "event_valid_match_dates": 7,
+          "event_valid_trip_patterns": 681,
+          "evidence_limit": "Scheduled connectivity candidate; special-event platform, parking, curb, and transfer capacity are not established.",
+          "hub_score": 9745.156,
+          "lat": 29.758368,
+          "lon": -95.361938,
+          "modes": [
+            "tram_light_rail"
+          ],
+          "name": "Central Station Capitol WB",
+          "rail_priority": true,
+          "route_count": 2,
+          "routes": [
+            "800",
+            "900"
+          ],
+          "status": "observed",
+          "stop_id": "25054"
+        }
+      ],
       "route_count": 115,
       "route_shapes": [
         {
@@ -116711,7 +117533,7 @@
             "stops.txt": true,
             "trips.txt": true
           },
-          "retrieved_at_utc": "2026-08-05T20:44:39.621871Z",
+          "retrieved_at_utc": "2026-08-10T00:18:51.164310Z",
           "service_span": {
             "end_date": "2026-07-11",
             "start_date": "2026-06-07"
@@ -117277,6 +118099,176 @@
         "transfers.txt": false
       },
       "raw_score": 385,
+      "regional_hubs": [
+        {
+          "agency": "RideKC/KCATA",
+          "distance_mi": 5.453,
+          "event_valid_match_dates": 6,
+          "event_valid_trip_patterns": 866,
+          "evidence_limit": "Scheduled connectivity candidate; special-event platform, parking, curb, and transfer capacity are not established.",
+          "hub_score": 9420.547,
+          "lat": 39.035832,
+          "lon": -94.584119,
+          "modes": [
+            "tram_light_rail"
+          ],
+          "name": "UMKC (51ST & BROOKSIDE BLVD)",
+          "rail_priority": true,
+          "route_count": 1,
+          "routes": [
+            "STCR"
+          ],
+          "status": "observed",
+          "stop_id": "1630"
+        },
+        {
+          "agency": "RideKC/KCATA",
+          "distance_mi": 6.681,
+          "event_valid_match_dates": 6,
+          "event_valid_trip_patterns": 851,
+          "evidence_limit": "Scheduled connectivity candidate; special-event platform, parking, curb, and transfer capacity are not established.",
+          "hub_score": 9404.319,
+          "lat": 39.117173,
+          "lon": -94.572115,
+          "modes": [
+            "tram_light_rail"
+          ],
+          "name": "RIVERFRONT (BERKLEY RIVERFRONT)",
+          "rail_priority": true,
+          "route_count": 1,
+          "routes": [
+            "STCR"
+          ],
+          "status": "observed",
+          "stop_id": "1598"
+        },
+        {
+          "agency": "RideKC/KCATA",
+          "distance_mi": 5.502,
+          "event_valid_match_dates": 6,
+          "event_valid_trip_patterns": 482,
+          "evidence_limit": "Scheduled connectivity candidate; special-event platform, parking, curb, and transfer capacity are not established.",
+          "hub_score": 9036.498,
+          "lat": 39.049567,
+          "lon": -94.586426,
+          "modes": [
+            "tram_light_rail"
+          ],
+          "name": "SOUTHMORELAND (43RD & MAIN ST)",
+          "rail_priority": true,
+          "route_count": 1,
+          "routes": [
+            "STCR"
+          ],
+          "status": "observed",
+          "stop_id": "1815"
+        },
+        {
+          "agency": "RideKC/KCATA",
+          "distance_mi": 5.506,
+          "event_valid_match_dates": 6,
+          "event_valid_trip_patterns": 482,
+          "evidence_limit": "Scheduled connectivity candidate; special-event platform, parking, curb, and transfer capacity are not established.",
+          "hub_score": 9036.494,
+          "lat": 39.056776,
+          "lon": -94.586006,
+          "modes": [
+            "tram_light_rail"
+          ],
+          "name": "WESTPORT(39TH & MAIN ST)",
+          "rail_priority": true,
+          "route_count": 1,
+          "routes": [
+            "STCR"
+          ],
+          "status": "observed",
+          "stop_id": "1814"
+        },
+        {
+          "agency": "RideKC/KCATA",
+          "distance_mi": 5.515,
+          "event_valid_match_dates": 6,
+          "event_valid_trip_patterns": 482,
+          "evidence_limit": "Scheduled connectivity candidate; special-event platform, parking, curb, and transfer capacity are not established.",
+          "hub_score": 9036.485,
+          "lat": 39.045936,
+          "lon": -94.586609,
+          "modes": [
+            "tram_light_rail"
+          ],
+          "name": "ART MUSEUMS (45TH & MAIN ST)",
+          "rail_priority": true,
+          "route_count": 1,
+          "routes": [
+            "STCR"
+          ],
+          "status": "observed",
+          "stop_id": "1816"
+        },
+        {
+          "agency": "RideKC/KCATA",
+          "distance_mi": 5.521,
+          "event_valid_match_dates": 6,
+          "event_valid_trip_patterns": 482,
+          "evidence_limit": "Scheduled connectivity candidate; special-event platform, parking, curb, and transfer capacity are not established.",
+          "hub_score": 9036.479,
+          "lat": 39.041626,
+          "lon": -94.586367,
+          "modes": [
+            "tram_light_rail"
+          ],
+          "name": "PLAZA (CLEAVER II & MAIN ST)",
+          "rail_priority": true,
+          "route_count": 1,
+          "routes": [
+            "STCR"
+          ],
+          "status": "observed",
+          "stop_id": "1817"
+        },
+        {
+          "agency": "RideKC/KCATA",
+          "distance_mi": 5.554,
+          "event_valid_match_dates": 6,
+          "event_valid_trip_patterns": 482,
+          "evidence_limit": "Scheduled connectivity candidate; special-event platform, parking, curb, and transfer capacity are not established.",
+          "hub_score": 9036.446,
+          "lat": 39.06407,
+          "lon": -94.585558,
+          "modes": [
+            "tram_light_rail"
+          ],
+          "name": "ARMOUR (35TH & MAIN ST)",
+          "rail_priority": true,
+          "route_count": 1,
+          "routes": [
+            "STCR"
+          ],
+          "status": "observed",
+          "stop_id": "1813"
+        },
+        {
+          "agency": "RideKC/KCATA",
+          "distance_mi": 5.651,
+          "event_valid_match_dates": 6,
+          "event_valid_trip_patterns": 482,
+          "evidence_limit": "Scheduled connectivity candidate; special-event platform, parking, curb, and transfer capacity are not established.",
+          "hub_score": 9036.349,
+          "lat": 39.071313,
+          "lon": -94.585195,
+          "modes": [
+            "tram_light_rail"
+          ],
+          "name": "UNION HILL (31ST & MAIN ST)",
+          "rail_priority": true,
+          "route_count": 1,
+          "routes": [
+            "STCR"
+          ],
+          "status": "observed",
+          "stop_id": "1812"
+        }
+      ],
       "route_count": 30,
       "route_shapes": [
         {
@@ -124380,7 +125372,7 @@
             "stops.txt": true,
             "trips.txt": true
           },
-          "retrieved_at_utc": "2026-08-05T20:41:28.167834Z",
+          "retrieved_at_utc": "2026-08-10T00:18:52.302834Z",
           "service_span": {
             "end_date": "2026-06-26",
             "start_date": "2026-06-12"
@@ -124419,7 +125411,7 @@
             "stops.txt": true,
             "trips.txt": true
           },
-          "retrieved_at_utc": "2026-08-05T20:41:28.167834Z",
+          "retrieved_at_utc": "2026-08-10T00:18:52.302834Z",
           "service_span": {
             "end_date": "2026-07-11",
             "start_date": "2026-06-27"
@@ -124468,7 +125460,7 @@
             "stops.txt": true,
             "trips.txt": true
           },
-          "retrieved_at_utc": "2026-08-05T20:41:28.167834Z",
+          "retrieved_at_utc": "2026-08-10T00:18:52.302834Z",
           "service_span": {
             "end_date": "2027-04-01",
             "start_date": "2025-12-08"
@@ -125179,6 +126171,189 @@
         "transfers.txt": false
       },
       "raw_score": 1204,
+      "regional_hubs": [
+        {
+          "agency": "LA Metro Rail",
+          "distance_mi": 8.013,
+          "event_valid_match_dates": 3,
+          "event_valid_trip_patterns": 2210,
+          "evidence_limit": "Scheduled connectivity candidate; special-event platform, parking, curb, and transfer capacity are not established.",
+          "hub_score": 11020.987,
+          "lat": 34.04861,
+          "lon": -118.258822,
+          "modes": [
+            "subway_metro",
+            "tram_light_rail"
+          ],
+          "name": "7th Street / Metro Center Station",
+          "rail_priority": true,
+          "route_count": 4,
+          "routes": [
+            "nan",
+            "nan",
+            "nan",
+            "nan"
+          ],
+          "status": "observed",
+          "stop_id": "80122S"
+        },
+        {
+          "agency": "LA Metro Rail",
+          "distance_mi": 9.287,
+          "event_valid_match_dates": 3,
+          "event_valid_trip_patterns": 1770,
+          "evidence_limit": "Scheduled connectivity candidate; special-event platform, parking, curb, and transfer capacity are not established.",
+          "hub_score": 10519.713,
+          "lat": 34.056197,
+          "lon": -118.234249,
+          "modes": [
+            "subway_metro",
+            "tram_light_rail"
+          ],
+          "name": "Union Station",
+          "rail_priority": true,
+          "route_count": 3,
+          "routes": [
+            "nan",
+            "nan",
+            "nan"
+          ],
+          "status": "observed",
+          "stop_id": "80214S"
+        },
+        {
+          "agency": "LA Metro Rail",
+          "distance_mi": 7.328,
+          "event_valid_match_dates": 5,
+          "event_valid_trip_patterns": 1139,
+          "evidence_limit": "Scheduled connectivity candidate; special-event platform, parking, curb, and transfer capacity are not established.",
+          "hub_score": 10041.672,
+          "lat": 34.040735,
+          "lon": -118.266118,
+          "modes": [
+            "tram_light_rail"
+          ],
+          "name": "Pico Station",
+          "rail_priority": true,
+          "route_count": 2,
+          "routes": [
+            "nan",
+            "nan"
+          ],
+          "status": "observed",
+          "stop_id": "80121S"
+        },
+        {
+          "agency": "LA Metro Rail",
+          "distance_mi": 2.302,
+          "event_valid_match_dates": 3,
+          "event_valid_trip_patterns": 1361,
+          "evidence_limit": "Scheduled connectivity candidate; special-event platform, parking, curb, and transfer capacity are not established.",
+          "hub_score": 10026.698,
+          "lat": 33.950075,
+          "lon": -118.37866,
+          "modes": [
+            "tram_light_rail"
+          ],
+          "name": "LAX / Metro Transit Center",
+          "rail_priority": true,
+          "route_count": 2,
+          "routes": [
+            "nan",
+            "nan"
+          ],
+          "status": "observed",
+          "stop_id": "80702S"
+        },
+        {
+          "agency": "LA Metro Rail",
+          "distance_mi": 2.355,
+          "event_valid_match_dates": 3,
+          "event_valid_trip_patterns": 1395,
+          "evidence_limit": "Scheduled connectivity candidate; special-event platform, parking, curb, and transfer capacity are not established.",
+          "hub_score": 10026.645,
+          "lat": 33.945572,
+          "lon": -118.378683,
+          "modes": [
+            "tram_light_rail"
+          ],
+          "name": "Aviation / Century Station",
+          "rail_priority": true,
+          "route_count": 2,
+          "routes": [
+            "nan",
+            "nan"
+          ],
+          "status": "observed",
+          "stop_id": "80701S"
+        },
+        {
+          "agency": "LA Metro Rail",
+          "distance_mi": 6.057,
+          "event_valid_match_dates": 3,
+          "event_valid_trip_patterns": 1154,
+          "evidence_limit": "Scheduled connectivity candidate; special-event platform, parking, curb, and transfer capacity are not established.",
+          "hub_score": 10022.943,
+          "lat": 33.928048,
+          "lon": -118.237555,
+          "modes": [
+            "tram_light_rail"
+          ],
+          "name": "Willowbrook - Rosa Parks Station",
+          "rail_priority": true,
+          "route_count": 2,
+          "routes": [
+            "nan",
+            "nan"
+          ],
+          "status": "observed",
+          "stop_id": "80112S"
+        },
+        {
+          "agency": "LA Metro Rail",
+          "distance_mi": 7.999,
+          "event_valid_match_dates": 3,
+          "event_valid_trip_patterns": 1316,
+          "evidence_limit": "Scheduled connectivity candidate; special-event platform, parking, curb, and transfer capacity are not established.",
+          "hub_score": 10021.001,
+          "lat": 34.056368,
+          "lon": -118.274879,
+          "modes": [
+            "subway_metro"
+          ],
+          "name": "Westlake / MacArthur Park Station",
+          "rail_priority": true,
+          "route_count": 2,
+          "routes": [
+            "nan",
+            "nan"
+          ],
+          "status": "observed",
+          "stop_id": "80210S"
+        },
+        {
+          "agency": "LA Metro Rail",
+          "distance_mi": 8.049,
+          "event_valid_match_dates": 3,
+          "event_valid_trip_patterns": 1316,
+          "evidence_limit": "Scheduled connectivity candidate; special-event platform, parking, curb, and transfer capacity are not established.",
+          "hub_score": 10020.951,
+          "lat": 34.062701,
+          "lon": -118.290082,
+          "modes": [
+            "subway_metro"
+          ],
+          "name": "Wilshire / Vermont Station",
+          "rail_priority": true,
+          "route_count": 2,
+          "routes": [
+            "nan",
+            "nan"
+          ],
+          "status": "observed",
+          "stop_id": "80209S"
+        }
+      ],
       "route_count": 120,
       "route_shapes": [
         {
@@ -198113,7 +199288,7 @@
             "stops.txt": true,
             "trips.txt": true
           },
-          "retrieved_at_utc": "2026-08-05T20:41:35.663771Z",
+          "retrieved_at_utc": "2026-08-10T00:19:03.671615Z",
           "service_span": {
             "end_date": "2027-12-31",
             "start_date": "2021-01-01"
@@ -198227,6 +199402,179 @@
         "transfers.txt": false
       },
       "raw_score": 639,
+      "regional_hubs": [
+        {
+          "agency": "Miami-Dade Transit",
+          "distance_mi": 12.059,
+          "event_valid_match_dates": 7,
+          "event_valid_trip_patterns": 1264,
+          "evidence_limit": "Scheduled connectivity candidate; special-event platform, parking, curb, and transfer capacity are not established.",
+          "hub_score": 10056.941,
+          "lat": 25.789456,
+          "lon": -80.187998,
+          "modes": [
+            "bus",
+            "tram_light_rail"
+          ],
+          "name": "ADRIENNE ARSHT CENTER METROMOVER STATION",
+          "rail_priority": true,
+          "route_count": 2,
+          "routes": [
+            "MMO",
+            "MIAWYNW"
+          ],
+          "status": "observed",
+          "stop_id": "796"
+        },
+        {
+          "agency": "Miami-Dade Transit",
+          "distance_mi": 12.855,
+          "event_valid_match_dates": 7,
+          "event_valid_trip_patterns": 4261,
+          "evidence_limit": "Scheduled connectivity candidate; special-event platform, parking, curb, and transfer capacity are not established.",
+          "hub_score": 10056.145,
+          "lat": 25.775864,
+          "lon": -80.196093,
+          "modes": [
+            "tram_light_rail"
+          ],
+          "name": "GOVERNMENT CENTER METROMOVER STATION",
+          "rail_priority": true,
+          "route_count": 2,
+          "routes": [
+            "MMO",
+            "MMI"
+          ],
+          "status": "observed",
+          "stop_id": "813"
+        },
+        {
+          "agency": "Miami-Dade Transit",
+          "distance_mi": 11.11,
+          "event_valid_match_dates": 7,
+          "event_valid_trip_patterns": 2442,
+          "evidence_limit": "Scheduled connectivity candidate; special-event platform, parking, curb, and transfer capacity are not established.",
+          "hub_score": 9557.89,
+          "lat": 25.798116,
+          "lon": -80.258748,
+          "modes": [
+            "tram_light_rail"
+          ],
+          "name": "AIRPORT STATION",
+          "rail_priority": true,
+          "route_count": 1,
+          "routes": [
+            "MIA"
+          ],
+          "status": "observed",
+          "stop_id": "10493"
+        },
+        {
+          "agency": "Miami-Dade Transit",
+          "distance_mi": 11.505,
+          "event_valid_match_dates": 7,
+          "event_valid_trip_patterns": 2442,
+          "evidence_limit": "Scheduled connectivity candidate; special-event platform, parking, curb, and transfer capacity are not established.",
+          "hub_score": 9557.495,
+          "lat": 25.795179,
+          "lon": -80.27803,
+          "modes": [
+            "tram_light_rail"
+          ],
+          "name": "MIAMI INTL AIRPORT GROUND LEVEL",
+          "rail_priority": true,
+          "route_count": 1,
+          "routes": [
+            "MIA"
+          ],
+          "status": "observed",
+          "stop_id": "56"
+        },
+        {
+          "agency": "Miami-Dade Transit",
+          "distance_mi": 12.665,
+          "event_valid_match_dates": 7,
+          "event_valid_trip_patterns": 1193,
+          "evidence_limit": "Scheduled connectivity candidate; special-event platform, parking, curb, and transfer capacity are not established.",
+          "hub_score": 9556.335,
+          "lat": 25.778815,
+          "lon": -80.195341,
+          "modes": [
+            "tram_light_rail"
+          ],
+          "name": "WILKIE D FERGUSON METROMOVER STATION",
+          "rail_priority": true,
+          "route_count": 1,
+          "routes": [
+            "MMO"
+          ],
+          "status": "observed",
+          "stop_id": "812"
+        },
+        {
+          "agency": "Miami-Dade Transit",
+          "distance_mi": 12.703,
+          "event_valid_match_dates": 7,
+          "event_valid_trip_patterns": 1193,
+          "evidence_limit": "Scheduled connectivity candidate; special-event platform, parking, curb, and transfer capacity are not established.",
+          "hub_score": 9556.297,
+          "lat": 25.778926,
+          "lon": -80.192085,
+          "modes": [
+            "tram_light_rail"
+          ],
+          "name": "COLLEGE NORTH METROMOVER STATION",
+          "rail_priority": true,
+          "route_count": 1,
+          "routes": [
+            "MMO"
+          ],
+          "status": "observed",
+          "stop_id": "811"
+        },
+        {
+          "agency": "Miami-Dade Transit",
+          "distance_mi": 13.148,
+          "event_valid_match_dates": 7,
+          "event_valid_trip_patterns": 1191,
+          "evidence_limit": "Scheduled connectivity candidate; special-event platform, parking, curb, and transfer capacity are not established.",
+          "hub_score": 9555.852,
+          "lat": 25.772024,
+          "lon": -80.193508,
+          "modes": [
+            "tram_light_rail"
+          ],
+          "name": "THIRD STREET METROMOVER STATION",
+          "rail_priority": true,
+          "route_count": 1,
+          "routes": [
+            "MMO"
+          ],
+          "status": "observed",
+          "stop_id": "815"
+        },
+        {
+          "agency": "Miami-Dade Transit",
+          "distance_mi": 13.055,
+          "event_valid_match_dates": 7,
+          "event_valid_trip_patterns": 940,
+          "evidence_limit": "Scheduled connectivity candidate; special-event platform, parking, curb, and transfer capacity are not established.",
+          "hub_score": 9496.945,
+          "lat": 25.773391,
+          "lon": -80.193582,
+          "modes": [
+            "tram_light_rail"
+          ],
+          "name": "MIAMI AVENUE METROMOVER STATION",
+          "rail_priority": true,
+          "route_count": 1,
+          "routes": [
+            "MMI"
+          ],
+          "status": "observed",
+          "stop_id": "834"
+        }
+      ],
       "route_count": 123,
       "route_shapes": [],
       "route_shapes_omitted": 0,
@@ -200518,7 +201866,7 @@
             "stops.txt": true,
             "trips.txt": true
           },
-          "retrieved_at_utc": "2026-08-05T20:41:37.903733Z",
+          "retrieved_at_utc": "2026-08-10T00:19:06.182357Z",
           "service_span": {
             "end_date": "2026-12-07",
             "start_date": "2026-06-11"
@@ -200809,6 +202157,206 @@
         "transfers.txt": false
       },
       "raw_score": 73,
+      "regional_hubs": [
+        {
+          "agency": "NJ Transit Rail",
+          "distance_mi": 5.954,
+          "event_valid_match_dates": 8,
+          "event_valid_trip_patterns": 816,
+          "evidence_limit": "Scheduled connectivity candidate; special-event platform, parking, curb, and transfer capacity are not established.",
+          "hub_score": 12890.046,
+          "lat": 40.734843,
+          "lon": -74.028046,
+          "modes": [
+            "rail"
+          ],
+          "name": "HOBOKEN",
+          "rail_priority": true,
+          "route_count": 8,
+          "routes": [
+            "PASC",
+            "BNTN",
+            "BNTNM",
+            "MNBN",
+            "MNBNP",
+            "MNE",
+            "MNEG",
+            "MRL"
+          ],
+          "status": "observed",
+          "stop_id": "63"
+        },
+        {
+          "agency": "NJ Transit Rail",
+          "distance_mi": 6.139,
+          "event_valid_match_dates": 8,
+          "event_valid_trip_patterns": 1069,
+          "evidence_limit": "Scheduled connectivity candidate; special-event platform, parking, curb, and transfer capacity are not established.",
+          "hub_score": 12572.861,
+          "lat": 40.750046,
+          "lon": -73.992358,
+          "modes": [
+            "rail"
+          ],
+          "name": "NEW YORK PENN STATION",
+          "rail_priority": true,
+          "route_count": 7,
+          "routes": [
+            "NEC",
+            "NJCL",
+            "NJCLL",
+            "RARV",
+            "BNTNM",
+            "MNE",
+            "MNEG"
+          ],
+          "status": "observed",
+          "stop_id": "105"
+        },
+        {
+          "agency": "NJ Transit Rail",
+          "distance_mi": 3.615,
+          "event_valid_match_dates": 8,
+          "event_valid_trip_patterns": 963,
+          "evidence_limit": "Scheduled connectivity candidate; special-event platform, parking, curb, and transfer capacity are not established.",
+          "hub_score": 12539.385,
+          "lat": 40.761188,
+          "lon": -74.075821,
+          "modes": [
+            "rail"
+          ],
+          "name": "SECAUCUS UPPER LEVEL",
+          "rail_priority": true,
+          "route_count": 7,
+          "routes": [
+            "NEC",
+            "NJCL",
+            "NJCLL",
+            "RARV",
+            "BNTNM",
+            "MNE",
+            "MNEG"
+          ],
+          "status": "observed",
+          "stop_id": "38187"
+        },
+        {
+          "agency": "NJ Transit Rail",
+          "distance_mi": 7.226,
+          "event_valid_match_dates": 8,
+          "event_valid_trip_patterns": 818,
+          "evidence_limit": "Scheduled connectivity candidate; special-event platform, parking, curb, and transfer capacity are not established.",
+          "hub_score": 10890.774,
+          "lat": 40.734221,
+          "lon": -74.164554,
+          "modes": [
+            "rail"
+          ],
+          "name": "NEWARK PENN STATION",
+          "rail_priority": true,
+          "route_count": 4,
+          "routes": [
+            "NEC",
+            "NJCL",
+            "NJCLL",
+            "RARV"
+          ],
+          "status": "observed",
+          "stop_id": "107"
+        },
+        {
+          "agency": "NJ Transit Rail",
+          "distance_mi": 3.615,
+          "event_valid_match_dates": 8,
+          "event_valid_trip_patterns": 589,
+          "evidence_limit": "Scheduled connectivity candidate; special-event platform, parking, curb, and transfer capacity are not established.",
+          "hub_score": 10665.385,
+          "lat": 40.761188,
+          "lon": -74.075821,
+          "modes": [
+            "rail"
+          ],
+          "name": "SECAUCUS LOWER LEVEL",
+          "rail_priority": true,
+          "route_count": 4,
+          "routes": [
+            "PASC",
+            "MNBN",
+            "MNBNP",
+            "MRL"
+          ],
+          "status": "observed",
+          "stop_id": "38174"
+        },
+        {
+          "agency": "NJ Transit Rail",
+          "distance_mi": 6.834,
+          "event_valid_match_dates": 8,
+          "event_valid_trip_patterns": 546,
+          "evidence_limit": "Scheduled connectivity candidate; special-event platform, parking, curb, and transfer capacity are not established.",
+          "hub_score": 10619.166,
+          "lat": 40.747621,
+          "lon": -74.171943,
+          "modes": [
+            "rail"
+          ],
+          "name": "NEWARK BROAD ST",
+          "rail_priority": true,
+          "route_count": 4,
+          "routes": [
+            "BNTN",
+            "BNTNM",
+            "MNE",
+            "MNEG"
+          ],
+          "status": "observed",
+          "stop_id": "106"
+        },
+        {
+          "agency": "NJ Transit Rail",
+          "distance_mi": 9.685,
+          "event_valid_match_dates": 8,
+          "event_valid_trip_patterns": 532,
+          "evidence_limit": "Scheduled connectivity candidate; special-event platform, parking, curb, and transfer capacity are not established.",
+          "hub_score": 9602.315,
+          "lat": 40.704415,
+          "lon": -74.190717,
+          "modes": [
+            "rail"
+          ],
+          "name": "NEWARK AIRPORT RAILROAD STATION",
+          "rail_priority": true,
+          "route_count": 2,
+          "routes": [
+            "NEC",
+            "NJCL"
+          ],
+          "status": "observed",
+          "stop_id": "37953"
+        },
+        {
+          "agency": "NJ Transit Rail",
+          "distance_mi": 17.805,
+          "event_valid_match_dates": 8,
+          "event_valid_trip_patterns": 448,
+          "evidence_limit": "Scheduled connectivity candidate; special-event platform, parking, curb, and transfer capacity are not established.",
+          "hub_score": 9510.195,
+          "lat": 40.606338,
+          "lon": -74.276692,
+          "modes": [
+            "rail"
+          ],
+          "name": "RAHWAY",
+          "rail_priority": true,
+          "route_count": 2,
+          "routes": [
+            "NEC",
+            "NJCL"
+          ],
+          "status": "observed",
+          "stop_id": "127"
+        }
+      ],
       "route_count": 17,
       "route_shapes": [
         {
@@ -281795,7 +283343,7 @@
             "stops.txt": true,
             "trips.txt": true
           },
-          "retrieved_at_utc": "2026-08-05T20:44:41.158658Z",
+          "retrieved_at_utc": "2026-08-10T00:19:14.694450Z",
           "service_span": {
             "end_date": "2027-06-13",
             "start_date": "2026-06-14"
@@ -281830,7 +283378,7 @@
             "stops.txt": true,
             "trips.txt": true
           },
-          "retrieved_at_utc": "2026-08-05T20:44:41.158658Z",
+          "retrieved_at_utc": "2026-08-10T00:19:14.694450Z",
           "service_span": {
             "end_date": "2026-08-22",
             "start_date": "2026-06-28"
@@ -282855,6 +284403,256 @@
         "transfers.txt": false
       },
       "raw_score": 1396,
+      "regional_hubs": [
+        {
+          "agency": "SEPTA",
+          "distance_mi": 6.435,
+          "event_valid_match_dates": 1,
+          "event_valid_trip_patterns": 1271,
+          "evidence_limit": "Scheduled connectivity candidate; special-event platform, parking, curb, and transfer capacity are not established.",
+          "hub_score": 18002.565,
+          "lat": 39.962267,
+          "lon": -75.258756,
+          "modes": [
+            "bus",
+            "subway_metro",
+            "tram_light_rail"
+          ],
+          "name": "69th Street Transit Center",
+          "rail_priority": true,
+          "route_count": 18,
+          "routes": [
+            "103",
+            "104",
+            "105",
+            "108",
+            "109",
+            "110",
+            "111",
+            "113",
+            "123",
+            "126",
+            "21",
+            "30"
+          ],
+          "status": "observed",
+          "stop_id": "31034"
+        },
+        {
+          "agency": "SEPTA",
+          "distance_mi": 9.725,
+          "event_valid_match_dates": 1,
+          "event_valid_trip_patterns": 1556,
+          "evidence_limit": "Scheduled connectivity candidate; special-event platform, parking, curb, and transfer capacity are not established.",
+          "hub_score": 17999.275,
+          "lat": 40.023303,
+          "lon": -75.077078,
+          "modes": [
+            "bus",
+            "subway_metro",
+            "trolleybus"
+          ],
+          "name": "Frankford Transit Center",
+          "rail_priority": true,
+          "route_count": 18,
+          "routes": [
+            "14",
+            "20",
+            "24",
+            "25",
+            "26",
+            "3",
+            "5",
+            "50",
+            "58",
+            "66",
+            "67",
+            "73"
+          ],
+          "status": "observed",
+          "stop_id": "31033"
+        },
+        {
+          "agency": "SEPTA",
+          "distance_mi": 3.668,
+          "event_valid_match_dates": 1,
+          "event_valid_trip_patterns": 443,
+          "evidence_limit": "Scheduled connectivity candidate; special-event platform, parking, curb, and transfer capacity are not established.",
+          "hub_score": 14449.332,
+          "lat": 39.95389,
+          "lon": -75.16778,
+          "modes": [
+            "rail"
+          ],
+          "name": "Suburban Station",
+          "rail_priority": true,
+          "route_count": 12,
+          "routes": [
+            "AIR",
+            "CHE",
+            "CHW",
+            "FOX",
+            "LAN",
+            "MED",
+            "NOR",
+            "PAO",
+            "TRE",
+            "WAR",
+            "WIL",
+            "WTR"
+          ],
+          "status": "observed",
+          "stop_id": "90005"
+        },
+        {
+          "agency": "SEPTA",
+          "distance_mi": 3.607,
+          "event_valid_match_dates": 1,
+          "event_valid_trip_patterns": 267,
+          "evidence_limit": "Scheduled connectivity candidate; special-event platform, parking, curb, and transfer capacity are not established.",
+          "hub_score": 13273.393,
+          "lat": 39.9525,
+          "lon": -75.15806,
+          "modes": [
+            "rail"
+          ],
+          "name": "Jefferson Station",
+          "rail_priority": true,
+          "route_count": 10,
+          "routes": [
+            "CHE",
+            "FOX",
+            "LAN",
+            "MED",
+            "NOR",
+            "PAO",
+            "TRE",
+            "WAR",
+            "WIL",
+            "WTR"
+          ],
+          "status": "observed",
+          "stop_id": "90006"
+        },
+        {
+          "agency": "SEPTA",
+          "distance_mi": 3.933,
+          "event_valid_match_dates": 1,
+          "event_valid_trip_patterns": 267,
+          "evidence_limit": "Scheduled connectivity candidate; special-event platform, parking, curb, and transfer capacity are not established.",
+          "hub_score": 13273.067,
+          "lat": 39.95667,
+          "lon": -75.18166,
+          "modes": [
+            "rail"
+          ],
+          "name": "Gray 30th St Station",
+          "rail_priority": true,
+          "route_count": 10,
+          "routes": [
+            "AIR",
+            "CHE",
+            "CHW",
+            "LAN",
+            "MED",
+            "NOR",
+            "PAO",
+            "TRE",
+            "WIL",
+            "WTR"
+          ],
+          "status": "observed",
+          "stop_id": "90004"
+        },
+        {
+          "agency": "SEPTA",
+          "distance_mi": 5.65,
+          "event_valid_match_dates": 1,
+          "event_valid_trip_patterns": 237,
+          "evidence_limit": "Scheduled connectivity candidate; special-event platform, parking, curb, and transfer capacity are not established.",
+          "hub_score": 13241.35,
+          "lat": 39.98139,
+          "lon": -75.14944,
+          "modes": [
+            "rail"
+          ],
+          "name": "Temple University",
+          "rail_priority": true,
+          "route_count": 10,
+          "routes": [
+            "CHE",
+            "FOX",
+            "LAN",
+            "MED",
+            "NOR",
+            "PAO",
+            "TRE",
+            "WAR",
+            "WIL",
+            "WTR"
+          ],
+          "status": "observed",
+          "stop_id": "90007"
+        },
+        {
+          "agency": "SEPTA",
+          "distance_mi": 3.579,
+          "event_valid_match_dates": 1,
+          "event_valid_trip_patterns": 1360,
+          "evidence_limit": "Scheduled connectivity candidate; special-event platform, parking, curb, and transfer capacity are not established.",
+          "hub_score": 13005.421,
+          "lat": 39.952555,
+          "lon": -75.164819,
+          "modes": [
+            "subway_metro",
+            "tram_light_rail"
+          ],
+          "name": "15th St/City Hall Station",
+          "rail_priority": true,
+          "route_count": 8,
+          "routes": [
+            "B1",
+            "B2",
+            "L1",
+            "T1",
+            "T2",
+            "T3",
+            "T4",
+            "T5"
+          ],
+          "status": "observed",
+          "stop_id": "33034"
+        },
+        {
+          "agency": "SEPTA",
+          "distance_mi": 9.611,
+          "event_valid_match_dates": 1,
+          "event_valid_trip_patterns": 686,
+          "evidence_limit": "Scheduled connectivity candidate; special-event platform, parking, curb, and transfer capacity are not established.",
+          "hub_score": 12686.389,
+          "lat": 40.038747,
+          "lon": -75.144114,
+          "modes": [
+            "bus",
+            "subway_metro"
+          ],
+          "name": "Olney Transit Center",
+          "rail_priority": true,
+          "route_count": 8,
+          "routes": [
+            "18",
+            "22",
+            "26",
+            "51",
+            "55",
+            "6",
+            "B1",
+            "B2"
+          ],
+          "status": "observed",
+          "stop_id": "32095"
+        }
+      ],
       "route_count": 186,
       "route_shapes": [
         {
@@ -365891,7 +367689,7 @@
             "stops.txt": true,
             "trips.txt": true
           },
-          "retrieved_at_utc": "2026-08-05T20:41:51.519674Z",
+          "retrieved_at_utc": "2026-08-10T00:19:32.523260Z",
           "service_span": {
             "end_date": "2026-08-09",
             "start_date": "2026-04-27"
@@ -366916,6 +368714,187 @@
         "transfers.txt": false
       },
       "raw_score": 990,
+      "regional_hubs": [
+        {
+          "agency": "VTA",
+          "distance_mi": 0.541,
+          "event_valid_match_dates": 6,
+          "event_valid_trip_patterns": 909,
+          "evidence_limit": "Scheduled connectivity candidate; special-event platform, parking, curb, and transfer capacity are not established.",
+          "hub_score": 10468.459,
+          "lat": 37.403334,
+          "lon": -121.979862,
+          "modes": [
+            "tram_light_rail"
+          ],
+          "name": "Old Ironsides Station",
+          "rail_priority": true,
+          "route_count": 3,
+          "routes": [
+            "BlueS",
+            "OrangeW",
+            "Orange Line"
+          ],
+          "status": "observed",
+          "stop_id": "PS_OLDI"
+        },
+        {
+          "agency": "VTA",
+          "distance_mi": 1.064,
+          "event_valid_match_dates": 6,
+          "event_valid_trip_patterns": 889,
+          "evidence_limit": "Scheduled connectivity candidate; special-event platform, parking, curb, and transfer capacity are not established.",
+          "hub_score": 10447.936,
+          "lat": 37.408898,
+          "lon": -121.951936,
+          "modes": [
+            "tram_light_rail"
+          ],
+          "name": "Champion Station",
+          "rail_priority": true,
+          "route_count": 3,
+          "routes": [
+            "BlueS",
+            "OrangeE",
+            "Orange Line"
+          ],
+          "status": "observed",
+          "stop_id": "PS_CHMP"
+        },
+        {
+          "agency": "VTA",
+          "distance_mi": 1.598,
+          "event_valid_match_dates": 6,
+          "event_valid_trip_patterns": 728,
+          "evidence_limit": "Scheduled connectivity candidate; special-event platform, parking, curb, and transfer capacity are not established.",
+          "hub_score": 10286.402,
+          "lat": 37.410438,
+          "lon": -121.942311,
+          "modes": [
+            "tram_light_rail"
+          ],
+          "name": "Baypointe Station",
+          "rail_priority": true,
+          "route_count": 3,
+          "routes": [
+            "BlueS",
+            "OrangeE",
+            "Orange Line"
+          ],
+          "status": "observed",
+          "stop_id": "PS_BAYP"
+        },
+        {
+          "agency": "VTA",
+          "distance_mi": 6.705,
+          "event_valid_match_dates": 6,
+          "event_valid_trip_patterns": 1108,
+          "evidence_limit": "Scheduled connectivity candidate; special-event platform, parking, curb, and transfer capacity are not established.",
+          "hub_score": 10052.295,
+          "lat": 37.330168,
+          "lon": -121.88975,
+          "modes": [
+            "tram_light_rail"
+          ],
+          "name": "Convention Center Station",
+          "rail_priority": true,
+          "route_count": 2,
+          "routes": [
+            "BlueS",
+            "GreenS"
+          ],
+          "status": "observed",
+          "stop_id": "PS_CONV"
+        },
+        {
+          "agency": "VTA",
+          "distance_mi": 1.019,
+          "event_valid_match_dates": 6,
+          "event_valid_trip_patterns": 663,
+          "evidence_limit": "Scheduled connectivity candidate; special-event platform, parking, curb, and transfer capacity are not established.",
+          "hub_score": 9721.981,
+          "lat": 37.403549,
+          "lon": -121.988555,
+          "modes": [
+            "tram_light_rail"
+          ],
+          "name": "Reamwood Station",
+          "rail_priority": true,
+          "route_count": 2,
+          "routes": [
+            "OrangeW",
+            "Orange Line"
+          ],
+          "status": "observed",
+          "stop_id": "PS_REAM"
+        },
+        {
+          "agency": "VTA",
+          "distance_mi": 1.624,
+          "event_valid_match_dates": 6,
+          "event_valid_trip_patterns": 663,
+          "evidence_limit": "Scheduled connectivity candidate; special-event platform, parking, curb, and transfer capacity are not established.",
+          "hub_score": 9721.376,
+          "lat": 37.403377,
+          "lon": -121.999589,
+          "modes": [
+            "tram_light_rail"
+          ],
+          "name": "Vienna Station",
+          "rail_priority": true,
+          "route_count": 2,
+          "routes": [
+            "OrangeW",
+            "Orange Line"
+          ],
+          "status": "observed",
+          "stop_id": "PS_VIEN"
+        },
+        {
+          "agency": "VTA",
+          "distance_mi": 2.121,
+          "event_valid_match_dates": 6,
+          "event_valid_trip_patterns": 663,
+          "evidence_limit": "Scheduled connectivity candidate; special-event platform, parking, curb, and transfer capacity are not established.",
+          "hub_score": 9720.879,
+          "lat": 37.402578,
+          "lon": -122.00864,
+          "modes": [
+            "tram_light_rail"
+          ],
+          "name": "Fair Oaks Station",
+          "rail_priority": true,
+          "route_count": 2,
+          "routes": [
+            "OrangeW",
+            "Orange Line"
+          ],
+          "status": "observed",
+          "stop_id": "PS_FAIR"
+        },
+        {
+          "agency": "VTA",
+          "distance_mi": 2.292,
+          "event_valid_match_dates": 6,
+          "event_valid_trip_patterns": 663,
+          "evidence_limit": "Scheduled connectivity candidate; special-event platform, parking, curb, and transfer capacity are not established.",
+          "hub_score": 9720.708,
+          "lat": 37.408841,
+          "lon": -122.01118,
+          "modes": [
+            "tram_light_rail"
+          ],
+          "name": "Crossman Station",
+          "rail_priority": true,
+          "route_count": 2,
+          "routes": [
+            "OrangeW",
+            "Orange Line"
+          ],
+          "status": "observed",
+          "stop_id": "PS_CRSS"
+        }
+      ],
       "route_count": 72,
       "route_shapes": [
         {
@@ -425274,7 +427253,7 @@
             "stops.txt": true,
             "trips.txt": true
           },
-          "retrieved_at_utc": "2026-08-05T20:41:53.792880Z",
+          "retrieved_at_utc": "2026-08-10T00:19:34.796678Z",
           "service_span": {
             "end_date": "2026-08-29",
             "start_date": "2026-01-24"
@@ -425319,7 +427298,7 @@
             "stops.txt": true,
             "trips.txt": true
           },
-          "retrieved_at_utc": "2026-08-05T20:41:53.792880Z",
+          "retrieved_at_utc": "2026-08-10T00:19:34.796678Z",
           "service_span": {
             "end_date": "2026-08-28",
             "start_date": "2026-06-08"
@@ -427163,6 +429142,227 @@
         "transfers.txt": false
       },
       "raw_score": 3034,
+      "regional_hubs": [
+        {
+          "agency": "King County Metro",
+          "distance_mi": 1.271,
+          "event_valid_match_dates": 6,
+          "event_valid_trip_patterns": 1683,
+          "evidence_limit": "Scheduled connectivity candidate; special-event platform, parking, curb, and transfer capacity are not established.",
+          "hub_score": 12057.729,
+          "lat": 47.612438,
+          "lon": -122.34111,
+          "modes": [
+            "bus"
+          ],
+          "name": "3rd Ave & Virginia St",
+          "rail_priority": false,
+          "route_count": 22,
+          "routes": [
+            "1",
+            "124",
+            "13",
+            "131",
+            "132",
+            "14",
+            "17",
+            "2",
+            "21",
+            "24",
+            "27",
+            "33"
+          ],
+          "status": "observed",
+          "stop_id": "420"
+        },
+        {
+          "agency": "King County Metro",
+          "distance_mi": 1.47,
+          "event_valid_match_dates": 6,
+          "event_valid_trip_patterns": 188,
+          "evidence_limit": "Scheduled connectivity candidate; special-event platform, parking, curb, and transfer capacity are not established.",
+          "hub_score": 10246.53,
+          "lat": 47.615166,
+          "lon": -122.320702,
+          "modes": [
+            "bus",
+            "tram_light_rail"
+          ],
+          "name": "Broadway & Pike-Pine",
+          "rail_priority": true,
+          "route_count": 4,
+          "routes": [
+            "43",
+            "60",
+            "9",
+            "First Hill Streetcar"
+          ],
+          "status": "observed",
+          "stop_id": "41970"
+        },
+        {
+          "agency": "Sound Transit",
+          "distance_mi": 0.509,
+          "event_valid_match_dates": 6,
+          "event_valid_trip_patterns": 3510,
+          "evidence_limit": "Scheduled connectivity candidate; special-event platform, parking, curb, and transfer capacity are not established.",
+          "hub_score": 10058.491,
+          "lat": 47.60256,
+          "lon": -122.331216,
+          "modes": [
+            "tram_light_rail"
+          ],
+          "name": "Pioneer Square",
+          "rail_priority": true,
+          "route_count": 2,
+          "routes": [
+            "1 Line",
+            "2 Line"
+          ],
+          "status": "observed",
+          "stop_id": "C07"
+        },
+        {
+          "agency": "King County Metro",
+          "distance_mi": 0.722,
+          "event_valid_match_dates": 6,
+          "event_valid_trip_patterns": 1213,
+          "evidence_limit": "Scheduled connectivity candidate; special-event platform, parking, curb, and transfer capacity are not established.",
+          "hub_score": 10058.278,
+          "lat": 47.605541,
+          "lon": -122.333832,
+          "modes": [
+            "bus"
+          ],
+          "name": "3rd Ave & Madison St",
+          "rail_priority": false,
+          "route_count": 18,
+          "routes": [
+            "113",
+            "124",
+            "131",
+            "132",
+            "17",
+            "21",
+            "24",
+            "27",
+            "28",
+            "33",
+            "5",
+            "56"
+          ],
+          "status": "observed",
+          "stop_id": "548"
+        },
+        {
+          "agency": "Sound Transit",
+          "distance_mi": 0.895,
+          "event_valid_match_dates": 6,
+          "event_valid_trip_patterns": 3510,
+          "evidence_limit": "Scheduled connectivity candidate; special-event platform, parking, curb, and transfer capacity are not established.",
+          "hub_score": 10058.105,
+          "lat": 47.60781,
+          "lon": -122.33602,
+          "modes": [
+            "tram_light_rail"
+          ],
+          "name": "Symphony",
+          "rail_priority": true,
+          "route_count": 2,
+          "routes": [
+            "1 Line",
+            "2 Line"
+          ],
+          "status": "observed",
+          "stop_id": "C05"
+        },
+        {
+          "agency": "King County Metro",
+          "distance_mi": 0.962,
+          "event_valid_match_dates": 6,
+          "event_valid_trip_patterns": 1213,
+          "evidence_limit": "Scheduled connectivity candidate; special-event platform, parking, curb, and transfer capacity are not established.",
+          "hub_score": 10058.038,
+          "lat": 47.608688,
+          "lon": -122.3367,
+          "modes": [
+            "bus"
+          ],
+          "name": "3rd Ave & Union St",
+          "rail_priority": false,
+          "route_count": 18,
+          "routes": [
+            "113",
+            "124",
+            "131",
+            "132",
+            "17",
+            "21",
+            "24",
+            "27",
+            "28",
+            "33",
+            "5",
+            "56"
+          ],
+          "status": "observed",
+          "stop_id": "570"
+        },
+        {
+          "agency": "Sound Transit",
+          "distance_mi": 1.156,
+          "event_valid_match_dates": 6,
+          "event_valid_trip_patterns": 3510,
+          "evidence_limit": "Scheduled connectivity candidate; special-event platform, parking, curb, and transfer capacity are not established.",
+          "hub_score": 10057.844,
+          "lat": 47.611572,
+          "lon": -122.33672,
+          "modes": [
+            "tram_light_rail"
+          ],
+          "name": "Westlake",
+          "rail_priority": true,
+          "route_count": 2,
+          "routes": [
+            "1 Line",
+            "2 Line"
+          ],
+          "status": "observed",
+          "stop_id": "C03"
+        },
+        {
+          "agency": "King County Metro",
+          "distance_mi": 1.446,
+          "event_valid_match_dates": 6,
+          "event_valid_trip_patterns": 1298,
+          "evidence_limit": "Scheduled connectivity candidate; special-event platform, parking, curb, and transfer capacity are not established.",
+          "hub_score": 10057.554,
+          "lat": 47.6143,
+          "lon": -122.344269,
+          "modes": [
+            "bus"
+          ],
+          "name": "3rd Ave & Bell St",
+          "rail_priority": false,
+          "route_count": 18,
+          "routes": [
+            "1",
+            "124",
+            "13",
+            "131",
+            "132",
+            "14",
+            "17",
+            "2",
+            "21",
+            "24",
+            "27",
+            "33"
+          ],
+          "status": "observed",
+          "stop_id": "400"
+        }
+      ],
       "route_count": 150,
       "route_shapes": [
         {
@@ -508463,7 +510663,7 @@
   },
   "contract_version": "0.3.0",
   "fixture": false,
-  "generated_at_utc": "2026-08-05T20:44:39.174659Z",
+  "generated_at_utc": "2026-08-10T00:18:17.794727Z",
   "mode_capacity_ranges": {
     "0": {
       "base": 180,
@@ -508535,6 +510735,9 @@
     "legacy_cache": "never loaded or promoted",
     "observed_gate": "required files, event-valid calendar, retrieval timestamp, and feed SHA-256",
     "peak_capacity": "one vehicle per static trip_id or expanded frequency occurrence; nearest eligible venue stop only; exact local event hour and event phase",
+    "regional_hub_limit": 8,
+    "regional_hub_radius_miles": 40.0,
+    "regional_hub_semantics": "event-valid scheduled connectivity candidates; not approved special-event transfer hubs",
     "service_capacity_radius_miles": 0.5,
     "venue_radius_miles": 2.0
   },

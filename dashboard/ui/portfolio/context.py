@@ -130,9 +130,7 @@ def _with_gap_evidence(
 def _with_access_metrics(frame: pd.DataFrame) -> pd.DataFrame:
     result = frame.copy()
     demand = pd.to_numeric(result.get("peak_demand_pph"), errors="coerce")
-    gap = pd.to_numeric(
-        result.get("capacity_qualified_gap_pph"), errors="coerce"
-    ).clip(lower=0)
+    gap = pd.to_numeric(result.get("capacity_qualified_gap_pph"), errors="coerce").clip(lower=0)
     result["scheduled_transit_capacity_pph"] = (demand - gap).clip(lower=0)
     result["scheduled_coverage_pct"] = np.where(
         demand > 0,
@@ -142,40 +140,27 @@ def _with_access_metrics(frame: pd.DataFrame) -> pd.DataFrame:
     return result
 
 
-def _direction_peak(
-    rows: list[Mapping[str, Any]], direction: str, case: str
-) -> tuple[float | None, float | None]:
+def _direction_peak(rows: list[Mapping[str, Any]], direction: str, case: str) -> tuple[float | None, float | None]:
     field = f"{direction}_{case}"
-    candidates = [
-        row
-        for row in rows
-        if pd.notna(pd.to_numeric(row.get(field), errors="coerce"))
-    ]
+    candidates = [row for row in rows if pd.notna(pd.to_numeric(row.get(field), errors="coerce"))]
     if not candidates:
         return None, None
     peak = max(candidates, key=lambda row: float(row.get(field) or 0))
-    return float(peak.get(field) or 0), float(
-        peak.get("hours_from_kickoff") or 0
-    )
+    return float(peak.get(field) or 0), float(peak.get("hours_from_kickoff") or 0)
 
 
-def _with_track1_metrics(
-    frame: pd.DataFrame, artifacts: Mapping[str, Any]
-) -> pd.DataFrame:
+def _with_track1_metrics(frame: pd.DataFrame, artifacts: Mapping[str, Any]) -> pd.DataFrame:
     result = _with_access_metrics(frame)
     movements = {
-        (str(row.get("city")), str(row.get("match_id"))): row
-        for row in artifacts.get("movement_scenarios", [])
+        (str(row.get("city")), str(row.get("match_id"))): row for row in artifacts.get("movement_scenarios", [])
     }
     forecasts_by_city: dict[str, list[Mapping[str, Any]]] = {}
     for forecast_row in artifacts.get("visitor_flow_forecasts", []):
-        forecasts_by_city.setdefault(
-            str(forecast_row.get("city")), []
-        ).append(forecast_row)
+        forecasts_by_city.setdefault(str(forecast_row.get("city")), []).append(forecast_row)
     access_rows = list(artifacts.get("access_gaps", []))
-    access = {
-        (str(row.get("city")), str(row.get("match_id"))): row
-        for row in access_rows
+    access = {(str(row.get("city")), str(row.get("match_id"))): row for row in access_rows}
+    traffic_plans = {
+        (str(row.get("city")), str(row.get("match_id"))): row for row in artifacts.get("traffic_strategy_plans", [])
     }
     walking = artifacts.get("walking_networks", {})
 
@@ -188,9 +173,7 @@ def _with_track1_metrics(
         hourly = list(movement.get("hourly_rows", []))
         movement_fields: dict[str, Any] = {
             "movement_status": str(movement.get("status") or "unavailable"),
-            "movement_uncertainty": str(
-                movement.get("uncertainty_type") or "not available"
-            ),
+            "movement_uncertainty": str(movement.get("uncertainty_type") or "not available"),
         }
         for direction in ("arrivals", "departures"):
             prefix = "arrival" if direction == "arrivals" else "departure"
@@ -201,6 +184,7 @@ def _with_track1_metrics(
                     movement_fields[f"{prefix}_peak_offset_hours"] = offset
 
         access_row = access.get((city, match_id), {})
+        traffic_plan = traffic_plans.get((city, match_id), {})
         peak_row = max(
             hourly,
             key=lambda item: float(item.get("total_movement_base") or 0),
@@ -212,20 +196,15 @@ def _with_track1_metrics(
         if arrivals == departures:
             peak_direction = "both"
 
-        city_access = [
-            item for item in access_rows if str(item.get("city")) == city
-        ]
+        city_access = [item for item in access_rows if str(item.get("city")) == city]
         zero_capacity_matches = sum(
-            float(item.get("transit_capacity_base") or 0) <= 0
-            and bool(item.get("capacity_qualified", False))
+            float(item.get("transit_capacity_base") or 0) <= 0 and bool(item.get("capacity_qualified", False))
             for item in city_access
         )
         walk = walking.get(city, {}) if isinstance(walking, Mapping) else {}
         target = walk.get("target_stop") or {}
         demand_value = pd.to_numeric(row.get("peak_demand_pph"), errors="coerce")
-        capacity_value = pd.to_numeric(
-            row.get("scheduled_transit_capacity_pph"), errors="coerce"
-        )
+        capacity_value = pd.to_numeric(row.get("scheduled_transit_capacity_pph"), errors="coerce")
         resilience = (
             stress_access_capacity(demand_value, capacity_value)
             if pd.notna(demand_value) and pd.notna(capacity_value)
@@ -244,34 +223,44 @@ def _with_track1_metrics(
                 "peak_offset_hours": peak_row.get("hours_from_kickoff"),
                 "zero_capacity_matches": zero_capacity_matches,
                 "city_match_count": len(city_access),
-                "network_walk_distance_m": access_row.get(
-                    "network_walk_distance_m"
-                ),
-                "walking_status": str(
-                    access_row.get("walking_status") or "unavailable"
-                ),
-                "service_span_after_match_min": access_row.get(
-                    "service_span_after_match_min"
-                ),
-                "route_heat_exposure_c": access_row.get(
-                    "route_heat_exposure_c"
-                ),
-                "target_stop_name": target.get("name")
-                or "No event stop path",
+                "network_walk_distance_m": access_row.get("network_walk_distance_m"),
+                "walking_status": str(access_row.get("walking_status") or "unavailable"),
+                "service_span_after_match_min": access_row.get("service_span_after_match_min"),
+                "route_heat_exposure_c": access_row.get("route_heat_exposure_c"),
+                "target_stop_name": target.get("name") or "No event stop path",
                 "target_route": target.get("route") or "Not established",
                 "walk_detour_ratio": walk.get("detour_ratio"),
-                "accessibility_status": str(
-                    walk.get("accessibility_status") or "not measured"
-                ),
+                "accessibility_status": str(walk.get("accessibility_status") or "not measured"),
                 "stress_coverage_pct": resilience["stressed_coverage_pct"],
                 "stress_gap_pph": resilience["stressed_gap_pph"],
                 "stress_demand_pph": resilience["stressed_demand_pph"],
                 "stress_capacity_pph": resilience["stressed_capacity_pph"],
+                "traffic_primary_pattern": traffic_plan.get("primary_pattern"),
+                "traffic_predicted_pattern": traffic_plan.get("predicted_pattern"),
+                "traffic_prediction_strength": traffic_plan.get("prediction_strength"),
+                "traffic_prediction_reasons": " | ".join(traffic_plan.get("prediction_reasons", [])),
+                "traffic_benchmark_pattern": traffic_plan.get("benchmark_pattern"),
+                "traffic_benchmark_agreement": traffic_plan.get("benchmark_agreement"),
+                "traffic_benchmark_source_url": traffic_plan.get("benchmark_source_url"),
+                "traffic_benchmark_evidence_level": traffic_plan.get("benchmark_evidence_level"),
+                "traffic_strategy_basis": traffic_plan.get("strategy_basis"),
+                "traffic_status": str(traffic_plan.get("status") or "unavailable"),
+                "traffic_official_plan_available": bool(traffic_plan.get("official_plan_available", False)),
+                "traffic_regional_hub_name": traffic_plan.get("regional_hub_name"),
+                "traffic_regional_hub_status": traffic_plan.get("regional_hub_status"),
+                "traffic_buses_low": traffic_plan.get("required_buses_per_hour_low"),
+                "traffic_buses_base": traffic_plan.get("required_buses_per_hour_base"),
+                "traffic_buses_high": traffic_plan.get("required_buses_per_hour_high"),
+                "traffic_single_hub_feasibility": traffic_plan.get("single_hub_feasibility"),
+                "traffic_peak_passengers_addressed": traffic_plan.get("peak_passengers_addressed"),
+                "traffic_vehicle_trips_avoided": traffic_plan.get("venue_vehicle_trips_avoided"),
+                "traffic_net_co2e_kg_avoided": traffic_plan.get("net_co2e_kg_avoided"),
+                "traffic_arrival_window": traffic_plan.get("arrival_window"),
+                "traffic_egress_window": traffic_plan.get("egress_window"),
+                "traffic_evidence_gap_count": len(traffic_plan.get("evidence_gaps", [])),
             }
         )
-    return pd.concat(
-        [result.reset_index(drop=True), pd.DataFrame(additions)], axis=1
-    )
+    return pd.concat([result.reset_index(drop=True), pd.DataFrame(additions)], axis=1)
 
 
 def _city_forecast_summary(
@@ -294,16 +283,10 @@ def _city_forecast_summary(
         summary[field] = sum(float(row.get(field) or 0) for row in forecasts)
     base_total = float(summary["attendance_base"] or 0)
     summary["non_host_market_share_base"] = (
-        float(summary["non_host_market_attendees_base"]) / base_total
-        if base_total
-        else 0.0
+        float(summary["non_host_market_attendees_base"]) / base_total if base_total else 0.0
     )
     for collection, key in (("origin_rows", "origin_type"), ("mode_rows", "mode")):
-        names = {
-            str(item.get(key))
-            for forecast in forecasts
-            for item in forecast.get(collection, [])
-        }
+        names = {str(item.get(key)) for forecast in forecasts for item in forecast.get(collection, [])}
         rows: list[dict[str, Any]] = []
         for name in sorted(names):
             combined: dict[str, Any] = {key: name}
@@ -328,40 +311,24 @@ def _forecast_fields(forecast: Mapping[str, Any]) -> dict[str, Any]:
         "forecast_anchor_match_id": forecast.get("match_id"),
         "forecast_match_count": forecast.get("forecast_match_count"),
         "forecast_status": str(forecast.get("status") or "unavailable"),
-        "forecast_validation_status": str(
-            forecast.get("validation_status") or "not available"
-        ),
+        "forecast_validation_status": str(forecast.get("validation_status") or "not available"),
         "forecast_attendance_base": forecast.get("attendance_base"),
-        "forecast_non_host_attendees_base": forecast.get(
-            "non_host_market_attendees_base"
-        ),
+        "forecast_non_host_attendees_base": forecast.get("non_host_market_attendees_base"),
         "forecast_non_host_share_pct": (
             float(forecast.get("non_host_market_share_base")) * 100
-            if pd.notna(
-                pd.to_numeric(
-                    forecast.get("non_host_market_share_base"), errors="coerce"
-                )
-            )
+            if pd.notna(pd.to_numeric(forecast.get("non_host_market_share_base"), errors="coerce"))
             else None
         ),
-        "forecast_origin_prior_status": str(
-            forecast.get("origin_prior_status") or "unavailable"
-        ),
-        "forecast_origin_prior_coverage_pct": forecast.get(
-            "origin_prior_coverage_pct"
-        ),
+        "forecast_origin_prior_status": str(forecast.get("origin_prior_status") or "unavailable"),
+        "forecast_origin_prior_coverage_pct": forecast.get("origin_prior_coverage_pct"),
         "forecast_arrival_peak_low": forecast.get("arrival_peak_low"),
         "forecast_arrival_peak_base": forecast.get("arrival_peak_base"),
         "forecast_arrival_peak_high": forecast.get("arrival_peak_high"),
-        "forecast_arrival_peak_offset_hours": forecast.get(
-            "arrival_peak_offset_hours"
-        ),
+        "forecast_arrival_peak_offset_hours": forecast.get("arrival_peak_offset_hours"),
         "forecast_departure_peak_low": forecast.get("departure_peak_low"),
         "forecast_departure_peak_base": forecast.get("departure_peak_base"),
         "forecast_departure_peak_high": forecast.get("departure_peak_high"),
-        "forecast_departure_peak_offset_hours": forecast.get(
-            "departure_peak_offset_hours"
-        ),
+        "forecast_departure_peak_offset_hours": forecast.get("departure_peak_offset_hours"),
     }
     origin_columns = {
         "Host market": "origin_host_market",

@@ -16,6 +16,7 @@ from dashboard.viz.portfolio import (
     portfolio_visitor_forecast_chart,
     readiness_components_chart,
 )
+from dashboard.viz.strategy_overlap import access_overlap_map, operating_overlap_map
 
 
 def _portfolio_frame() -> pd.DataFrame:
@@ -528,3 +529,48 @@ def test_walking_shapes_share_one_legend_entry_without_losing_hover_detail() -> 
         "15-minute isochrone",
         "30-minute isochrone",
     }
+
+
+def test_access_overlap_map_keeps_service_screen_routes_stops_and_walk_distinct() -> None:
+    figure = access_overlap_map(
+        {"name": "MetLife Stadium", "lat": 40.8135, "lon": -74.0745},
+        {
+            "gtfs_routes": [{"route_name": "Rail", "coordinates": [[-74.10, 40.82], [-74.07, 40.81]]}],
+            "gtfs": [{"name": "Rutherford", "lat": 40.828, "lon": -74.101}],
+            "walk": [{"name": "Network path", "coordinates": [[-74.08, 40.81], [-74.07, 40.82]]}],
+        },
+    )
+
+    assert [trace.name for trace in figure.data] == [
+        "Half-mile service screen",
+        "Event-valid GTFS routes",
+        "Event-relevant stops",
+        "Walking evidence",
+        "Venue",
+    ]
+    assert len(figure.data[0].lat) == 73
+    assert figure.layout.map.zoom == 11.2
+
+
+def test_operating_overlap_map_separates_selected_and_other_candidate_hubs() -> None:
+    figure = operating_overlap_map(
+        {
+            "regional_hub_name": "Candidate Station",
+            "regional_hub_lat": 32.80,
+            "regional_hub_lon": -97.05,
+            "regional_hub_status": "candidate",
+        },
+        {"name": "AT&T Stadium", "lat": 32.748, "lon": -97.0929},
+        [
+            {"name": "Candidate Station", "lat": 32.80, "lon": -97.05},
+            {"name": "Other Station", "lat": 32.817, "lon": -97.053},
+        ],
+    )
+
+    assert [trace.name for trace in figure.data] == [
+        "Schematic transfer link",
+        "Other screened candidates",
+        "Selected engine anchor",
+        "Venue",
+    ]
+    assert list(figure.data[1].text) == ["Other Station"]

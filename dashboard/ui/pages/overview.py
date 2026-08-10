@@ -12,7 +12,9 @@ import streamlit as st
 
 from dashboard.domain.comparison import build_city_comparison
 from dashboard.domain.portfolio import build_portfolio_timeline, portfolio_summary
+from dashboard.mobility_platform.mappings import HOST_CITIES
 from dashboard.models.interventions import factor_registry_from_snapshot
+from dashboard.ui.city.traffic_plan import render as render_traffic_plan
 from dashboard.ui.presentation import build_presentation
 from dashboard.ui.theme import callout, metric_card, page_header, section_header
 from dashboard.viz.style import COLORS, STATUS_COLORS, style_figure
@@ -105,7 +107,11 @@ def _portfolio_chart(timeline: pd.DataFrame) -> go.Figure:
 def _readiness_components(metric: Mapping[str, Any]) -> tuple[go.Figure, pd.DataFrame]:
     rows = pd.DataFrame(
         [
-            {"Component": label, "Score": metric.get(f"{key}_score"), "Evidence": metric.get(f"{key}_status", "unavailable")}
+            {
+                "Component": label,
+                "Score": metric.get(f"{key}_score"),
+                "Evidence": metric.get(f"{key}_status", "unavailable"),
+            }
             for key, label in (
                 ("transit", "Transit service"),
                 ("access", "Venue support"),
@@ -163,12 +169,32 @@ def render_decision_brief(
         "City action plan",
         f"{city}: from access gap to action",
         f"Representative match {match.match_id} at {match.venue}.",
-        (match.stage, match.kickoff_local or "Kickoff unavailable", f"Readiness rank {row.get('strict_rank', '—')} of 11"),
+        (
+            match.stage,
+            match.kickoff_local or "Kickoff unavailable",
+            f"Readiness rank {row.get('strict_rank', '—')} of 11",
+        ),
     )
-    section_header("Access challenge", "Peak-hour demand and scheduled transit capacity for the representative match.", "Problem")
+    section_header(
+        "Why readiness differs", "The readiness score combines four independently labeled components.", "Why"
+    )
+    readiness_figure, readiness_table = _readiness_components(decision.metric)
+    st.plotly_chart(readiness_figure, width="stretch", config={"displayModeBar": False})
+    with st.expander("Readiness component table"):
+        st.dataframe(readiness_table, hide_index=True, width="stretch")
+
+    section_header(
+        "Access challenge", "Peak-hour demand and scheduled transit capacity for the representative match.", "Problem"
+    )
     _metric_row(
         [
-            (f"#{int(row['strict_rank'])}" if pd.notna(row.get("strict_rank")) else "Not ranked", "Readiness rank", "derived", "Selected weight profile", "teal"),
+            (
+                f"#{int(row['strict_rank'])}" if pd.notna(row.get("strict_rank")) else "Not ranked",
+                "Readiness rank",
+                "derived",
+                "Selected weight profile",
+                "teal",
+            ),
             (
                 _number(access.peak_demand_per_hour, " / hr"),
                 "Peak movement demand",
@@ -176,12 +202,28 @@ def render_decision_brief(
                 "Base attendance scenario; the representative peak may be a post-match departure",
                 "blue",
             ),
-            (_number(access.residual_passengers if access.capacity_qualified else None, " / hr"), "Unserved peak demand", access.transit_status, "After scheduled transit capacity", "coral"),
-            (_number(access.transit_capacity_base if access.capacity_qualified else None, " / hr"), "Scheduled transit capacity", access.transit_status, "Event-window service", "amber"),
+            (
+                _number(access.residual_passengers if access.capacity_qualified else None, " / hr"),
+                "Unserved peak demand",
+                access.transit_status,
+                "After scheduled transit capacity",
+                "coral",
+            ),
+            (
+                _number(access.transit_capacity_base if access.capacity_qualified else None, " / hr"),
+                "Scheduled transit capacity",
+                access.transit_status,
+                "Event-window service",
+                "amber",
+            ),
         ]
     )
     if not access.capacity_qualified:
-        callout("warning", "This case is not capacity-qualified", "Demand remains visible, but missing or partial event transit evidence prevents a strict residual-gap claim.")
+        callout(
+            "warning",
+            "This case is not capacity-qualified",
+            "Demand remains visible, but missing or partial event transit evidence prevents a strict residual-gap claim.",
+        )
     elif float(access.transit_capacity_high or 0) == 0:
         callout(
             "warning",
@@ -189,13 +231,43 @@ def render_decision_brief(
             "The pinned schedule contains no departures within the half-mile venue catchment.",
         )
     elif access.walking_status == "unavailable":
-        callout("warning", "Transit gap qualified; walking route unavailable", "Scheduled capacity can support a residual passenger gap, but the pedestrian connection remains a separate missing evidence component.")
+        callout(
+            "warning",
+            "Transit gap qualified; walking route unavailable",
+            "Scheduled capacity can support a residual passenger gap, but the pedestrian connection remains a separate missing evidence component.",
+        )
 
-    section_header("Why readiness differs", "The readiness score combines four independently labeled components.", "Why")
-    readiness_figure, readiness_table = _readiness_components(decision.metric)
-    st.plotly_chart(readiness_figure, width="stretch", config={"displayModeBar": False})
-    with st.expander("Readiness component table"):
-        st.dataframe(readiness_table, hide_index=True, width="stretch")
+    traffic_plan = next(
+        (
+            item
+            for item in artifacts.get("traffic_strategy_plans", [])
+            if str(item.get("city")) == city and str(item.get("match_id")) == match.match_id
+        ),
+        None,
+    )
+    section_header(
+        "Match-day traffic strategy",
+        "Turn the access gap into a time-phased operating pattern, a scale screen, and explicit local validation needs.",
+        "Operations",
+    )
+    if traffic_plan:
+        venue_context = HOST_CITIES.get(city, {})
+        render_traffic_plan(
+            traffic_plan,
+            {
+                "name": match.venue,
+                "lat": venue_context.get("lat"),
+                "lon": venue_context.get("lon"),
+            },
+            map_layers=artifacts.get("map_layers", {}).get(city, {}),
+            hub_candidates=artifacts.get("gtfs", {}).get(city, {}).get("regional_hubs", []),
+        )
+    else:
+        callout(
+            "warning",
+            "Traffic strategy unavailable",
+            "Movement, access, regional-hub, and intervention evidence must reconcile before a match-day strategy can be screened.",
+        )
 
     section_header(
         "Concrete investment screen",
@@ -218,9 +290,27 @@ def render_decision_brief(
                 st.write(priority.scope)
                 _metric_row(
                     [
-                        (_money(priority.comparison_cost_base), "Comparison cost", priority.status, priority.cost_basis, "amber"),
-                        (_number(priority.gap_resolved_passengers, " passengers"), "Peak demand addressed", priority.status, "Representative match", "teal"),
-                        (_money(priority.cost_per_passenger), "Cost / passenger", priority.status, "Comparison basis", "blue"),
+                        (
+                            _money(priority.comparison_cost_base),
+                            "Comparison cost",
+                            priority.status,
+                            priority.cost_basis,
+                            "amber",
+                        ),
+                        (
+                            _number(priority.gap_resolved_passengers, " passengers"),
+                            "Peak demand addressed",
+                            priority.status,
+                            "Representative match",
+                            "teal",
+                        ),
+                        (
+                            _money(priority.cost_per_passenger),
+                            "Cost / passenger",
+                            priority.status,
+                            "Comparison basis",
+                            "blue",
+                        ),
                         (priority.lead_time_band, "Lead time", priority.status, "Planning range", "slate"),
                     ]
                 )
@@ -273,7 +363,11 @@ def render_decision_brief(
             "Local bids, fleet constraints, rights-of-way, and observed uptake should replace the shared national screening assumptions before funding."
         )
     else:
-        callout("warning", "No match-specific action", "Movement, transit, factors, and intervention evidence must be complete before screening an option.")
+        callout(
+            "warning",
+            "No match-specific action",
+            "Movement, transit, factors, and intervention evidence must be complete before screening an option.",
+        )
 
     show_composites = st.toggle(
         "Show advanced composite model tests",
@@ -314,7 +408,11 @@ def render_decision_brief(
             color="Composite",
             size="Climate magnitude",
             text="Composite",
-            color_discrete_map={"Baseline": COLORS["slate"], "Operational Package": COLORS["teal"], "Capital Package": COLORS["blue"]},
+            color_discrete_map={
+                "Baseline": COLORS["slate"],
+                "Operational Package": COLORS["teal"],
+                "Capital Package": COLORS["blue"],
+            },
         )
         figure.update_traces(textposition="top center")
         figure.update_xaxes(tickprefix="$", title="Planning cost")
@@ -323,13 +421,20 @@ def render_decision_brief(
         st.dataframe(scenario_rows, hide_index=True, width="stretch")
 
     st.markdown("#### Tournament sensitivity")
-    scope_labels = {"match": "Selected match", "city_tournament": f"{city} tournament", "us_tournament": "All U.S. matches"}
-    scope_label = st.segmented_control(
-        "Time horizon",
-        list(scope_labels.values()),
-        default="Selected match",
-        key="brief_scope",
-    ) or "Selected match"
+    scope_labels = {
+        "match": "Selected match",
+        "city_tournament": f"{city} tournament",
+        "us_tournament": "All U.S. matches",
+    }
+    scope_label = (
+        st.segmented_control(
+            "Time horizon",
+            list(scope_labels.values()),
+            default="Selected match",
+            key="brief_scope",
+        )
+        or "Selected match"
+    )
     scope = next(key for key, label in scope_labels.items() if label == scope_label)
     package_name = st.selectbox("Composite scenario", [item.name for item in scenarios], index=1, key="brief_package")
     include_partial_portfolio = st.checkbox(
@@ -354,10 +459,34 @@ def render_decision_brief(
     summary = portfolio_summary(timeline)
     _metric_row(
         [
-            (str(summary.get("match_count", 0)), "Matches included", "scenario" if not timeline.empty else "unavailable", f"{summary.get('omitted_matches', 0)} omitted for evidence", "slate"),
-            (_number(summary.get("gap_resolved_passengers"), " passengers"), "Cumulative peak gaps addressed", "scenario", "Sum of match-level peak benefits", "teal"),
-            (_number(summary.get("net_co2e_kg"), " kg"), "Cumulative net CO2e avoided", "scenario", "May be negative for poor service", "blue"),
-            (_money(summary.get("total_cost_base")), "Cumulative planning cost", "scenario", "Capital + recurring operations", "amber"),
+            (
+                str(summary.get("match_count", 0)),
+                "Matches included",
+                "scenario" if not timeline.empty else "unavailable",
+                f"{summary.get('omitted_matches', 0)} omitted for evidence",
+                "slate",
+            ),
+            (
+                _number(summary.get("gap_resolved_passengers"), " passengers"),
+                "Cumulative peak gaps addressed",
+                "scenario",
+                "Sum of match-level peak benefits",
+                "teal",
+            ),
+            (
+                _number(summary.get("net_co2e_kg"), " kg"),
+                "Cumulative net CO2e avoided",
+                "scenario",
+                "May be negative for poor service",
+                "blue",
+            ),
+            (
+                _money(summary.get("total_cost_base")),
+                "Cumulative planning cost",
+                "scenario",
+                "Capital + recurring operations",
+                "amber",
+            ),
         ]
     )
     if not timeline.empty:

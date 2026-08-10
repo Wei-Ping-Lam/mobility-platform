@@ -1,0 +1,149 @@
+{
+  "artifact_sha256": "b67d43135fb32b75e8b1cd1acb9e878f4adbfed2d392b982a2344a892c384c72",
+  "city_coverage": {
+    "Atlanta": {
+      "fallback": "derived strategy from pinned GTFS, movement, access, and intervention evidence",
+      "published_plan_available": false,
+      "source_ids": []
+    },
+    "Boston": {
+      "fallback": "derived strategy from pinned GTFS, movement, access, and intervention evidence",
+      "published_plan_available": false,
+      "source_ids": []
+    },
+    "Dallas": {
+      "fallback": "common derived strategy; published facts retained for source audit",
+      "published_plan_available": true,
+      "source_ids": [
+        "dallas_fwc26_transportation_plan"
+      ]
+    },
+    "Houston": {
+      "fallback": "derived strategy from pinned GTFS, movement, access, and intervention evidence",
+      "published_plan_available": false,
+      "source_ids": []
+    },
+    "Kansas City": {
+      "fallback": "derived strategy from pinned GTFS, movement, access, and intervention evidence",
+      "published_plan_available": false,
+      "source_ids": []
+    },
+    "Los Angeles": {
+      "fallback": "derived strategy from pinned GTFS, movement, access, and intervention evidence",
+      "published_plan_available": false,
+      "source_ids": []
+    },
+    "Miami": {
+      "fallback": "derived strategy from pinned GTFS, movement, access, and intervention evidence",
+      "published_plan_available": false,
+      "source_ids": []
+    },
+    "New York/NJ": {
+      "fallback": "derived strategy from pinned GTFS, movement, access, and intervention evidence",
+      "published_plan_available": false,
+      "source_ids": []
+    },
+    "Philadelphia": {
+      "fallback": "derived strategy from pinned GTFS, movement, access, and intervention evidence",
+      "published_plan_available": false,
+      "source_ids": []
+    },
+    "San Francisco": {
+      "fallback": "derived strategy from pinned GTFS, movement, access, and intervention evidence",
+      "published_plan_available": false,
+      "source_ids": []
+    },
+    "Seattle": {
+      "fallback": "derived strategy from pinned GTFS, movement, access, and intervention evidence",
+      "published_plan_available": false,
+      "source_ids": []
+    }
+  },
+  "contract_version": "0.3.0",
+  "generated_at_utc": "2026-08-10T00:23:10.164978Z",
+  "plans": {
+    "Dallas": {
+      "accessible_operations": "ADA-accessible vans at CentrePort and accessible carts at the stadium bus hub",
+      "arrival_window": "5 hours before kickoff through kickoff",
+      "city": "Dallas",
+      "curb_instruction": "Keep rideshare and taxi loading in the published Arlington Esports Stadium lot; direct private cars and shuttles to their separate published operating area.",
+      "curb_location": "Arlington Esports Stadium rideshare and taxi lot",
+      "egress_instruction": "Return ticket holders by charter bus to CentrePort for TRE service; preserve the published walk from the stadium to the bus hub and separate rideshare route.",
+      "egress_window": "Match end through 3 hours after",
+      "modeled_measure": "Shuttle service",
+      "overflow_trigger": "Dispatch dynamic charter buses from Victory or Fort Worth Central when TRE reaches capacity and passenger lines form.",
+      "primary_pattern": "Regional rail to charter-bus bridge",
+      "published_controls": [
+        "AT&T Way closed from Cowboys Way to Randol Mill Road on match days",
+        "Cowboys Way closed from North Collins Street to AT&T Way on match days",
+        "A portion of Nolan Ryan Expressway closed from Road to Six Flags to the hotel south entrance",
+        "A portion of Statler Boulevard closed near CentrePort Station",
+        "Rideshare/taxi, private shuttle, charter bus, and pedestrian channels are separated"
+      ],
+      "source_ids": [
+        "dallas_fwc26_transportation_plan"
+      ],
+      "source_locators": [
+        "Match Day Transit",
+        "Dallas Stadium Road Closures",
+        "Pedestrian Walking Routes",
+        "CentrePort Station Road Closures"
+      ],
+      "status": "observed",
+      "transfer_hubs": [
+        {
+          "lat": 32.789607,
+          "lon": -96.812513,
+          "name": "Victory Station",
+          "role": "origin rail hub",
+          "status": "observed"
+        },
+        {
+          "lat": 32.751796,
+          "lon": -97.325397,
+          "name": "Fort Worth Central Station",
+          "role": "origin rail hub",
+          "status": "observed"
+        },
+        {
+          "lat": 32.81701,
+          "lon": -97.05294,
+          "name": "TRE CentrePort/DFW Airport Station",
+          "role": "primary transfer",
+          "status": "observed"
+        }
+      ],
+      "trunk_instruction": "Route ticket holders by TRE from Victory Station or Fort Worth Central Station to CentrePort, then transfer to complimentary charter buses serving the stadium bus hub."
+    }
+  },
+  "policy": {
+    "generated_locations": "candidate only; never an approved hub, curb, lot, or closure",
+    "precedence": "generated plans are never overridden by a city-specific source-audit overlay",
+    "roadway_claims": "no speed, delay, signal, queue, or congestion claim without observed roadway evidence",
+    "runtime": "cache-only; no source request during dashboard use"
+  },
+  "schema_version": "1.0.0",
+  "snapshot_kind": "world_cup_traffic_management_plans",
+  "sources": {
+    "dallas_fwc26_transportation_plan": {
+      "coverage_end": "2026-07-23",
+      "coverage_start": "2026-05-26",
+      "hash_scope": "Raw HTTP response bytes retained in ignored data/raw/operations",
+      "license": "Official public information; retain publisher attribution and source terms",
+      "publisher": "North Texas FIFA World Cup Organizing Committee",
+      "retrieved_at_utc": "2026-08-10T00:23:10.164978Z",
+      "sha256": "76507d80542ef90cace7ac0ef31e90a7c3e2eea48438c6072c8e0f58e7bc1578",
+      "source": "FIFA World Cup 26 Dallas Transportation & Mobility Plan",
+      "source_id": "dallas_fwc26_transportation_plan",
+      "status": "observed",
+      "url": "https://www.dallasfwc26.com/dallas-2026/transportation-mobility/",
+      "verification_terms": [
+        "CentrePort",
+        "Dynamic Charter Buses",
+        "Griffin Street"
+      ],
+      "version": "Published World Cup 2026 transportation plan; accessed 2026-08-09"
+    }
+  },
+  "status": "partial"
+}

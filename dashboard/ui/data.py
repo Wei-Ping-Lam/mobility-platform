@@ -57,17 +57,19 @@ def _legacy_uhi(paths: ProjectPaths) -> pd.DataFrame:
         city = MARKET_TO_CITY.get(str(market))
         if city:
             row = group.iloc[0]
-            rows.append({
-                "city": city,
-                "avg_uhi": row.get("avg_uhi"),
-                "p90_uhi": row.get("p90_uhi"),
-                "max_uhi": row.get("max_uhi"),
-                "venue_avg_uhi": None,
-                "venue_p90_uhi": None,
-                "venue_points": 0,
-                "source_dataset": "urban-heat-index-rice",
-                "evidence_status": "partial",
-            })
+            rows.append(
+                {
+                    "city": city,
+                    "avg_uhi": row.get("avg_uhi"),
+                    "p90_uhi": row.get("p90_uhi"),
+                    "max_uhi": row.get("max_uhi"),
+                    "venue_avg_uhi": None,
+                    "venue_p90_uhi": None,
+                    "venue_points": 0,
+                    "source_dataset": "urban-heat-index-rice",
+                    "evidence_status": "partial",
+                }
+            )
     return pd.DataFrame(rows) if rows else _empty("uhi")
 
 
@@ -83,7 +85,10 @@ def _legacy_origins(paths: ProjectPaths) -> pd.DataFrame:
 
 
 def load_gtfs(paths: ProjectPaths) -> dict[str, dict[str, Any]]:
-    candidates = [paths.artifact_root / "gtfs_transit_scores.json", paths.repo_root / "data" / "gtfs_transit_scores.json"]
+    candidates = [
+        paths.artifact_root / "gtfs_transit_scores.json",
+        paths.repo_root / "data" / "gtfs_transit_scores.json",
+    ]
     for path in candidates:
         if not path.exists():
             continue
@@ -100,7 +105,9 @@ def load_gtfs(paths: ProjectPaths) -> dict[str, dict[str, Any]]:
                     value["gtfs_transit_score"] = None
                     value["score_status"] = "unavailable"
                     value["feed_status"] = "unavailable"
-                    value["legacy_reason"] = "Legacy cache has no pinned fetch timestamp, hash, calendar validity, or evidence status."
+                    value["legacy_reason"] = (
+                        "Legacy cache has no pinned fetch timestamp, hash, calendar validity, or evidence status."
+                    )
                 normalized[str(city)] = value
             return normalized
         except (OSError, json.JSONDecodeError):
@@ -152,6 +159,10 @@ def _load_public_supplements(paths: ProjectPaths) -> dict[str, Any]:
     walking = _load_json(snapshot_root / "osm" / "walking_networks.json")
     gtfs = _load_json(snapshot_root / "gtfs" / "gtfs_venue_access.json")
     operations = _load_json(snapshot_root / "operations" / "world_cup_2026_operations.json")
+    traffic_management = _load_json(snapshot_root / "operations" / "world_cup_2026_traffic_management.json")
+    strategy_benchmarks = _load_json(
+        snapshot_root / "operations" / "world_cup_2026_strategy_benchmarks.json"
+    )
     environment = _load_json(snapshot_root / "environment" / "venue_environment.json")
     if isinstance(schedule, dict):
         bundle.setdefault("match_events", schedule.get("events", []))
@@ -185,6 +196,21 @@ def _load_public_supplements(paths: ProjectPaths) -> dict[str, Any]:
             for source_id, source in operations.get("sources", {}).items()
             if isinstance(source, dict)
         )
+    if isinstance(traffic_management, dict):
+        bundle["traffic_management_snapshot"] = traffic_management
+        bundle["published_traffic_plans"] = traffic_management.get("plans", {})
+        bundle["traffic_management_coverage"] = traffic_management.get("city_coverage", {})
+        bundle.setdefault("source_references", []).extend(
+            {"source_id": source_id, **source}
+            for source_id, source in traffic_management.get("sources", {}).items()
+            if isinstance(source, dict)
+        )
+    if isinstance(strategy_benchmarks, dict):
+        from dashboard.pipeline.public.strategy_benchmarks import validate_snapshot
+
+        validate_snapshot(strategy_benchmarks)
+        bundle["strategy_benchmark_snapshot"] = strategy_benchmarks
+        bundle["strategy_benchmarks"] = strategy_benchmarks.get("benchmarks", {})
     if isinstance(environment, dict):
         bundle["environment_snapshot"] = environment
         bundle.setdefault("source_references", []).extend(
@@ -255,15 +281,24 @@ def _load_rice_spatial(paths: ProjectPaths) -> dict[str, Any]:
             source_total = len(city_poi)
             city_poi["lat_bin"] = pd.to_numeric(city_poi["lat"], errors="coerce").round(2)
             city_poi["lon_bin"] = pd.to_numeric(city_poi["lon"], errors="coerce").round(2)
-            grouped = city_poi.groupby(["lat_bin", "lon_bin", "category"], dropna=True).size().rename("category_count").reset_index()
+            grouped = (
+                city_poi.groupby(["lat_bin", "lon_bin", "category"], dropna=True)
+                .size()
+                .rename("category_count")
+                .reset_index()
+            )
             city_poi = (
-                grouped.sort_values(["lat_bin", "lon_bin", "category_count", "category"], ascending=[True, True, False, True])
+                grouped.sort_values(
+                    ["lat_bin", "lon_bin", "category_count", "category"], ascending=[True, True, False, True]
+                )
                 .drop_duplicates(["lat_bin", "lon_bin"])
                 .rename(columns={"lat_bin": "lat", "lon_bin": "lon", "category": "top_category"})
                 .sort_values(["category_count", "lat", "lon"], ascending=[False, True, True])
                 .head(500)
             )
-            city_poi["name"] = city_poi.apply(lambda row: f"{row['top_category']} ({int(row['category_count'])})", axis=1)
+            city_poi["name"] = city_poi.apply(
+                lambda row: f"{row['top_category']} ({int(row['category_count'])})", axis=1
+            )
             city_poi["source_total_records"] = source_total
         if not city_origins.empty:
             city_origins = city_origins.rename(columns={"home_state": "name"})
@@ -335,7 +370,13 @@ def load_artifacts(paths: ProjectPaths) -> dict[str, Any]:
         if isinstance(route_geometry, dict):
             route_geometry = route_geometry.get("coordinates")
         if isinstance(route_geometry, list) and route_geometry:
-            walk_rows.append({"coordinates": route_geometry, "name": "Network path to event-relevant stop", "status": network.get("status", "partial")})
+            walk_rows.append(
+                {
+                    "coordinates": route_geometry,
+                    "name": "Network path to event-relevant stop",
+                    "status": network.get("status", "partial"),
+                }
+            )
         for isochrone in network.get("isochrones", []):
             geometry = isochrone.get("geometry", {})
             coordinates = geometry.get("coordinates", [])

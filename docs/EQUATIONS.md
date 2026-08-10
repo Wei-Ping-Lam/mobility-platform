@@ -58,6 +58,41 @@ gap_h = max(demand_h − scheduled_capacity_h, 0)
 This is a passenger-per-hour planning gap, not roadway congestion or a measured
 queue.
 
+## EQ-TRAFFIC-SCALE-01 — unconstrained event-bus scale screen
+
+```text
+bus_equivalents_h = ceil(
+  max(demand_h - scheduled_capacity_h, 0)
+  / (bus_capacity * usable_load_factor)
+)
+```
+
+The low case couples low demand with high usable bus capacity; the base case
+uses base values; the high case couples high demand with low usable capacity.
+The result is an order-of-magnitude residual-gap translation, not a fleet
+recommendation. A base result above 60 buses/hour triggers a disclosed
+single-hub review signal; that threshold is a project planning heuristic, not
+an observed curb, layover, roadway, or dispatch limit.
+
+## EQ-HUB-RANK-01 — regional GTFS candidate ranking
+
+For each GTFS parent station more than 0.5 and no more than 40 miles from the
+venue, with scheduled service active on at least one host match date:
+
+```text
+hub score = 8,000 × rail/ferry flag
+          + 500 × route count
+          + min(event-valid trip patterns, 999)
+          + 10 × event-valid match dates
+          − distance miles
+```
+
+Stations explicitly labeled “no service” are excluded. Candidates are sorted by
+descending score, then distance and name; duplicate station names are removed
+and at most eight are retained. The first retained station is the displayed
+anchor. This ranks scheduled network connectivity only—not parking, platform,
+curb, layover, staffing, ADA, emergency-access, or event-operations feasibility.
+
 ## EQ-RESILIENCE-01 — common access stress
 
 ```text

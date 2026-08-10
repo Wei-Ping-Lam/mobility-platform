@@ -51,6 +51,14 @@ completed analytical result.
   York/New Jersey, each with at least 18 hourly observations and a station under
   five miles from its venue. Boston contains five valid Landsat scenes and
   169,940 venue-buffer pixels. Snapshot tampering fails closed.
+- The traffic-management source-audit artifact covers all 11 cities explicitly
+  and contains one content-hashed official Dallas plan. Runtime generation uses
+  the same derived strategy path for all cities; missing review terms, invalid
+  source references, or content tampering still fail closed.
+- The separate strategy benchmark covers all 11 cities with an official source
+  link, broad reviewed family, and service signals. Artifact tampering, missing
+  cities, invalid families, or missing attribution fail closed. These labels
+  cannot authorize exact operating claims.
 
 ## Release model gates
 
@@ -80,6 +88,15 @@ completed analytical result.
   net VMT and net CO2e may be negative when a package performs poorly.
 - Identical packages produce different outcomes for fixture cities with
   different schedules, networks, service, heat, or demand.
+- Every match receives exactly five ordered traffic actions. Strategy families
+  respond to scheduled coverage, stop proximity, walking evidence, network
+  scale, and regional-hub structure; nine families occur in production.
+- The classifier never receives the city name or official benchmark label.
+  Benchmark agreement is calculated only after prediction and is described as
+  an in-sample calibration check, never holdout accuracy.
+- Event-bus low/base/high screens remain ordered and trace to
+  `EQ-TRAFFIC-SCALE-01`. They are labeled unconstrained needs, and the
+  60-bus/hour single-hub signal is disclosed as a heuristic.
 - Observed, calibrated, validated, or predictive-accuracy language is blocked
   unless both holdout years beat seasonal-naive and fan-specific origin/mode
   calibration evidence is supplied. The permitted label is “scenario forecast.”
@@ -90,11 +107,18 @@ completed analytical result.
 
 - Portfolio starts with all 11 cities and has no city filter or map. It leads with the
   readiness ranking and its four criterion scores, then separates visitor movement,
-  first/last mile, investment screens, and Access/Traffic/CO2e outcomes into their own
-  tabs with exact tables and explicit claim boundaries. Visitor movement uses one
+  first/last mile, investment/transit screens, traffic management, and
+  Access/Traffic/CO2e outcomes into six tabs with exact tables and explicit
+  claim boundaries. Visitor movement uses one
   compact segmented view for origin mix, mode mix, and peak timing.
-- City Action Plan answers the access challenge, readiness drivers, candidate investment, modeled outcome, cost,
-  lead time, evidence quality, and evidence-gated time horizons.
+- City Action Plan answers the access challenge, readiness drivers, a concise
+  match-day operating pattern, five chronological actions, candidate
+  investment, modeled outcome, cost, lead time, evidence quality, and
+  evidence-gated time horizons. Venue-access and operating-overlap maps stay
+  collapsed until requested. Their captions distinguish service-screen geometry,
+  the selected candidate, other retained candidates, and schematic links.
+- City information order is readiness rank, component explanation, access
+  shortfall, traffic strategy, then bounded investment screen.
 - Portfolio separates physical access priority, strict readiness, and qualified single-measure screens.
   Cost per passenger for the common added-frequency measure is not used as a cross-city
   portfolio lens because the shared scale and national unit factors make it identical.
@@ -138,6 +162,11 @@ completed analytical result.
   It contains 11 content-hashed official source records, 33 post-event
   benchmarks across all cities, and 13 match-level records without filling
   unreported fields.
+- Traffic-management overlay artifact SHA-256:
+  `b67d43135fb32b75e8b1cd1acb9e878f4adbfed2d392b982a2344a892c384c72`.
+  It retains the official Dallas transfer pattern and named controls for source
+  audit only. All 78 generated match strategies use the common movement,
+  access, GTFS candidate-hub, and intervention rules without named controls.
 - Environment evidence artifact SHA-256:
   `9b60e5e6b3f2acda78b10ef08478af485383ba3283f92d8ddc9ad75bc18029de`.
   Its NOAA source hashes are `087e554002f51bff3fafe134bb9c494bdefcd5df031cf677b54251e1923d5772`
@@ -176,6 +205,19 @@ completed analytical result.
   special-event overlays; 29 match records show zero scheduled half-mile
   capacity and 23 lack a stop-route/route-heat path. Team/contact metadata and final desktop/narrow
   screenshot review remain outstanding.
+
+## Traffic-strategy v1 evidence record — 2026-08-09
+
+- Ruff, Python compilation, `git diff --check`, and the cache-only public
+  snapshot validator pass.
+- The suite collected 239 tests. In the managed sandbox, 236 passed and three
+  temp-directory fixtures were blocked by Windows ACL errors before their test
+  bodies ran; those exact three tests passed in an isolated authorized rerun.
+- A 36-test traffic/GTFS/public/integration/UI regression partition passes.
+- Desktop Browser review verified all six Portfolio tabs, the simplified
+  all-city traffic table, readiness-first city hierarchy, and common candidate-
+  hub overlap treatment for Dallas and New York/New Jersey. The current build
+  produced no browser console errors.
 
 This is a competition MVP validation record, not certification for operational
 traffic management.

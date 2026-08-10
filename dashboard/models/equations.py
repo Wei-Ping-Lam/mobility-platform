@@ -65,6 +65,22 @@ EQUATIONS = (
         "It is not roadway congestion or a queue measurement.",
     ),
     EquationDefinition(
+        "EQ-TRAFFIC-SCALE-01",
+        "Unconstrained event-bus scale screen",
+        "bus_equivalents_h = ceil(max(demand_h âˆ’ scheduled_capacity_h, 0) Ã· (bus_capacity Ã— usable_load_factor))",
+        "low uses low demand with high usable bus capacity; base uses base values; high uses high demand with low usable bus capacity",
+        "Translates the residual passenger gap into an auditable order-of-magnitude operating scale.",
+        "This is not a fleet recommendation or throughput approval; a 60-bus/hour single-hub review threshold is a disclosed project heuristic requiring local curb and layover validation.",
+    ),
+    EquationDefinition(
+        "EQ-HUB-RANK-01",
+        "Regional GTFS hub candidate ranking",
+        "hub_score = 8000 * rail_or_ferry + 500 * routes + min(event_trip_patterns, 999) + 10 * event_match_dates - distance_miles",
+        "eligible parent stations are 0.5-40 miles from the venue and have scheduled service active on at least one host match date; no-service labels are excluded",
+        "Retains at most eight network-connectivity candidates and selects the highest-ranked anchor.",
+        "This is not an exhaustive station list or a parking, platform, curb, layover, staffing, ADA, emergency-access, or event-operations feasibility ranking.",
+    ),
+    EquationDefinition(
         "EQ-RESILIENCE-01",
         "Common access stress",
         "stress_coverage = capacity_h × (1 − 0.20) ÷ (demand_h × (1 + 0.10))",

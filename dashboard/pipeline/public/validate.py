@@ -13,6 +13,7 @@ from dashboard.pipeline.public.loaders import (
     load_gtfs_snapshot,
     load_operational_snapshot,
     load_schedule_snapshot,
+    load_traffic_management_snapshot,
     load_walking_snapshot,
 )
 from dashboard.pipeline.public.walking import validate_snapshot as validate_walking
@@ -25,6 +26,9 @@ def validate_all(root: Path) -> dict[str, object]:
     validate_walking(walking)
     gtfs = load_gtfs_snapshot(root / "gtfs" / "gtfs_venue_access.json")
     operations = load_operational_snapshot(root / "operations" / "world_cup_2026_operations.json")
+    traffic_management = load_traffic_management_snapshot(
+        root / "operations" / "world_cup_2026_traffic_management.json"
+    )
     environment = load_environment_snapshot(root / "environment" / "venue_environment.json")
     expected = set(HOST_CITIES)
     if (
@@ -32,6 +36,7 @@ def validate_all(root: Path) -> dict[str, object]:
         or set(walking["cities"]) != expected
         or set(gtfs["cities"]) != expected
         or set(operations["city_coverage"]) != expected
+        or set(traffic_management["city_coverage"]) != expected
     ):
         raise ValueError("A public snapshot is missing one or more U.S. host cities")
     return {
@@ -46,6 +51,9 @@ def validate_all(root: Path) -> dict[str, object]:
         "operational_metrics": len(operations["metrics"]),
         "operational_event_records": len(operations["event_records"]),
         "operational_cities": sum(row["metric_count"] > 0 for row in operations["city_coverage"].values()),
+        "traffic_management_sources": len(traffic_management["sources"]),
+        "traffic_management_published_plans": len(traffic_management["plans"]),
+        "traffic_management_cities": len(traffic_management["city_coverage"]),
         "environment_weather_rows": len(environment["weather_daily"]),
         "environment_uhi_cities": len(environment["uhi_city"]),
         "passed": True,
