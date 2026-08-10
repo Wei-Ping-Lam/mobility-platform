@@ -11,7 +11,6 @@ import streamlit as st
 from dashboard.ui.portfolio import (
     first_last_mile,
     investments,
-    outcomes,
     resilience,
     visitor_movement,
 )
@@ -20,11 +19,10 @@ from dashboard.ui.portfolio.shared import navigate
 from dashboard.ui.theme import page_header, section_header
 
 TAB_LABELS = (
-    ":material/health_and_safety: Resilience",
+    ":material/health_and_safety: Overview",
     ":material/route: Visitor movement",
     ":material/transfer_within_a_station: First/last mile",
     ":material/construction: Investments & strategies",
-    ":material/monitoring: Outcomes",
 )
 
 
@@ -36,10 +34,10 @@ def render_portfolio(
     page_header(
         "Transportation & access",
         "FIFA 2026 Host City Mobility Readiness",
-        "Compare resilience, modeled visitor movement, first/last-mile gaps, concrete actions, and decision outcomes across every U.S. host.",
+        "Compare resilience, modeled visitor movement, first/last-mile gaps, and concrete actions across every U.S. host.",
         (
             "11 cities at once",
-            "5 Track 1 objectives",
+            "4 Track 1 objectives",
             "No portfolio map or city filter",
         ),
     )
@@ -60,7 +58,6 @@ def render_portfolio(
         lambda: visitor_movement.render(frame),
         lambda: first_last_mile.render(frame),
         lambda: investments.render(frame),
-        lambda: outcomes.render(frame),
     )
     for tab, renderer in zip(tabs, renderers):
         if tab.open:

@@ -6,10 +6,13 @@ from dashboard.viz.portfolio import (
     portfolio_access_chart,
     portfolio_actions_chart,
     portfolio_climate_chart,
+    portfolio_gap_quadrant_chart,
     portfolio_movement_chart,
-    portfolio_outcome_chart,
+    portfolio_package_benefit_chart,
     portfolio_resilience_chart,
+    portfolio_stop_density_chart,
     portfolio_traffic_chart,
+    portfolio_transit_capacity_chart,
     portfolio_visitor_forecast_chart,
     readiness_components_chart,
 )
@@ -26,6 +29,7 @@ def _portfolio_frame() -> pd.DataFrame:
                 "strict_rank": 2,
                 "peak_demand_pph": 20_000,
                 "capacity_qualified_gap_pph": 12_000,
+                "scheduled_transit_capacity_pph": 8_000,
                 "scheduled_coverage_pct": 40.0,
                 "stress_coverage_pct": 29.1,
                 "stress_gap_pph": 15_600,
@@ -82,6 +86,15 @@ def _portfolio_frame() -> pd.DataFrame:
                 "representative_match_id": "M001",
                 "qualified_interventions": "Shuttle service",
                 "screening_confidence": "medium",
+                "capacity": 70_000,
+                "transit_score": 70.0,
+                "first_last_mile_gap": 30.0,
+                "avg_temp_c": 26.0,
+                "transit_stops_0_5mi": 20,
+                "gtfs_stops_1mi": 100,
+                "gtfs_stops_2mi": 300,
+                "nearest_stop_mi": 0.10,
+                "gtfs_agencies": "MARTA",
             },
             {
                 "city": "Seattle",
@@ -91,6 +104,7 @@ def _portfolio_frame() -> pd.DataFrame:
                 "strict_rank": 1,
                 "peak_demand_pph": 20_000,
                 "capacity_qualified_gap_pph": 5_000,
+                "scheduled_transit_capacity_pph": 15_000,
                 "scheduled_coverage_pct": 75.0,
                 "stress_coverage_pct": 54.5,
                 "stress_gap_pph": 10_000,
@@ -147,6 +161,15 @@ def _portfolio_frame() -> pd.DataFrame:
                 "representative_match_id": "M002",
                 "qualified_interventions": "Added transit frequency",
                 "screening_confidence": "high",
+                "capacity": 72_000,
+                "transit_score": 90.0,
+                "first_last_mile_gap": 10.0,
+                "avg_temp_c": 18.0,
+                "transit_stops_0_5mi": 50,
+                "gtfs_stops_1mi": 150,
+                "gtfs_stops_2mi": 400,
+                "nearest_stop_mi": 0.12,
+                "gtfs_agencies": "Sound Transit, King County Metro",
             },
         ]
     )
@@ -174,17 +197,85 @@ def test_portfolio_resilience_chart_compares_the_same_common_stress() -> None:
     assert figure.layout.barmode == "group"
 
 
-def test_portfolio_movement_chart_keeps_arrivals_and_departures_separate() -> None:
+def test_portfolio_movement_chart_is_a_dumbbell_of_arrival_and_departure_peaks() -> None:
     figure = portfolio_movement_chart(_portfolio_frame())
 
+    marker_traces = [trace for trace in figure.data if trace.mode == "markers"]
+    line_traces = [trace for trace in figure.data if trace.mode == "lines"]
+    assert [trace.name for trace in marker_traces] == ["Arrival peak", "Departure peak"]
+    assert list(marker_traces[0].x) == [16_000, 15_000]
+    assert list(marker_traces[1].x) == [20_000, 20_000]
+    assert "Peak time" in marker_traces[0].hovertemplate
+    # One connecting segment per city (arrival -> departure -> gap), unnamed and legend-free.
+    assert len(line_traces) == 1
+    assert line_traces[0].showlegend is False
+    assert list(line_traces[0].x) == [16_000, 20_000, None, 15_000, 20_000, None]
+
+
+def test_portfolio_transit_capacity_chart_ranks_hosts_by_departure_pressure() -> None:
+    frame = pd.DataFrame(
+        [
+            {
+                "city": "HighCapacity",
+                "forecast_arrival_peak_base": 10_000,
+                "forecast_departure_peak_base": 20_000,
+                "mode_scheduled_transit_share_pct": 50.0,
+                "scheduled_transit_capacity_pph": 10_000,
+            },
+            {
+                "city": "LowCapacity",
+                "forecast_arrival_peak_base": 10_000,
+                "forecast_departure_peak_base": 20_000,
+                "mode_scheduled_transit_share_pct": 50.0,
+                "scheduled_transit_capacity_pph": 1_000,
+            },
+            {
+                "city": "NoCapacity",
+                "forecast_arrival_peak_base": 10_000,
+                "forecast_departure_peak_base": 20_000,
+                "mode_scheduled_transit_share_pct": 50.0,
+                "scheduled_transit_capacity_pph": 0,
+            },
+        ]
+    )
+    figure = portfolio_transit_capacity_chart(frame)
+
     assert [trace.name for trace in figure.data] == ["Arrival peak", "Departure peak"]
-    assert list(figure.data[0].x) == [16_000, 15_000]
-    assert list(figure.data[1].x) == [20_000, 20_000]
-    assert "Peak time" in figure.data[0].hovertemplate
+    # Sorted by departure % descending: LowCapacity (1000%) outranks HighCapacity (100%).
+    # NoCapacity is excluded from the bars entirely - a ratio against zero is undefined.
+    assert list(figure.data[0].x) == ["LowCapacity", "HighCapacity"]
+    assert list(figure.data[0].y) == [500.0, 50.0]
+    assert list(figure.data[1].y) == [1_000.0, 100.0]
+    assert figure.layout.yaxis.type == "log"
+    assert any("NoCapacity" in str(annotation.text) for annotation in figure.layout.annotations)
+
+
+def test_portfolio_gap_quadrant_chart_encodes_capacity_size_and_temperature_color() -> None:
+    figure = portfolio_gap_quadrant_chart(_portfolio_frame())
+
+    assert len(figure.data) == 1
+    trace = figure.data[0]
+    assert list(trace.x) == [70.0, 90.0]
+    assert list(trace.y) == [30.0, 10.0]
+    assert list(trace.text) == ["Atlanta", "Seattle"]
+    assert list(trace.marker.size) == [70_000, 72_000]
+    assert list(trace.marker.color) == [26.0, 18.0]
+    assert figure.layout.yaxis.title.text == "First/last-mile gap score"
+
+
+def test_portfolio_stop_density_chart_sorts_hosts_by_stops_within_one_mile() -> None:
+    figure = portfolio_stop_density_chart(_portfolio_frame())
+
+    assert [trace.name for trace in figure.data] == ["Within 0.5 mi", "Within 1 mi", "Within 2 mi"]
+    assert list(figure.data[0].x) == ["Seattle", "Atlanta"]
+    assert list(figure.data[0].y) == [50, 20]
+    assert list(figure.data[1].y) == [150, 100]
+    assert list(figure.data[2].y) == [400, 300]
+    assert figure.layout.barmode == "group"
 
 
 def test_portfolio_visitor_forecast_compares_origin_and_mode_mix_without_extra_panels() -> None:
-    origins = portfolio_visitor_forecast_chart(_portfolio_frame(), "Origin mix")
+    origins = portfolio_visitor_forecast_chart(_portfolio_frame(), "Attendee Origin")
     modes = portfolio_visitor_forecast_chart(_portfolio_frame(), "Mode mix")
 
     assert [trace.name for trace in origins.data] == [
@@ -206,17 +297,37 @@ def test_portfolio_visitor_forecast_compares_origin_and_mode_mix_without_extra_p
             assert sum(float(trace.x[city_index]) for trace in figure.data) == 100.0
 
 
-def test_portfolio_actions_and_outcomes_use_city_specific_priority_measures() -> None:
+def test_portfolio_actions_chart_uses_city_specific_priority_measures() -> None:
     actions = portfolio_actions_chart(_portfolio_frame())
-    traffic = portfolio_outcome_chart(_portfolio_frame(), "Traffic")
 
     assert set(actions.data[0].text) == {"Shuttle service", "Added transit frequency"}
     assert list(actions.data[0].x) == [630, 700]
-    assert set(traffic.data[0].customdata[:, 0]) == {
-        "Shuttle service",
-        "Added transit frequency",
+
+
+def test_portfolio_package_benefit_chart_omits_baseline_and_nets_vehicle_trips() -> None:
+    city_row = {
+        "baseline_vehicle_trips_base": 12_000,
+        "operational_gap_resolved": 500.0,
+        "operational_vehicle_trips_base": 10_000,
+        "operational_net_co2e_base": 800.0,
+        "capital_gap_resolved": 550.0,
+        "capital_vehicle_trips_base": 9_000,
+        "capital_net_co2e_base": 900.0,
     }
-    assert "vehicle trips avoided" in traffic.layout.xaxis.title.text
+    figure = portfolio_package_benefit_chart(city_row)
+
+    assert [trace.name for trace in figure.data] == ["Operational Package", "Capital Package"]
+    operational, capital = figure.data
+    # Vehicle trips avoided = baseline - package; the other two metrics are the
+    # package's own value (baseline is trivially zero for both, by definition).
+    assert list(operational.y) == [500.0, 2_000.0, 800.0]
+    assert list(capital.y) == [550.0, 3_000.0, 900.0]
+    assert list(operational.x) == [
+        "Peak passengers\naddressed / hr",
+        "Vehicle trips\navoided",
+        "Net CO2e\navoided (kg)",
+    ]
+    assert figure.layout.barmode == "group"
 
 
 def test_readiness_components_chart_exposes_all_four_defined_criteria() -> None:

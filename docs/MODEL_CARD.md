@@ -54,8 +54,8 @@ causal evaluation.
   status. It is not an agency commitment.
 - Operational and capital composites combine several measures only for sensitivity
   testing; they are not named investment recommendations.
-- The Portfolio uses five objective tabs: Resilience, Visitor movement,
-  First/last mile, Investments & strategies, and Outcomes. All 11 cities remain
+- The Portfolio uses four objective tabs: Overview, Visitor movement,
+  First/last mile, and Investments & strategies. All 11 cities remain
   visible in every comparison; exact values are disclosed in expandable tables.
 - The resilience comparison applies a common sensitivity of 10% more peak
   movement and 20% less scheduled capacity. It is a transparent physical stress
@@ -70,9 +70,10 @@ causal evaluation.
   shuttle; a long event-stop approach screens a shuttle connection; a hot
   documented approach can screen a cooled walking corridor; low coverage on an
   established route can screen added frequency. This is not an automatic optimum.
-- Access, venue-area vehicle trips avoided, and net CO2e are compared separately
-  in the Outcomes tab. They are scenario outputs, not observed mode shift,
-  measured roadway congestion relief, or a certified emissions inventory.
+- Access, venue-area vehicle trips avoided, and net CO2e are surfaced per named
+  intervention package in the Investments & strategies tab. They are scenario
+  outputs, not observed mode shift, measured roadway congestion relief, or a
+  certified emissions inventory.
 
 ## Validation and uncertainty
 

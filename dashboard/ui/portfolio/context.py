@@ -8,8 +8,16 @@ from typing import Any
 import numpy as np
 import pandas as pd
 
-from dashboard.domain.overview import build_portfolio_overview
+from dashboard.domain.overview import PACKAGE_NAMES, build_portfolio_overview
 from dashboard.models.resilience import stress_access_capacity
+
+# Maps each named package to the column-name prefix used for its attached
+# outcome fields (see _with_package_outcomes).
+PACKAGE_KEYS = {
+    "Baseline": "baseline",
+    "Operational Package": "operational",
+    "Capital Package": "capital",
+}
 
 
 def build_portfolio_frame(
@@ -24,7 +32,99 @@ def build_portfolio_frame(
         artifacts.get("intervention_outcomes", []),
         weights=weights,
     )
-    return _with_track1_metrics(frame, artifacts)
+    frame = _with_track1_metrics(frame, artifacts)
+    frame = _with_gap_evidence(frame, metrics, artifacts.get("gtfs", {}))
+    return _with_package_outcomes(frame, artifacts.get("intervention_outcomes", []))
+
+
+def _outcome_row(
+    city: str,
+    match_id: str,
+    package_name: str,
+    outcome_rows: list[Mapping[str, Any]],
+) -> Mapping[str, Any]:
+    for row in outcome_rows:
+        package = row.get("package", {})
+        name = package.get("name") if isinstance(package, Mapping) else row.get("name")
+        if (
+            str(row.get("city")) == city
+            and str(row.get("match_id")) == match_id
+            and str(name) == package_name
+        ):
+            return row
+    return {}
+
+
+def _with_package_outcomes(
+    frame: pd.DataFrame, outcome_rows: list[Mapping[str, Any]]
+) -> pd.DataFrame:
+    """Attach each named package's modeled outcome for the representative match.
+
+    Lets the Investments tab offer a real package selector (Baseline / Operational
+    / Capital) without evaluating the intervention model live from the UI layer -
+    every package is already evaluated once in build_transportation_bundle.
+    """
+
+    records: list[dict[str, Any]] = []
+    for row in frame.to_dict("records"):
+        city = str(row.get("city"))
+        match_id = str(row.get("representative_match_id") or "")
+        entry: dict[str, Any] = {}
+        for package_name in PACKAGE_NAMES:
+            prefix = PACKAGE_KEYS[package_name]
+            outcome = _outcome_row(city, match_id, package_name, outcome_rows)
+            entry[f"{prefix}_cost_low"] = outcome.get("cost_low")
+            entry[f"{prefix}_cost_base"] = outcome.get("cost_base")
+            entry[f"{prefix}_cost_high"] = outcome.get("cost_high")
+            entry[f"{prefix}_gap_resolved"] = outcome.get("gap_resolved_passengers")
+            entry[f"{prefix}_net_co2e_base"] = outcome.get("net_co2e_kg_base")
+            entry[f"{prefix}_vehicle_trips_base"] = outcome.get("venue_vehicle_trips_base")
+            entry[f"{prefix}_arrival_shifted_pph"] = outcome.get("arrival_shifted_pph_base")
+            entry[f"{prefix}_status"] = outcome.get("status", "unavailable")
+        records.append(entry)
+    additions = pd.DataFrame(records)
+    # build_portfolio_overview already attaches baseline_vehicle_trips_{low,base,high}
+    # (from the same Baseline package outcome) - keep those, don't duplicate them.
+    additions = additions.drop(
+        columns=[column for column in additions.columns if column in frame.columns]
+    )
+    return pd.concat([frame.reset_index(drop=True), additions], axis=1)
+
+
+# Columns computed in dashboard/domain/scoring.py that build_city_comparison
+# does not carry forward, but the gap-analysis and stop-density views need.
+_GAP_EVIDENCE_METRICS_COLUMNS = (
+    "city",
+    "capacity",
+    "transit_score",
+    "transit_status",
+    "first_last_mile_gap",
+    "avg_temp_c",
+    "transit_stops_0_5mi",
+    "nearest_stop_mi",
+    "route_count",
+    "feed_status",
+)
+
+
+def _with_gap_evidence(
+    frame: pd.DataFrame, metrics: pd.DataFrame, gtfs: Mapping[str, Any]
+) -> pd.DataFrame:
+    available = [c for c in _GAP_EVIDENCE_METRICS_COLUMNS if c in metrics.columns]
+    merged = frame.merge(metrics[available], on="city", how="left")
+
+    gtfs_rows = []
+    for city in merged["city"]:
+        entry = gtfs.get(str(city), {}) if isinstance(gtfs, Mapping) else {}
+        agencies = entry.get("agencies") if isinstance(entry, Mapping) else None
+        gtfs_rows.append(
+            {
+                "gtfs_stops_1mi": entry.get("stops_1mi") if isinstance(entry, Mapping) else None,
+                "gtfs_stops_2mi": entry.get("stops_2mi") if isinstance(entry, Mapping) else None,
+                "gtfs_agencies": ", ".join(agencies) if agencies else None,
+            }
+        )
+    return pd.concat([merged.reset_index(drop=True), pd.DataFrame(gtfs_rows)], axis=1)
 
 
 def _with_access_metrics(frame: pd.DataFrame) -> pd.DataFrame:

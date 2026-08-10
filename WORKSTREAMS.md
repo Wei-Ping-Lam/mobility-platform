@@ -29,8 +29,8 @@ This repository uses isolated branches and Git worktrees so agents and people ca
 
 `dashboard/app.py`, `dashboard/ui/workspaces.py`, `dashboard/domain/decision_support.py`, shared contracts, and dependency lockfiles are integration-owned. Workstreams expose tested modules and do not edit those seams without an agreed integration handoff.
 
-Within W5, contributors may independently own Resilience, Visitor movement,
-First/last mile, Investments, or Outcomes. The tab renderer and its focused
+Within W5, contributors may independently own Overview, Visitor movement,
+First/last mile, or Investments. The tab renderer and its focused
 tests are the normal change surface. `dashboard/ui/portfolio/context.py` and
 `page.py` remain integration-owned because every objective consumes them;
 coordinate changes to the shared formatting and table adapters as well.
