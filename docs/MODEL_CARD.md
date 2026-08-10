@@ -83,8 +83,10 @@ causal evaluation.
 - The Portfolio chooses a priority screening measure from the evidence-qualified
   option set using explicit bottleneck rules. Zero serving capacity screens a
   shuttle; a long event-stop approach screens a shuttle connection; a hot
-  documented approach can screen a cooled walking corridor; low coverage on an
-  established route can screen added frequency. This is not an automatic optimum.
+  documented approach can screen a cooled walking corridor. Nearby event-hour
+  service can identify a candidate location for added frequency, but that
+  option remains exploratory until a route-specific operating plan is assigned.
+  This is not an automatic optimum.
 - Access, venue-area vehicle trips avoided, and net CO2e are surfaced per named
   intervention package in the Investments & transit tab. They are scenario
   outputs, not observed mode shift, measured roadway congestion relief, or a

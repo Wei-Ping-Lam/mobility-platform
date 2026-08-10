@@ -12,7 +12,7 @@ from dashboard.viz.style import STATUS_COLORS
     ("mode", "expected_tabs"),
     [
         ("Overview", 4),
-        ("City Brief", 2),
+        ("City Brief", 0),
     ],
 )
 def test_every_workspace_renders_without_exception(mode, expected_tabs):
@@ -103,6 +103,4 @@ def test_every_city_renders_in_the_action_plan(city):
     app.run(timeout=30)
     assert not app.exception
     assert city_selector.value == city
-    # The two overlap-map sub-tabs (venue access / operating) live inside a
-    # collapsed expander; City Brief itself still has no top-level tab nav.
-    assert {tab.label for tab in app.tabs} == {"Venue access overlap", "Operating overlap"}
+    assert not app.tabs
