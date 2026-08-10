@@ -92,7 +92,15 @@ def _number(value: Any) -> float | None:
 
 def _hubs(city_gtfs: Mapping[str, Any]) -> list[Mapping[str, Any]]:
     value = city_gtfs.get("regional_hubs")
-    return [row for row in value if isinstance(row, Mapping)] if isinstance(value, list) else []
+    return (
+        [
+            row
+            for row in value
+            if isinstance(row, Mapping) and "no service" not in str(row.get("name") or "").casefold()
+        ]
+        if isinstance(value, list)
+        else []
+    )
 
 
 def build_strategy_features(

@@ -260,7 +260,7 @@ def render_decision_brief(
                 "lon": venue_context.get("lon"),
             },
             map_layers=artifacts.get("map_layers", {}).get(city, {}),
-            published_plan=artifacts.get("published_traffic_plans", {}).get(city, {}),
+            hub_candidates=artifacts.get("gtfs", {}).get(city, {}).get("regional_hubs", []),
         )
     else:
         callout(

@@ -1,9 +1,8 @@
 """Pure, evidence-gated match-day traffic strategy generation.
 
-The v1 strategy artifact combines published operating-plan facts with derived
-GTFS, movement, access, and intervention evidence.  Exact controls are retained
-only when an official overlay supplies them; the model never invents named road
-closures, curb locations, or engineering approvals.
+Every city uses the same GTFS, movement, access, and intervention rules.
+Official plans remain an external broad-family benchmark and never override
+the generated hub, actions, windows, or controls.
 """
 
 from __future__ import annotations
@@ -198,16 +197,12 @@ def _recommendation(
 
 def _hub(
     regional_hubs: Sequence[Mapping[str, Any]],
-    official_plan: Mapping[str, Any],
 ) -> tuple[dict[str, Any] | None, str]:
-    published = official_plan.get("transfer_hubs")
-    if isinstance(published, list) and published:
-        transfer = next(
-            (dict(item) for item in published if str(item.get("role")) == "primary transfer"),
-            dict(published[0]),
-        )
-        return transfer, "published"
-    candidates = [dict(item) for item in regional_hubs if isinstance(item, Mapping)]
+    candidates = [
+        dict(item)
+        for item in regional_hubs
+        if isinstance(item, Mapping) and "no service" not in str(item.get("name") or "").casefold()
+    ]
     return (candidates[0], "candidate") if candidates else (None, "unavailable")
 
 
@@ -243,14 +238,14 @@ def build_traffic_strategy_plan(
     """Build one evidence-gated, time-phased traffic strategy.
 
     The strategy is operational decision support, not a traffic engineering
-    plan.  Published facts can name facilities and controls; derived actions
-    use candidate locations and disclose the missing local evidence.
+    plan. Every city uses candidate locations and the same action template;
+    official evidence is compared only at the broad strategy-family level.
     """
 
     _identity_check(match, movement, access, city)
     official = dict(official_plan or {})
     official_available = bool(official)
-    selected_hub, hub_status = _hub(regional_hubs, official)
+    selected_hub, hub_status = _hub(regional_hubs)
     hub_name = str(selected_hub.get("name")) if selected_hub else None
     demand = float(access.peak_demand_per_hour)
     scheduled = float(access.transit_capacity_base)
@@ -279,34 +274,29 @@ def build_traffic_strategy_plan(
         prediction_features = {}
 
     benchmark = compare_with_benchmark(predicted_pattern, strategy_benchmark)
-    if official_available and official.get("primary_pattern"):
-        pattern = str(official["primary_pattern"])
-        basis = "Published operating plan over an independently generated strategy-family screen"
-        primary_measure = str(official.get("modeled_measure") or "Shuttle service")
-    else:
-        pattern = predicted_pattern
-        basis = (
-            "Calibrated from event-valid service, access, walking, and regional-hub features"
-            if strategy_features is not None
-            else (
-                "Derived from event-valid venue service and modeled peak coverage"
-                if scheduled > 0
-                else "Derived from zero direct venue capacity and regional-hub evidence"
-            )
+    pattern = predicted_pattern
+    basis = (
+        "Calibrated from event-valid service, access, walking, and regional-hub features"
+        if strategy_features is not None
+        else (
+            "Derived from event-valid venue service and modeled peak coverage"
+            if scheduled > 0
+            else "Derived from zero direct venue capacity and regional-hub evidence"
         )
-        primary_measure = (
-            "Added transit frequency"
-            if pattern
-            in {
-                "Direct high-capacity transit reinforcement",
-                "Downtown multimodal dispersal",
-                "Direct transit plus distributed egress",
-                "Multimodal rail-transfer network",
-                "Direct-transit reinforcement",
-                "Direct transit plus overflow shuttle",
-            }
-            else "Shuttle service"
-        )
+    )
+    primary_measure = (
+        "Added transit frequency"
+        if pattern
+        in {
+            "Direct high-capacity transit reinforcement",
+            "Downtown multimodal dispersal",
+            "Direct transit plus distributed egress",
+            "Multimodal rail-transfer network",
+            "Direct-transit reinforcement",
+            "Direct transit plus overflow shuttle",
+        }
+        else "Shuttle service"
+    )
 
     buses_low, buses_base, buses_high, proposed_capacity = _bus_requirements(movement, access, factors)
     feasibility = (
@@ -321,36 +311,25 @@ def build_traffic_strategy_plan(
         max(baseline_vehicle_trips - modeled_vehicle_trips, 0.0) if modeled_vehicle_trips is not None else None
     )
 
-    source_ids = tuple(str(value) for value in official.get("source_ids", []) if str(value))
-    published_controls = tuple(str(value) for value in official.get("published_controls", []) if str(value).strip())
-    arrival_window = str(official.get("arrival_window") or _window(movement.hourly_rows, "arrivals_base"))
-    egress_window = str(official.get("egress_window") or _window(movement.hourly_rows, "departures_base"))
+    published_controls: tuple[str, ...] = ()
+    arrival_window = _window(movement.hourly_rows, "arrivals_base")
+    egress_window = _window(movement.hourly_rows, "departures_base")
     hub_location = hub_name or "Transfer or staging hub to be validated"
     hub_location_status = hub_status if selected_hub else "unavailable"
     trunk_instruction = (
-        str(official.get("trunk_instruction"))
-        if official.get("trunk_instruction")
-        else (
-            f"Use {hub_location} as the candidate transfer point and screen {buses_base:,} buses per hour in the base case."
-            if selected_hub
-            else f"Validate a regional staging hub before procuring the screened {buses_base:,} buses per hour."
-        )
+        f"Use {hub_location} as the candidate transfer point and screen {buses_base:,} one-hub bus equivalents per hour in the base case."
+        if selected_hub
+        else f"Validate distributed staging before using the {buses_base:,} one-hub bus-equivalent scale screen."
     )
-    curb_instruction = str(
-        official.get("curb_instruction")
-        or "Separate transit, rideshare/taxi, private shuttle, and accessible-vehicle loading before assigning a specific curb or lot."
+    curb_instruction = (
+        "Separate transit, rideshare/taxi, private shuttle, and accessible-vehicle loading before assigning a specific curb or lot."
     )
-    egress_instruction = str(
-        official.get("egress_instruction")
-        or "Stage return service against the modeled departure peak and preserve a protected pedestrian route from the venue to loading areas."
+    egress_instruction = (
+        "Stage return service against the modeled departure peak and preserve a protected pedestrian route from the venue to loading areas."
     )
-    overflow_trigger = str(
-        official.get("overflow_trigger")
-        or (
-            f"Activate overflow when projected demand exceeds scheduled plus proposed capacity, or the estimated queue exceeds {QUEUE_TRIGGER_MINUTES} minutes of shuttle throughput."
-        )
+    overflow_trigger = (
+        f"Activate overflow when projected demand exceeds scheduled plus proposed capacity, or the estimated queue exceeds {QUEUE_TRIGGER_MINUTES} minutes of shuttle throughput."
     )
-    official_status = EvidenceStatus.OBSERVED if official_available else EvidenceStatus.PARTIAL
     actions = (
         TrafficStrategyAction(
             phase="Before match",
@@ -371,8 +350,7 @@ def build_traffic_strategy_plan(
             trigger=f"Screened residual peak gap: {access.residual_passengers:,.0f} passengers per hour.",
             location=hub_name,
             location_status=hub_location_status,
-            evidence_status=official_status if hub_status == "published" else EvidenceStatus.PARTIAL,
-            source_ids=source_ids if hub_status == "published" else (),
+            evidence_status=EvidenceStatus.PARTIAL,
             dependencies=("Fleet and operator availability", "Staging and layover capacity"),
         ),
         TrafficStrategyAction(
@@ -381,10 +359,9 @@ def build_traffic_strategy_plan(
             instruction=curb_instruction,
             time_window=arrival_window,
             trigger="Open only after curb, pedestrian, emergency-access, and accessible-service checks are signed off.",
-            location=str(official.get("curb_location")) if official.get("curb_location") else None,
-            location_status="published" if official.get("curb_location") else "candidate",
-            evidence_status=official_status if official.get("curb_location") else EvidenceStatus.PARTIAL,
-            source_ids=source_ids if official.get("curb_location") else (),
+            location=None,
+            location_status="candidate",
+            evidence_status=EvidenceStatus.PARTIAL,
             dependencies=("Curb inventory and enforcement plan", "Field-verified pedestrian and ADA path"),
         ),
         TrafficStrategyAction(
@@ -395,8 +372,7 @@ def build_traffic_strategy_plan(
             trigger="Hold service until venue release, pedestrian crossing, and downstream platform conditions are safe.",
             location=hub_name,
             location_status=hub_location_status,
-            evidence_status=official_status if official_available else EvidenceStatus.SCENARIO,
-            source_ids=source_ids,
+            evidence_status=EvidenceStatus.SCENARIO,
             dependencies=("Post-match crowd-control plan", "Return-service and platform management"),
         ),
         TrafficStrategyAction(
@@ -407,8 +383,7 @@ def build_traffic_strategy_plan(
             trigger=overflow_trigger,
             location=hub_name,
             location_status=hub_location_status,
-            evidence_status=official_status if official.get("overflow_trigger") else EvidenceStatus.SCENARIO,
-            source_ids=source_ids if official.get("overflow_trigger") else (),
+            evidence_status=EvidenceStatus.SCENARIO,
             dependencies=("Queue monitoring", "Dispatch authority", "Reserved overflow fleet"),
         ),
     )
@@ -420,23 +395,18 @@ def build_traffic_strategy_plan(
     ]
     if not selected_hub:
         evidence_gaps.append("No published or event-valid regional transfer hub is established.")
-    if not official_available:
-        evidence_gaps.append(
-            "No published city operating-plan overlay is integrated; all named locations remain candidates."
-        )
+    evidence_gaps.append(
+        "The generated view does not authorize exact hubs, parking, curb assignments, road closures, or special-event service."
+    )
     if access.walking_status == EvidenceStatus.UNAVAILABLE:
         evidence_gaps.append("The final pedestrian connection is not modeled.")
 
     summary = (
-        f"{pattern}: use {hub_name} as the published transfer hub and preserve the official operating controls."
-        if hub_status == "published"
-        else (
-            f"{pattern}: use {hub_name} as a candidate transfer anchor; the one-hub equivalent is "
-            f"{buses_base:,} buses per hour, so validate a distributed operating plan."
-            if hub_name
-            else f"{pattern}: establish distributed staging; the one-hub equivalent is "
-            f"{buses_base:,} buses per hour and is not a fleet recommendation."
-        )
+        f"{pattern}: use {hub_name} as the highest-ranked candidate transfer anchor; the one-hub equivalent is "
+        f"{buses_base:,} buses per hour, so validate a distributed operating plan."
+        if hub_name
+        else f"{pattern}: establish distributed staging; the one-hub equivalent is "
+        f"{buses_base:,} buses per hour and is not a fleet recommendation."
     )
     return TrafficStrategyPlan(
         schema_version="1.0.0",
@@ -452,7 +422,7 @@ def build_traffic_strategy_plan(
         benchmark_source_url=benchmark["benchmark_source_url"],
         benchmark_evidence_level=benchmark["benchmark_evidence_level"],
         strategy_basis=basis,
-        status=EvidenceStatus.PARTIAL if official_available else EvidenceStatus.SCENARIO,
+        status=EvidenceStatus.SCENARIO,
         summary=summary,
         arrival_window=arrival_window,
         egress_window=egress_window,
@@ -481,13 +451,14 @@ def build_traffic_strategy_plan(
             "Bus requirements are unconstrained screening needs, not fleet commitments.",
             f"A single hub is screened at no more than {SINGLE_HUB_BUS_LIMIT_PER_HOUR} buses per hour before multi-hub operations are required.",
             "Vehicle-trip, VMT, and CO2e outcomes reuse the existing single-measure intervention model.",
-            "Exact controls appear only when supplied by an official operating-plan overlay.",
+            "Official plans are broad-family benchmarks only and do not override generated locations or actions.",
         ),
         equation_ids=(
             "EQ-DEMAND-01",
             "EQ-CAPACITY-01",
             "EQ-GAP-01",
             "EQ-TRAFFIC-SCALE-01",
+            "EQ-HUB-RANK-01",
             "EQ-VMT-01",
             "EQ-CO2-01",
         ),

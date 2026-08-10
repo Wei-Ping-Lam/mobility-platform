@@ -360,6 +360,9 @@ def _regional_hub_candidates(
         row = station_rows.get(str(hub_stop_id))
         if not row:
             continue
+        station_name = str(row.get("stop_name") or "Unnamed station")
+        if "no service" in station_name.casefold():
+            continue
         lat = float(row["stop_lat"])
         lon = float(row["stop_lon"])
         distance = float(haversine_miles(float(venue["lat"]), float(venue["lon"]), np.array([lat]), np.array([lon]))[0])
@@ -391,7 +394,7 @@ def _regional_hub_candidates(
         candidates.append(
             {
                 "stop_id": str(hub_stop_id),
-                "name": str(row.get("stop_name") or "Unnamed station"),
+                "name": station_name,
                 "lat": round(lat, 6),
                 "lon": round(lon, 6),
                 "distance_mi": round(distance, 3),

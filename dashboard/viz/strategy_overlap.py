@@ -163,35 +163,40 @@ def access_overlap_map(venue: Mapping[str, Any], layers: Mapping[str, Any]) -> g
     return style_map(figure, 390, zoom=11.2, lat=venue_lat, lon=venue_lon)
 
 
-def _hub_records(plan: Mapping[str, Any], published_plan: Mapping[str, Any]) -> list[dict[str, Any]]:
+def _hub_records(plan: Mapping[str, Any], candidate_hubs: Sequence[Mapping[str, Any]]) -> list[dict[str, Any]]:
+    selected_name = str(plan.get("regional_hub_name") or "")
     hubs: list[dict[str, Any]] = []
-    published_hubs = published_plan.get("transfer_hubs", [])
-    if isinstance(published_hubs, Sequence) and not isinstance(published_hubs, (str, bytes)):
-        hubs.extend(dict(hub) for hub in published_hubs if isinstance(hub, Mapping))
-    selected = {
-        "name": plan.get("regional_hub_name"),
-        "lat": plan.get("regional_hub_lat"),
-        "lon": plan.get("regional_hub_lon"),
-        "role": "engine-selected transfer anchor",
-        "status": plan.get("regional_hub_status") or "candidate",
-    }
-    if selected["lat"] is not None and selected["lon"] is not None:
-        selected_key = (str(selected["name"]), _number(selected["lat"]), _number(selected["lon"]))
-        existing = {
-            (str(hub.get("name")), _number(hub.get("lat")), _number(hub.get("lon")))
-            for hub in hubs
-        }
-        if selected_key not in existing:
-            hubs.append(selected)
+    seen: set[tuple[str, float | None, float | None]] = set()
+    for raw in candidate_hubs:
+        name = str(raw.get("name") or "")
+        if "no service" in name.casefold():
+            continue
+        hub = dict(raw)
+        key = (name.casefold(), _number(hub.get("lat")), _number(hub.get("lon")))
+        if key in seen:
+            continue
+        seen.add(key)
+        hub["selected"] = name == selected_name
+        hubs.append(hub)
+    if selected_name and not any(bool(hub.get("selected")) for hub in hubs):
+        hubs.insert(
+            0,
+            {
+                "name": selected_name,
+                "lat": plan.get("regional_hub_lat"),
+                "lon": plan.get("regional_hub_lon"),
+                "selected": True,
+            },
+        )
     return hubs
 
 
 def operating_overlap_map(
     plan: Mapping[str, Any],
     venue: Mapping[str, Any],
-    published_plan: Mapping[str, Any] | None = None,
+    candidate_hubs: Sequence[Mapping[str, Any]] = (),
 ) -> go.Figure:
-    """Map the venue-to-hub structure, separating published from candidate locations."""
+    """Map the selected transfer anchor alongside the retained candidate shortlist."""
 
     venue_lat = _number(venue.get("lat"))
     venue_lon = _number(venue.get("lon"))
@@ -199,57 +204,53 @@ def operating_overlap_map(
     if venue_lat is None or venue_lon is None:
         return style_map(figure, 390, zoom=3, lat=38.5, lon=-96)
 
-    hubs = _hub_records(plan, published_plan or {})
+    hubs = _hub_records(plan, candidate_hubs)
     valid_hubs = [
         (hub, _number(hub.get("lat")), _number(hub.get("lon")))
         for hub in hubs
     ]
     valid_hubs = [(hub, lat, lon) for hub, lat, lon in valid_hubs if lat is not None and lon is not None]
 
-    if valid_hubs:
-        link_lat: list[float | None] = []
-        link_lon: list[float | None] = []
-        link_text: list[str | None] = []
-        for hub, lat, lon in valid_hubs:
-            label = f"Schematic link: {hub.get('name') or 'hub'} to venue"
-            link_lat.extend([lat, venue_lat, None])
-            link_lon.extend([lon, venue_lon, None])
-            link_text.extend([label, label, None])
+    selected_hubs = [(hub, lat, lon) for hub, lat, lon in valid_hubs if bool(hub.get("selected"))]
+    other_hubs = [(hub, lat, lon) for hub, lat, lon in valid_hubs if not bool(hub.get("selected"))]
+    if selected_hubs:
+        selected, selected_lat, selected_lon = selected_hubs[0]
+        label = f"Schematic link: {selected.get('name') or 'hub'} to venue"
         figure.add_trace(
             go.Scattermap(
-                lat=link_lat,
-                lon=link_lon,
+                lat=[selected_lat, venue_lat],
+                lon=[selected_lon, venue_lon],
                 mode="lines",
                 line=dict(color=COLORS["slate"], width=2),
                 name="Schematic transfer link",
-                text=link_text,
+                text=[label, label],
                 hovertemplate="%{text}<extra></extra>",
-                connectgaps=False,
             )
         )
-
-        for status, label, color in (
-            ("observed", "Published hub", COLORS["blue"]),
-            ("published", "Published hub", COLORS["blue"]),
-            ("candidate", "Engine candidate hub", COLORS["amber"]),
-        ):
-            subset = [(hub, lat, lon) for hub, lat, lon in valid_hubs if str(hub.get("status")) == status]
-            if not subset:
-                continue
-            figure.add_trace(
-                go.Scattermap(
-                    lat=[lat for _, lat, _ in subset],
-                    lon=[lon for _, _, lon in subset],
-                    mode="markers",
-                    marker=dict(size=15, color=color),
-                    name=label,
-                    text=[
-                        f"{hub.get('name') or 'Hub'} - {hub.get('role') or 'transfer role'}"
-                        for hub, _, _ in subset
-                    ],
-                    hovertemplate="%{text}<extra></extra>",
-                )
+    if other_hubs:
+        figure.add_trace(
+            go.Scattermap(
+                lat=[lat for _, lat, _ in other_hubs],
+                lon=[lon for _, _, lon in other_hubs],
+                mode="markers",
+                marker=dict(size=10, color=COLORS["blue"], opacity=0.72),
+                name="Other screened candidates",
+                text=[str(hub.get("name") or "Candidate hub") for hub, _, _ in other_hubs],
+                hovertemplate="%{text}<extra></extra>",
             )
+        )
+    if selected_hubs:
+        figure.add_trace(
+            go.Scattermap(
+                lat=[selected_hubs[0][1]],
+                lon=[selected_hubs[0][2]],
+                mode="markers",
+                marker=dict(size=17, color=COLORS["amber"]),
+                name="Selected engine anchor",
+                text=[str(selected_hubs[0][0].get("name") or "Selected hub")],
+                hovertemplate="%{text}<extra></extra>",
+            )
+        )
 
     figure.add_trace(
         go.Scattermap(
@@ -270,7 +271,7 @@ def operating_overlap_map(
         (max(all_longitudes) - min(all_longitudes)) * math.cos(math.radians(venue_lat)),
         0.01,
     )
-    zoom = 11.2 if spread < 0.04 else 9.2 if spread < 0.16 else 7.7 if spread < 0.55 else 6.4
+    zoom = 11.2 if spread < 0.04 else 9.8 if spread < 0.16 else 8.6 if spread < 0.55 else 7.3
     return style_map(
         figure,
         390,

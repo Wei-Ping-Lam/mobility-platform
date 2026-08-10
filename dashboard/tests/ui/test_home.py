@@ -120,7 +120,8 @@ def test_priority_case_drills_into_the_same_city_action_plan():
     assert len(app.get("plotly_chart")) == 3
     tab_labels = {tab.label for tab in app.tabs}
     assert {"Venue access overlap", "Operating overlap"}.issubset(tab_labels)
-    assert len(app.dataframe) == 3
+    assert len(app.dataframe) == 4
+    assert any("Candidate hub" in dataframe.value.columns for dataframe in app.dataframe)
     strategy = next(frame.value for frame in app.dataframe if "Phase" in frame.value.columns)
     assert list(strategy["Phase"]) == [
         "Before match",

@@ -11,6 +11,7 @@ def test_equation_registry_has_stable_unique_ids_and_review_fields():
         "EQ-PARETO-01",
         "EQ-VISITOR-FLOW-01",
         "EQ-MODE-SPLIT-01",
+        "EQ-HUB-RANK-01",
     }.issubset(equation_ids())
     for row in records:
         assert all(row[key].strip() for key in ("equation_id", "equation", "variables", "interpretation", "evidence_limit"))

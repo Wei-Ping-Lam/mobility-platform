@@ -53,10 +53,11 @@ file or duplicating analytical formulas.
 
 City-only traffic presentation lives in `dashboard/ui/city/traffic_plan.py`.
 It consumes the same serialized match plan as the Portfolio adapter, so the
-map, chronological actions, and exact controls do not introduce UI formulas.
+map and chronological actions do not introduce UI formulas.
 `dashboard/viz/strategy_overlap.py` separately owns the city overlap maps: one
 for the venue service screen against GTFS/walking evidence and one for the
-published-or-candidate transfer structure. The portfolio remains map-free.
+selected GTFS transfer anchor against the retained candidate shortlist. The
+portfolio remains map-free.
 
 ## Public and deferred workspaces
 
@@ -106,6 +107,7 @@ from scheduled coverage, stop proximity, walking evidence, network scale, and
 regional-hub structure. It never reads a city name or official benchmark.
 `dashboard/domain/decision_support.py` performs the benchmark comparison only
 after prediction. The reviewed labels live in the separately validated
-`world_cup_2026_strategy_benchmarks.json` snapshot, while exact published hubs,
-windows, and controls remain in content-pinned operating-plan overlays. This
+`world_cup_2026_strategy_benchmarks.json` snapshot. Exact published hubs,
+windows, and controls may remain in source-audit artifacts, but do not override
+the common generated plan or appear in the normalized city comparison. This
 separation prevents the official answer from becoming a hidden runtime rule.

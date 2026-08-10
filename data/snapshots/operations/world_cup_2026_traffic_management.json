@@ -1,5 +1,5 @@
 {
-  "artifact_sha256": "07adb936dd0d532a43e6d0a1b517b6d854f8654c88b7536b4d01699bbf4e188b",
+  "artifact_sha256": "b67d43135fb32b75e8b1cd1acb9e878f4adbfed2d392b982a2344a892c384c72",
   "city_coverage": {
     "Atlanta": {
       "fallback": "derived strategy from pinned GTFS, movement, access, and intervention evidence",
@@ -12,7 +12,7 @@
       "source_ids": []
     },
     "Dallas": {
-      "fallback": "published overlay",
+      "fallback": "common derived strategy; published facts retained for source audit",
       "published_plan_available": true,
       "source_ids": [
         "dallas_fwc26_transportation_plan"
@@ -118,7 +118,7 @@
   },
   "policy": {
     "generated_locations": "candidate only; never an approved hub, curb, lot, or closure",
-    "precedence": "published plan facts override generated locations and controls",
+    "precedence": "generated plans are never overridden by a city-specific source-audit overlay",
     "roadway_claims": "no speed, delay, signal, queue, or congestion claim without observed roadway evidence",
     "runtime": "cache-only; no source request during dashboard use"
   },

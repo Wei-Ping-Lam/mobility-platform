@@ -1,8 +1,7 @@
-"""Build and validate compact published traffic-management plan overlays.
+"""Build and validate compact traffic-management source-audit overlays.
 
-Published overlays preserve exact facilities, service windows, and controls from
-official sources.  They supplement the generated strategy model; cities without
-an overlay remain eligible for evidence-labeled derived candidates.
+Published overlays preserve exact facilities, service windows, and controls
+for provenance. They do not override the normalized generated strategy model.
 """
 
 from __future__ import annotations
@@ -169,7 +168,7 @@ def build_snapshot(raw_root: Path, *, refresh: bool) -> dict[str, Any]:
             "published_plan_available": city in PUBLISHED_PLANS,
             "source_ids": list(PUBLISHED_PLANS.get(city, {}).get("source_ids", [])),
             "fallback": (
-                "published overlay"
+                "common derived strategy; published facts retained for source audit"
                 if city in PUBLISHED_PLANS
                 else "derived strategy from pinned GTFS, movement, access, and intervention evidence"
             ),
@@ -186,7 +185,7 @@ def build_snapshot(raw_root: Path, *, refresh: bool) -> dict[str, Any]:
             "city_coverage": coverage,
             "policy": {
                 "runtime": "cache-only; no source request during dashboard use",
-                "precedence": "published plan facts override generated locations and controls",
+                "precedence": "generated plans are never overridden by a city-specific source-audit overlay",
                 "generated_locations": "candidate only; never an approved hub, curb, lot, or closure",
                 "roadway_claims": "no speed, delay, signal, queue, or congestion claim without observed roadway evidence",
             },

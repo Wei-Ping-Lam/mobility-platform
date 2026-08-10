@@ -135,8 +135,10 @@ def test_compact_evidence_composes_match_decisions_with_repaired_event_gtfs():
     )
     dallas = next(row for row in bundle["traffic_strategy_plans"] if row["city"] == "Dallas")
     assert dallas["official_plan_available"] is True
-    assert dallas["regional_hub_name"] == "TRE CentrePort/DFW Airport Station"
-    assert dallas["published_controls"]
+    assert dallas["regional_hub_name"] == artifacts["gtfs"]["Dallas"]["regional_hubs"][0]["name"]
+    assert dallas["regional_hub_status"] == "candidate"
+    assert dallas["published_controls"] == []
+    assert dallas["status"] == "scenario"
 
 
 def test_recommendations_are_scoped_to_exact_matches_without_citywide_bleed():

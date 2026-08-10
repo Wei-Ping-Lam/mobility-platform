@@ -441,7 +441,7 @@ def test_access_overlap_map_keeps_service_screen_routes_stops_and_walk_distinct(
     assert figure.layout.map.zoom == 11.2
 
 
-def test_operating_overlap_map_separates_published_and_candidate_hubs() -> None:
+def test_operating_overlap_map_separates_selected_and_other_candidate_hubs() -> None:
     figure = operating_overlap_map(
         {
             "regional_hub_name": "Candidate Station",
@@ -450,23 +450,16 @@ def test_operating_overlap_map_separates_published_and_candidate_hubs() -> None:
             "regional_hub_status": "candidate",
         },
         {"name": "AT&T Stadium", "lat": 32.748, "lon": -97.0929},
-        {
-            "transfer_hubs": [
-                {
-                    "name": "CentrePort",
-                    "lat": 32.817,
-                    "lon": -97.053,
-                    "role": "primary transfer",
-                    "status": "observed",
-                }
-            ]
-        },
+        [
+            {"name": "Candidate Station", "lat": 32.80, "lon": -97.05},
+            {"name": "Other Station", "lat": 32.817, "lon": -97.053},
+        ],
     )
 
     assert [trace.name for trace in figure.data] == [
         "Schematic transfer link",
-        "Published hub",
-        "Engine candidate hub",
+        "Other screened candidates",
+        "Selected engine anchor",
         "Venue",
     ]
-    assert list(figure.data[1].text) == ["CentrePort - primary transfer"]
+    assert list(figure.data[1].text) == ["Other Station"]

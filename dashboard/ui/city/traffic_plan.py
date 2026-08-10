@@ -28,12 +28,31 @@ def _actions(plan: Mapping[str, Any]) -> pd.DataFrame:
     return pd.DataFrame(rows)
 
 
+def _candidate_hubs(rows: object, selected_name: object) -> pd.DataFrame:
+    records = []
+    if isinstance(rows, list):
+        for row in rows:
+            if not isinstance(row, Mapping) or "no service" in str(row.get("name") or "").casefold():
+                continue
+            records.append(
+                {
+                    "Rank": len(records) + 1,
+                    "Candidate hub": row.get("name"),
+                    "Selected": "Yes" if str(row.get("name")) == str(selected_name) else "",
+                    "Distance": f"{number(row.get('distance_mi'), decimals=1)} mi",
+                    "Routes": number(row.get("route_count")),
+                    "Modes": ", ".join(str(value).replace("_", " ") for value in row.get("modes", [])),
+                }
+            )
+    return pd.DataFrame(records)
+
+
 def render(
     plan: Mapping[str, Any],
     venue: Mapping[str, Any],
     *,
     map_layers: Mapping[str, Any] | None = None,
-    published_plan: Mapping[str, Any] | None = None,
+    hub_candidates: list[Mapping[str, Any]] | None = None,
 ) -> None:
     """Render the decision summary first and keep audit detail collapsible."""
 
@@ -70,7 +89,7 @@ def render(
                 str(plan.get("regional_hub_name") or "Site not established"),
                 "Transfer hub",
                 hub_evidence,
-                "Published means official; candidate means event-valid GTFS evidence only",
+                "Highest-ranked candidate from the bounded GTFS connectivity screen; not an approved hub",
                 "blue",
             ),
             (
@@ -106,7 +125,7 @@ def render(
             "The official benchmark is withheld from the classifier and compared afterward. Rule strength is not a probability."
         )
 
-    with st.expander("Overlap maps, controls, and evidence gaps", icon=":material/map:"):
+    with st.expander("Overlap maps and evidence gaps", icon=":material/map:"):
         access_tab, operating_tab = st.tabs(["Venue access overlap", "Operating overlap"])
         with access_tab:
             st.plotly_chart(
@@ -119,19 +138,23 @@ def render(
             )
         with operating_tab:
             st.plotly_chart(
-                operating_overlap_map(plan, venue, published_plan),
+                operating_overlap_map(plan, venue, hub_candidates or []),
                 width="stretch",
                 config={"displayModeBar": False},
             )
             st.caption(
-                "Published hubs are blue; engine candidate hubs are amber. Connector lines show the strategy structure only; they are not routed shuttle paths or approved traffic controls."
+                "Amber is the selected engine anchor; blue points are the other retained candidates. The line is schematic, not a routed shuttle path or approved traffic control."
             )
-        controls = list(plan.get("published_controls", []))
-        if controls:
-            st.markdown("**Published controls retained from the official plan**")
-            st.markdown("\n".join(f"- {item}" for item in controls))
-        else:
-            st.info("No published road closure or traffic-control overlay is integrated for this city.")
+            candidates = _candidate_hubs(hub_candidates or [], plan.get("regional_hub_name"))
+            if not candidates.empty:
+                st.dataframe(candidates, hide_index=True, width="stretch", height=315)
+            st.markdown("**How candidates are screened**")
+            st.write(
+                "The GTFS screen retains up to eight parent stations between 0.5 and 40 miles from the venue with scheduled service active on at least one host match date. Ranking favors rail or ferry connectivity, more routes, more event-valid trip patterns and match dates, then shorter distance."
+            )
+            st.caption(
+                "This is a bounded network-connectivity shortlist, not an exhaustive list and not an operational feasibility ranking. It does not test parking, curb, platform, layover, staffing, ADA, emergency-access, or special-event capacity."
+            )
         gaps = list(plan.get("evidence_gaps", []))
         if gaps:
             st.markdown("**Evidence still required**")

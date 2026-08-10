@@ -51,10 +51,10 @@ completed analytical result.
   York/New Jersey, each with at least 18 hourly observations and a station under
   five miles from its venue. Boston contains five valid Landsat scenes and
   169,940 venue-buffer pixels. Snapshot tampering fails closed.
-- The traffic-management overlay covers all 11 cities explicitly, contains one
-  content-hashed official Dallas plan, and leaves the other ten cities on the
-  derived-strategy path. Missing review terms, invalid source references, or
-  content tampering fail closed.
+- The traffic-management source-audit artifact covers all 11 cities explicitly
+  and contains one content-hashed official Dallas plan. Runtime generation uses
+  the same derived strategy path for all cities; missing review terms, invalid
+  source references, or content tampering still fail closed.
 - The separate strategy benchmark covers all 11 cities with an official source
   link, broad reviewed family, and service signals. Artifact tampering, missing
   cities, invalid families, or missing attribution fail closed. These labels
@@ -114,9 +114,9 @@ completed analytical result.
 - City Action Plan answers the access challenge, readiness drivers, a concise
   match-day operating pattern, five chronological actions, candidate
   investment, modeled outcome, cost, lead time, evidence quality, and
-  evidence-gated time horizons. Venue-access and operating-overlap maps, plus
-  detailed controls, stay collapsed until requested. Their captions distinguish
-  service-screen geometry, candidate hubs, published hubs, and schematic links.
+  evidence-gated time horizons. Venue-access and operating-overlap maps stay
+  collapsed until requested. Their captions distinguish service-screen geometry,
+  the selected candidate, other retained candidates, and schematic links.
 - City information order is readiness rank, component explanation, access
   shortfall, traffic strategy, then bounded investment screen.
 - Portfolio separates physical access priority, strict readiness, and qualified single-measure screens.
@@ -163,10 +163,10 @@ completed analytical result.
   benchmarks across all cities, and 13 match-level records without filling
   unreported fields.
 - Traffic-management overlay artifact SHA-256:
-  `07adb936dd0d532a43e6d0a1b517b6d854f8654c88b7536b4d01699bbf4e188b`.
-  It retains the official Dallas transfer pattern and named controls; all 78
-  match strategies reconcile to movement, access, GTFS hub, and intervention
-  identities without inventing official controls for the other cities.
+  `b67d43135fb32b75e8b1cd1acb9e878f4adbfed2d392b982a2344a892c384c72`.
+  It retains the official Dallas transfer pattern and named controls for source
+  audit only. All 78 generated match strategies use the common movement,
+  access, GTFS candidate-hub, and intervention rules without named controls.
 - Environment evidence artifact SHA-256:
   `9b60e5e6b3f2acda78b10ef08478af485383ba3283f92d8ddc9ad75bc18029de`.
   Its NOAA source hashes are `087e554002f51bff3fafe134bb9c494bdefcd5df031cf677b54251e1923d5772`
@@ -214,10 +214,10 @@ completed analytical result.
   temp-directory fixtures were blocked by Windows ACL errors before their test
   bodies ran; those exact three tests passed in an isolated authorized rerun.
 - A 36-test traffic/GTFS/public/integration/UI regression partition passes.
-- Desktop Browser review at 1440×1000 verified all six Portfolio tabs, the
-  simplified all-city traffic table, readiness-first city hierarchy, Dallas
-  published controls and transfer map, and the New York/New Jersey candidate
-  hub legend. The current build produced no browser console errors.
+- Desktop Browser review verified all six Portfolio tabs, the simplified
+  all-city traffic table, readiness-first city hierarchy, and common candidate-
+  hub overlap treatment for Dallas and New York/New Jersey. The current build
+  produced no browser console errors.
 
 This is a competition MVP validation record, not certification for operational
 traffic management.

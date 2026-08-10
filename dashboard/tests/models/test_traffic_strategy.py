@@ -140,7 +140,7 @@ def _recommendations() -> tuple[InvestmentRecommendation, ...]:
     return (_recommendation("Shuttle service"), _recommendation("Added transit frequency"))
 
 
-def test_published_dallas_plan_overrides_generated_pattern_and_locations() -> None:
+def test_published_dallas_plan_does_not_override_the_common_generated_plan() -> None:
     match, movement, access, city = _inputs()
     official = {
         "primary_pattern": "Regional rail to charter-bus bridge",
@@ -161,16 +161,26 @@ def test_published_dallas_plan_overrides_generated_pattern_and_locations() -> No
         city,
         default_factor_registry(),
         _recommendations(),
+        regional_hubs=[
+            {
+                "name": "Central Station",
+                "lat": 32.80,
+                "lon": -97.05,
+                "distance_mi": 7.5,
+                "status": "observed",
+            }
+        ],
         official_plan=official,
     )
 
-    assert plan.primary_pattern == "Regional rail to charter-bus bridge"
-    assert plan.regional_hub_name == "TRE CentrePort/DFW Airport Station"
-    assert plan.regional_hub_status == "published"
+    assert plan.primary_pattern == "Regional hub to event shuttle"
+    assert plan.regional_hub_name == "Central Station"
+    assert plan.regional_hub_status == "candidate"
     assert plan.official_plan_available
-    assert plan.published_controls == ("AT&T Way closed on match days",)
-    assert plan.actions[2].location_status == "published"
-    assert plan.actions[-1].evidence_status is EvidenceStatus.OBSERVED
+    assert plan.published_controls == ()
+    assert plan.actions[2].location_status == "candidate"
+    assert plan.actions[-1].evidence_status is EvidenceStatus.SCENARIO
+    assert plan.arrival_window != official["arrival_window"]
 
 
 def test_zero_direct_capacity_uses_regional_hub_candidate_without_inventing_controls() -> None:
@@ -182,15 +192,19 @@ def test_zero_direct_capacity_uses_regional_hub_candidate_without_inventing_cont
         city,
         default_factor_registry(),
         _recommendations(),
-        regional_hubs=[{"name": "Central Station", "distance_mi": 7.5, "status": "observed"}],
+        regional_hubs=[
+            {"name": "Line End (No Service)", "distance_mi": 5.0, "status": "observed"},
+            {"name": "Central Station", "distance_mi": 7.5, "status": "observed"},
+        ],
     )
 
     assert plan.primary_pattern == "Regional hub to event shuttle"
+    assert plan.regional_hub_name == "Central Station"
     assert plan.regional_hub_status == "candidate"
     assert plan.published_controls == ()
     assert plan.actions[1].location_status == "candidate"
     assert plan.actions[2].location is None
-    assert "published" in plan.evidence_gaps[-1].lower()
+    assert "does not authorize exact hubs" in plan.evidence_gaps[-1].lower()
 
 
 def test_direct_service_changes_the_operating_pattern() -> None:
