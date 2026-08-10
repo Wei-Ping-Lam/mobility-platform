@@ -42,7 +42,6 @@ The Portfolio is composed from independently owned modules under
 | Visitor movement | `visitor_movement.py` |
 | First/last mile | `first_last_mile.py` |
 | Investments & transit | `investments.py` |
-| Traffic management | `traffic_management.py` |
 
 `context.py` is the only analytics-to-UI adapter, `tables.py` owns exact-value
 display schemas, and `page.py` only creates tabs and the page-level drill-down.
@@ -50,13 +49,33 @@ Objective renderers must not import models/domain modules or one another. This
 lets separate contributors edit different objectives without touching the same
 file or duplicating analytical formulas.
 
-City-only traffic presentation lives in `dashboard/ui/city/traffic_plan.py`.
-It consumes the same serialized match plan as the Portfolio adapter, so the
-map and chronological actions do not introduce UI formulas.
+Traffic management is intentionally city-only and lives in
+`dashboard/ui/city/traffic_plan.py`. It consumes the serialized match plan
+directly, so its maps and chronological actions do not introduce UI formulas
+or add match-operating detail to the Portfolio comparison frame.
 `dashboard/viz/strategy_overlap.py` separately owns the city overlap maps: one
 for the venue service screen against GTFS/walking evidence and one for the
 selected GTFS transfer anchor against the retained candidate shortlist. The
 portfolio remains map-free.
+
+### Planned city strategy sensitivity controls
+
+The next traffic-strategy interaction should explain when the recommendation
+changes, not claim that one strategy is universally best. Keep the generated
+plan as the default, then expose a compact assumption panel with:
+
+- a mutually exclusive low/base/high demand control;
+- independent toggles for a wider arrival window, added scheduled transit, and
+  distributed-hub operations;
+- a single comparison row for residual peak gap, bus equivalents per hub,
+  vehicle trips avoided, net CO2e, and whether the strategy family changes.
+
+The domain layer must recompute every alternative without reading the official
+benchmark. The UI should say "recommended under these assumptions" and show
+the changed input beside each delta. A scenario can be called robust only when
+the same family remains preferred across all displayed cases. Candidate hubs,
+curb capacity, fleet, staffing, and traveler response remain evidence gates;
+toggles must not turn missing local evidence into an assumed fact.
 
 ## Public and deferred workspaces
 

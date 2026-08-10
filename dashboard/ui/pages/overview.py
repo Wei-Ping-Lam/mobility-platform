@@ -13,7 +13,7 @@ import streamlit as st
 from dashboard.domain.comparison import build_city_comparison
 from dashboard.domain.portfolio import build_portfolio_timeline, portfolio_summary
 from dashboard.mobility_platform.mappings import HOST_CITIES
-from dashboard.models.interventions import factor_registry_from_snapshot
+from dashboard.models.interventions import factor_registry_from_snapshot, recommendation_candidates
 from dashboard.ui.city.traffic_plan import render as render_traffic_plan
 from dashboard.ui.presentation import build_presentation
 from dashboard.ui.theme import callout, metric_card, page_header, section_header
@@ -35,6 +35,96 @@ def _money(value: Any) -> str:
     if abs(value) >= 1_000:
         return f"${value / 1_000:,.0f}K"
     return f"${value:,.0f}"
+
+
+def _money_exact(value: Any, decimals: int = 0) -> str:
+    if value is None or pd.isna(value):
+        return "Not available"
+    return f"${float(value):,.{decimals}f}"
+
+
+def _added_frequency_candidate(artifacts: Mapping[str, Any], city: str) -> str:
+    walking = artifacts.get("walking_networks", {})
+    city_walk = walking.get(city, {}) if isinstance(walking, Mapping) else {}
+    target = city_walk.get("target_stop") if isinstance(city_walk, Mapping) else None
+    if not isinstance(target, Mapping):
+        return "no route-specific candidate established"
+    agency = str(target.get("agency") or "Transit agency")
+    route = str(target.get("route") or "route not identified")
+    stop = str(target.get("name") or "stop not identified")
+    return f"{agency} Route {route} at {stop}"
+
+
+def _render_added_frequency_cost_basis(
+    priority: Any,
+    artifacts: Mapping[str, Any],
+    *,
+    city: str,
+    match_id: str,
+) -> None:
+    if priority.intervention != "Added transit frequency":
+        return
+    snapshot = artifacts.get("factor_snapshot", {})
+    factor_rows = snapshot.get("factors", {}) if isinstance(snapshot, Mapping) else {}
+    cost_factor = factor_rows.get("transit_cost_per_departure", {})
+    capacity_factor = factor_rows.get("transit_passengers_per_departure", {})
+    load_factor = factor_rows.get("service_load_factor", {})
+    if not all(isinstance(item, Mapping) for item in (cost_factor, capacity_factor, load_factor)):
+        return
+    city_input = next(
+        (
+            row
+            for row in artifacts.get("city_intervention_inputs", [])
+            if str(row.get("city")) == city and str(row.get("match_id")) == match_id
+        ),
+        {},
+    )
+    arrival_hours = float(city_input.get("arrival_window_hours") or 3.0)
+    package = next(
+        item for item in recommendation_candidates() if item.name == "Added transit frequency"
+    )
+    departures_per_hour = float(package.added_transit_departures_per_hour)
+    event_departures = departures_per_hour * arrival_hours
+    base_cost_per_departure = float(cost_factor.get("base") or 0)
+    base_capacity = float(capacity_factor.get("base") or 0)
+    usable_load = float(load_factor.get("base") or 0)
+    peak_capacity = departures_per_hour * base_capacity * usable_load
+    source_ids = list(cost_factor.get("source_ids", []))
+    source_rows = snapshot.get("sources", {}) if isinstance(snapshot, Mapping) else {}
+    source = source_rows.get(source_ids[0], {}) if source_ids else {}
+    source_name = source.get("source") or "national transit operating-cost reference"
+    source_url = source.get("url")
+    candidate = _added_frequency_candidate(artifacts, city)
+
+    with st.expander(
+        "Why the unallocated added-service estimate is low",
+        expanded=False,
+        icon=":material/calculate:",
+    ):
+        st.markdown(
+            f"**Route allocation:** unresolved. The nearest event-relevant GTFS candidate is "
+            f"**{candidate}**, but it is not an assigned route, direction, terminal, or operating plan."
+        )
+        st.markdown(
+            f"**Base cost:** {event_departures:,.0f} added departures "
+            f"({departures_per_hour:,.0f}/hour × {arrival_hours:g} hours) × "
+            f"{base_cost_per_departure:,.0f} USD/departure = "
+            f"**{float(priority.comparison_cost_base):,.0f} USD per match**."
+        )
+        st.markdown(
+            f"**Capacity screen:** {departures_per_hour:,.0f} departures/hour × "
+            f"{base_capacity:,.0f} passengers/departure × {usable_load:.0%} usable load = "
+            f"**{peak_capacity:,.0f} passengers/hour**. The displayed "
+            f"{float(priority.cost_per_passenger):,.2f} USD ratio divides the per-match operating screen by that peak-hour capacity; it is not an observed cost per rider."
+        )
+        st.caption(
+            "The 140-passenger factor is a cross-mode planning assumption, not the capacity of the candidate route. Do not interpret the 630-passenger result as a route-specific claim."
+        )
+        source_label = f"[{source_name}]({source_url})" if source_url else str(source_name)
+        st.caption(
+            f"Source basis: {source_label}. {cost_factor.get('basis') or ''} "
+            "This national order-of-magnitude screen excludes agency-specific overtime, deadhead, dispatch, security, station and curb operations, and fleet acquisition. Replace it with a local operating plan and quote before funding."
+        )
 
 
 def _scenario_scope(package: Mapping[str, Any]) -> str:
@@ -291,8 +381,8 @@ def render_decision_brief(
                 _metric_row(
                     [
                         (
-                            _money(priority.comparison_cost_base),
-                            "Comparison cost",
+                            _money_exact(priority.comparison_cost_base),
+                            "Per-match screening cost",
                             priority.status,
                             priority.cost_basis,
                             "amber",
@@ -305,10 +395,10 @@ def render_decision_brief(
                             "teal",
                         ),
                         (
-                            _money(priority.cost_per_passenger),
-                            "Cost / passenger",
+                            _money_exact(priority.cost_per_passenger, 2),
+                            "Screening cost ratio",
                             priority.status,
-                            "Comparison basis",
+                            "Per peak-hour capacity addressed; not observed cost/rider",
                             "blue",
                         ),
                         (priority.lead_time_band, "Lead time", priority.status, "Planning range", "slate"),
@@ -327,6 +417,18 @@ def render_decision_brief(
                 "Only exploratory measures remain. Close the stated local evidence gaps before advancing funding.",
             )
 
+        frequency_option = next(
+            (option for option in recommendations if option.intervention == "Added transit frequency"),
+            None,
+        )
+        if frequency_option is not None and not frequency_option.evidence_qualified:
+            callout(
+                "warning",
+                "Added frequency is not route-assigned",
+                f"Nearest GTFS candidate: {_added_frequency_candidate(artifacts, city)}. "
+                "It remains exploratory until the transit agency assigns a route, direction, terminal or turnback, vehicle type, fleet, and event-window timetable.",
+            )
+
         lens_table = pd.DataFrame(
             [
                 {
@@ -338,10 +440,15 @@ def render_decision_brief(
                         else "Hold - evidence gap"
                     ),
                     "Investment": option.intervention,
-                    "Proposed scale": option.scope,
+                    "Scope and location": (
+                        f"{option.scope}. Nearest GTFS candidate: "
+                        f"{_added_frequency_candidate(artifacts, city)}; not assigned."
+                        if option.intervention == "Added transit frequency"
+                        else option.scope
+                    ),
                     "Peak passengers": option.gap_resolved_passengers,
-                    "Comparison cost": option.comparison_cost_base,
-                    "Cost / passenger": option.cost_per_passenger,
+                    "Per-match screening cost": option.comparison_cost_base,
+                    "Screening cost ratio": option.cost_per_passenger,
                     "Lead time": option.lead_time_band,
                     "Evidence": option.evidence_quality,
                 }
@@ -354,14 +461,21 @@ def render_decision_brief(
             width="stretch",
             column_config={
                 "Peak passengers": st.column_config.NumberColumn(format="%.0f"),
-                "Comparison cost": st.column_config.NumberColumn(format="$%,.0f"),
-                "Cost / passenger": st.column_config.NumberColumn(format="$%.2f"),
+                "Per-match screening cost": st.column_config.NumberColumn(format="$%,.0f"),
+                "Screening cost ratio": st.column_config.NumberColumn(format="$%.2f"),
             },
         )
         st.caption(
             f"{len(qualified_options)} qualified and {len(exploratory_options)} exploratory options. "
             "Local bids, fleet constraints, rights-of-way, and observed uptake should replace the shared national screening assumptions before funding."
         )
+        if frequency_option is not None:
+            _render_added_frequency_cost_basis(
+                frequency_option,
+                artifacts,
+                city=city,
+                match_id=match.match_id,
+            )
     else:
         callout(
             "warning",

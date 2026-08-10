@@ -59,19 +59,11 @@ def render(
     with st.container(border=True):
         status = str(plan.get("status") or "scenario").upper()
         strength = str(plan.get("prediction_strength") or "limited").upper()
-        agreement = str(plan.get("benchmark_agreement") or "not benchmarked").upper()
-        st.caption(f"ENGINE STRATEGY · {status} · {strength} RULE · {agreement}")
+        st.caption(f"ENGINE STRATEGY · {status} · {strength} RULE")
         st.markdown(
             f"### {plan.get('predicted_pattern') or plan.get('primary_pattern', 'Strategy unavailable')}"
         )
         st.write(plan.get("summary") or "No strategy summary is available.")
-        benchmark = plan.get("benchmark_pattern")
-        source_url = plan.get("benchmark_source_url")
-        if benchmark and source_url:
-            st.markdown(
-                f"Official benchmark: [{benchmark}]({source_url}) · "
-                f"{plan.get('benchmark_evidence_level') or 'evidence level unavailable'}"
-            )
 
     bus_range = (
         f"{number(plan.get('required_buses_per_hour_low'))} · "
@@ -102,6 +94,16 @@ def render(
         ]
     )
 
+    st.markdown("#### Planned operating footprint")
+    st.plotly_chart(
+        operating_overlap_map(plan, venue, hub_candidates or []),
+        width="stretch",
+        config={"displayModeBar": False},
+    )
+    st.caption(
+        "Amber is the selected engine anchor; blue points are other retained candidates. The line is schematic, not a routed shuttle path or approved traffic control."
+    )
+
     st.markdown("#### Five actions, in operating order")
     st.dataframe(
         _actions(plan),
@@ -121,40 +123,27 @@ def render(
         reasons = list(plan.get("prediction_reasons", []))
         if reasons:
             st.markdown("\n".join(f"- {reason}" for reason in reasons))
-        st.caption(
-            "The official benchmark is withheld from the classifier and compared afterward. Rule strength is not a probability."
-        )
+        st.caption("Rule strength describes evidence coverage; it is not a probability.")
 
-    with st.expander("Overlap maps and evidence gaps", icon=":material/map:"):
-        access_tab, operating_tab = st.tabs(["Venue access overlap", "Operating overlap"])
-        with access_tab:
-            st.plotly_chart(
-                access_overlap_map(venue, map_layers or {}),
-                width="stretch",
-                config={"displayModeBar": False},
-            )
-            st.caption(
-                "Overlap of the half-mile scheduled-service screen, event-valid GTFS routes and stops, and available walking geometry. Presence on the map does not prove capacity, accessibility, or match-day operation."
-            )
-        with operating_tab:
-            st.plotly_chart(
-                operating_overlap_map(plan, venue, hub_candidates or []),
-                width="stretch",
-                config={"displayModeBar": False},
-            )
-            st.caption(
-                "Amber is the selected engine anchor; blue points are the other retained candidates. The line is schematic, not a routed shuttle path or approved traffic control."
-            )
-            candidates = _candidate_hubs(hub_candidates or [], plan.get("regional_hub_name"))
-            if not candidates.empty:
-                st.dataframe(candidates, hide_index=True, width="stretch", height=315)
-            st.markdown("**How candidates are screened**")
-            st.write(
-                "The GTFS screen retains up to eight parent stations between 0.5 and 40 miles from the venue with scheduled service active on at least one host match date. Ranking favors rail or ferry connectivity, more routes, more event-valid trip patterns and match dates, then shorter distance."
-            )
-            st.caption(
-                "This is a bounded network-connectivity shortlist, not an exhaustive list and not an operational feasibility ranking. It does not test parking, curb, platform, layover, staffing, ADA, emergency-access, or special-event capacity."
-            )
+    with st.expander("Venue access evidence, candidates, and gaps", icon=":material/map:"):
+        st.plotly_chart(
+            access_overlap_map(venue, map_layers or {}),
+            width="stretch",
+            config={"displayModeBar": False},
+        )
+        st.caption(
+            "Overlap of the half-mile scheduled-service screen, event-valid GTFS routes and stops, and available walking geometry. Presence on the map does not prove capacity, accessibility, or match-day operation."
+        )
+        candidates = _candidate_hubs(hub_candidates or [], plan.get("regional_hub_name"))
+        if not candidates.empty:
+            st.dataframe(candidates, hide_index=True, width="stretch", height=315)
+        st.markdown("**How candidates are screened**")
+        st.write(
+            "The GTFS screen retains up to eight parent stations between 0.5 and 40 miles from the venue with scheduled service active on at least one host match date. Ranking favors rail or ferry connectivity, more routes, more event-valid trip patterns and match dates, then shorter distance."
+        )
+        st.caption(
+            "This is a bounded network-connectivity shortlist, not an exhaustive list and not an operational feasibility ranking. It does not test parking, curb, platform, layover, staffing, ADA, emergency-access, or special-event capacity."
+        )
         gaps = list(plan.get("evidence_gaps", []))
         if gaps:
             st.markdown("**Evidence still required**")
