@@ -62,8 +62,10 @@ causal evaluation.
   does not override generated candidates, windows, actions, or controls.
 - Operational and capital composites combine several measures only for sensitivity
   testing; they are not named investment recommendations.
-- The Portfolio uses five objective tabs: Overview, Visitor movement,
-  First/last mile, Investments & transit, and Traffic management.
+- The Portfolio uses four comparison tabs: Overview, Visitor movement,
+  First/last mile, and Investments & transit. Match-day traffic management is
+  shown only in each City Action Plan, where the strategy can remain tied to
+  its local controls, hubs, and evidence gaps.
   All 11 cities remain visible in every comparison; exact values are disclosed
   without adding a portfolio map or city filter.
 - Each City Action Plan provides two optional overlap maps. Venue access shows

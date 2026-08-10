@@ -42,7 +42,6 @@ The Portfolio is composed from independently owned modules under
 | Visitor movement | `visitor_movement.py` |
 | First/last mile | `first_last_mile.py` |
 | Investments & transit | `investments.py` |
-| Traffic management | `traffic_management.py` |
 
 `context.py` is the only analytics-to-UI adapter, `tables.py` owns exact-value
 display schemas, and `page.py` only creates tabs and the page-level drill-down.
@@ -50,9 +49,10 @@ Objective renderers must not import models/domain modules or one another. This
 lets separate contributors edit different objectives without touching the same
 file or duplicating analytical formulas.
 
-City-only traffic presentation lives in `dashboard/ui/city/traffic_plan.py`.
-It consumes the same serialized match plan as the Portfolio adapter, so the
-map and chronological actions do not introduce UI formulas.
+Traffic management is intentionally city-only and lives in
+`dashboard/ui/city/traffic_plan.py`. It consumes the serialized match plan
+directly, so its maps and chronological actions do not introduce UI formulas
+or add match-operating detail to the Portfolio comparison frame.
 `dashboard/viz/strategy_overlap.py` separately owns the city overlap maps: one
 for the venue service screen against GTFS/walking evidence and one for the
 selected GTFS transfer anchor against the retained candidate shortlist. The
