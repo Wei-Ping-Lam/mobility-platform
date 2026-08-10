@@ -378,8 +378,15 @@ def test_recommendation_list_places_qualified_options_before_exploratory(event_i
     assert "curb-throughput" in arrival.evidence_reason
 
 
-def test_added_frequency_requires_an_established_serving_route(event_inputs):
+def test_added_frequency_requires_a_route_specific_operating_plan(event_inputs):
     match, movement, access, city = event_inputs
+    recommendations = pareto_recommendations(match, movement, access, city)
+    frequency = next(
+        item for item in recommendations if item.intervention == "Added transit frequency"
+    )
+    assert not frequency.evidence_qualified
+    assert "no route, direction, terminal or turnback" in frequency.evidence_reason
+
     zero_service = replace(
         access,
         transit_capacity_low=0,

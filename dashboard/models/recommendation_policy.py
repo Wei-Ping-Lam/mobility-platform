@@ -44,13 +44,18 @@ MEASURE_POLICIES = {
     ),
     "Added transit frequency": MeasurePolicy(
         "Added transit frequency",
-        "Add 6 transit departures per hour in the event window",
+        "Hold 6 added departures per hour until a route-specific operating plan is assigned",
         "3-12 months",
         "Transit agency",
-        ("Fleet and operator availability", "Event-window timetable"),
+        (
+            "Named route and direction",
+            "Terminal or turnback capacity",
+            "Vehicle type, fleet, and operators",
+            "Event-window timetable",
+        ),
         "Per-event operating cost",
         None,
-        "Requires a capacity-qualified access gap and a serving event-hour route; added fleet capacity remains a scenario range.",
+        "Requires a capacity-qualified access gap plus an assigned route, direction, terminal or turnback, vehicle type, and event-window operating plan.",
     ),
     "Park-and-ride feeder service": MeasurePolicy(
         "Park-and-ride feeder service",
@@ -132,13 +137,15 @@ def assess_evidence(name: str, access: AccessGapResult) -> EvidenceAssessment:
             else "Event transit capacity is not qualified.",
         )
     if name == "Added transit frequency":
-        eligible = bool(access.capacity_qualified and access.transit_capacity_base > 0)
+        nearby_service = bool(access.capacity_qualified and access.transit_capacity_base > 0)
         return EvidenceAssessment(
-            eligible,
-            "medium" if eligible else "low",
-            "A serving event-hour route and capacity-qualified gap are available; fleet, loading, and operations remain scenarios."
-            if eligible
-            else "No serving scheduled route is established in the modeled peak hour; frequency requires a route-specific operating plan.",
+            False,
+            "low",
+            (
+                "Nearby event-hour service exists, but no route, direction, terminal or turnback, vehicle type, or fleet plan is assigned; retain added frequency as exploratory."
+                if nearby_service
+                else "No serving scheduled route is established in the modeled peak hour; frequency requires a route-specific operating plan."
+            ),
         )
     if name == "Cooled walking corridors":
         eligible = (

@@ -58,6 +58,25 @@ for the venue service screen against GTFS/walking evidence and one for the
 selected GTFS transfer anchor against the retained candidate shortlist. The
 portfolio remains map-free.
 
+### Planned city strategy sensitivity controls
+
+The next traffic-strategy interaction should explain when the recommendation
+changes, not claim that one strategy is universally best. Keep the generated
+plan as the default, then expose a compact assumption panel with:
+
+- a mutually exclusive low/base/high demand control;
+- independent toggles for a wider arrival window, added scheduled transit, and
+  distributed-hub operations;
+- a single comparison row for residual peak gap, bus equivalents per hub,
+  vehicle trips avoided, net CO2e, and whether the strategy family changes.
+
+The domain layer must recompute every alternative without reading the official
+benchmark. The UI should say "recommended under these assumptions" and show
+the changed input beside each delta. A scenario can be called robust only when
+the same family remains preferred across all displayed cases. Candidate hubs,
+curb capacity, fleet, staffing, and traveler response remain evidence gates;
+toggles must not turn missing local evidence into an assumed fact.
+
 ## Public and deferred workspaces
 
 `dashboard/ui/workspaces.py` is the single navigation policy seam. The public
