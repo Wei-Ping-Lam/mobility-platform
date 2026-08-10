@@ -12,7 +12,6 @@ from dashboard.ui.portfolio import (
     first_last_mile,
     investments,
     resilience,
-    traffic_management,
     visitor_movement,
 )
 from dashboard.ui.portfolio.context import build_portfolio_frame
@@ -24,7 +23,6 @@ TAB_LABELS = (
     ":material/route: Visitor movement",
     ":material/transfer_within_a_station: First/last mile",
     ":material/construction: Investments & transit",
-    ":material/traffic: Traffic management",
 )
 
 
@@ -36,18 +34,18 @@ def render_portfolio(
     page_header(
         "Transportation & access",
         "FIFA 2026 Host City Mobility Readiness",
-        "Compare resilience, modeled visitor movement, first/last-mile gaps, and concrete actions across every U.S. host.",
+        "Compare readiness, modeled visitor movement, first/last-mile gaps, and investment choices across every U.S. host.",
         (
             "11 cities at once",
-            "5 Track 1 objectives",
+            "4 portfolio comparisons",
             "No portfolio map or city filter",
         ),
     )
     frame = build_portfolio_frame(metrics, artifacts, weights)
 
     section_header(
-        "Compare every Track 1 objective",
-        "Each tab answers one decision question with one all-city comparison. Definitions and limitations stay next to the number; exact values remain available on demand.",
+        "Compare the portfolio-level objectives",
+        "Each tab answers one cross-city decision question. Match-day traffic operations stay in each City action plan, where they can be tied to local hubs, controls, and evidence.",
         "Track 1 scorecard",
     )
     tabs = st.tabs(
@@ -60,7 +58,6 @@ def render_portfolio(
         lambda: visitor_movement.render(frame),
         lambda: first_last_mile.render(frame),
         lambda: investments.render(frame),
-        lambda: traffic_management.render(frame),
     )
     for tab, renderer in zip(tabs, renderers):
         if tab.open:
@@ -73,7 +70,7 @@ def render_portfolio(
     priority_city = str(largest_gap.iloc[0]["city"]) if not largest_gap.empty else None
     section_header(
         "Open the priority case",
-        "Continue from the all-city comparison to the representative match, concrete scope, delivery owner, dependencies, and evidence limits.",
+        "Continue from the all-city comparison to the representative match, traffic strategy, candidate hubs, concrete scope, delivery owner, dependencies, and evidence limits.",
         "Drill down",
     )
     st.button(

@@ -107,8 +107,8 @@ completed analytical result.
 
 - Portfolio starts with all 11 cities and has no city filter or map. It leads with the
   readiness ranking and its four criterion scores, then separates visitor movement,
-  first/last mile, investment/transit screens, traffic management, and
-  Access/Traffic/CO2e outcomes into six tabs with exact tables and explicit
+  first/last mile, and investment/transit screens with Access/Traffic/CO2e
+  outcomes into four tabs with exact tables and explicit
   claim boundaries. Visitor movement uses one
   compact segmented view for origin mix, mode mix, and peak timing.
 - City Action Plan answers the access challenge, readiness drivers, a concise
@@ -214,10 +214,10 @@ completed analytical result.
   temp-directory fixtures were blocked by Windows ACL errors before their test
   bodies ran; those exact three tests passed in an isolated authorized rerun.
 - A 36-test traffic/GTFS/public/integration/UI regression partition passes.
-- Desktop Browser review verified all six Portfolio tabs, the simplified
-  all-city traffic table, readiness-first city hierarchy, and common candidate-
-  hub overlap treatment for Dallas and New York/New Jersey. The current build
-  produced no browser console errors.
+- Desktop Browser review verified the four-tab Portfolio with no traffic-
+  management tab and the readiness-first City Action Plan with its match-day
+  traffic strategy, transfer-hub screen, five ordered actions, overlap maps,
+  and evidence gaps intact.
 
 This is a competition MVP validation record, not certification for operational
 traffic management.
