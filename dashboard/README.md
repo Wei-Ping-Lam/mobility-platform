@@ -81,10 +81,10 @@ project interpreter directly: `.venv\Scripts\python.exe -m streamlit run dashboa
 
 - **Portfolio Overview:** four comparison tabs keep all 11 cities visible: Overview,
   Visitor movement, First/last mile, and Investments & transit. The
-  default starts with readiness and a common physical stress test. Visitor movement
-  compares city-tournament origin mix, approach-mode mix, and peak timing without
-  implying exact visitor locations or routes; exact tables and a
-  direct link to the largest-gap action plan support drill-down without a map or city filter.
+  default starts with a readiness ranking and a map of every host city colored by
+  readiness score. Visitor movement compares city-tournament origin mix,
+  approach-mode mix, and peak timing without implying exact visitor locations or
+  routes; exact tables support drill-down without a city filter.
 - **City Action Plan:** a concise problem/why/action story with a defined measure scale,
   comparison cost, peak benefit, owner, lead time, dependencies, and evidence gate.
 

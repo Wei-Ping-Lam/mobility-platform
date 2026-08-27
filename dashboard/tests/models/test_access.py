@@ -21,11 +21,11 @@ def test_access_gap_exposes_peak_capacity_and_residual(movement, event_service, 
     )
 
     assert result.status == EvidenceStatus.SCENARIO
-    assert result.peak_demand_per_hour == 30_353
+    assert result.peak_demand_per_hour == 29_004
     assert result.transit_capacity_low == 4_000
     assert result.transit_capacity_base == 5_600
     assert result.transit_capacity_high == 7_200
-    assert result.residual_passengers == 24_753
+    assert result.residual_passengers == 23_404
     assert result.network_walk_distance_m == 620
     assert result.service_span_after_match_min == 180
     assert result.route_heat_exposure_c == 33

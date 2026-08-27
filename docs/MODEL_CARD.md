@@ -67,14 +67,16 @@ causal evaluation.
   shown only in each City Action Plan, where the strategy can remain tied to
   its local controls, hubs, and evidence gaps.
   All 11 cities remain visible in every comparison; exact values are disclosed
-  without adding a portfolio map or city filter.
+  without adding a city filter. The Overview tab plots one portfolio-level map:
+  every host city at its venue location, colored by readiness score.
 - Each City Action Plan provides two optional overlap maps. Venue access shows
   the half-mile screening boundary against pinned GTFS and walking geometry;
   operating overlap shows the selected anchor and the other retained GTFS
   candidates. Schematic links are not routing, capacity, or approval claims.
 - The resilience comparison applies a common sensitivity of 10% more peak
   movement and 20% less scheduled capacity. It is a transparent physical stress
-  test, not a disruption probability or reliability forecast.
+  test, not a disruption probability or reliability forecast; it is reported
+  only in the Overview tab's exact resilience values table, not as a chart.
 - MRS is a secondary sensitivity-tested index, not the primary decision result.
 - The portfolio does not rank cities by the added-frequency screen's cost per passenger.
   That ratio is useful for understanding one measure within an action plan, but the common

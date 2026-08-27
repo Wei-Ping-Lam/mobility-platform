@@ -79,8 +79,20 @@ def _circle(latitude: float, longitude: float, radius_m: float) -> tuple[list[fl
     return latitudes, longitudes
 
 
-def access_overlap_map(venue: Mapping[str, Any], layers: Mapping[str, Any]) -> go.Figure:
-    """Map the exact evidence layers used to interpret venue-side access."""
+def access_overlap_map(
+    venue: Mapping[str, Any],
+    layers: Mapping[str, Any],
+    *,
+    route_label: str = "Event-valid GTFS routes",
+    stop_label: str = "Event-relevant stops",
+) -> go.Figure:
+    """Map the exact evidence layers used to interpret venue-side access.
+
+    route_label/stop_label let callers relabel the GTFS route/stop traces with
+    the real serving agency name where that's more meaningful than the
+    generic "event-valid"/"event-relevant" framing (e.g. the Current
+    strategies map).
+    """
 
     venue_lat = _number(venue.get("lat"))
     venue_lon = _number(venue.get("lon"))
@@ -108,7 +120,7 @@ def access_overlap_map(venue: Mapping[str, Any], layers: Mapping[str, Any]) -> g
                 lon=route_lon,
                 mode="lines",
                 line=dict(color=COLORS["violet"], width=1.5),
-                name="Event-valid GTFS routes",
+                name=route_label,
                 text=route_labels,
                 hovertemplate="%{text}<extra></extra>",
                 connectgaps=False,
@@ -128,7 +140,7 @@ def access_overlap_map(venue: Mapping[str, Any], layers: Mapping[str, Any]) -> g
                 lon=[lon for _, _, lon in stop_points],
                 mode="markers",
                 marker=dict(size=8, color=COLORS["blue"], opacity=0.78),
-                name="Event-relevant stops",
+                name=stop_label,
                 text=[str(item.get("name") or "GTFS stop") for item, _, _ in stop_points],
                 hovertemplate="%{text}<extra></extra>",
             )

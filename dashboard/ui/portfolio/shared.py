@@ -11,7 +11,6 @@ import streamlit as st
 from dashboard.domain.decision_support import build_custom_intervention_outcome
 from dashboard.domain.scoring import DEFAULT_WEIGHTS, normalize_weights
 from dashboard.mobility_platform.contracts import InterventionPackage
-from dashboard.mobility_platform.sources import RICE_COLLECTION
 from dashboard.models.demand import validation_metrics
 from dashboard.ui.theme import metric_card
 
@@ -30,7 +29,7 @@ MetricItem = tuple[str, str, str, str, str]
 # read last-run values from session_state before this run's tab renders.
 WEIGHT_PROFILE_KEY = "weight_profile"
 WEIGHT_FIELD_KEYS = {
-    "transit": "weight_transit",
+    "gap": "weight_gap",
     "heat": "weight_heat",
     "uhi": "weight_uhi",
     "access": "weight_access",
@@ -69,6 +68,32 @@ def render_weight_settings() -> None:
         "sustainability": "Sustainability",
         "rice_supplied_data": "Rice supplied-data lens",
     }
+    profile_descriptions = {
+        "balanced": (
+            "Weights all four criteria close to evenly, with first/last-mile access and venue support given "
+            "slightly more emphasis than the two heat criteria - a general-purpose default that doesn't favor "
+            "any one concern."
+        ),
+        "transit_access": (
+            "Emphasizes first/last-mile access (50%, from transit-stop and parking-facility density) and venue "
+            "support (30%), de-emphasizing heat and urban heat safety (10% each) - use this when getting to and "
+            "from the venue matters most to the comparison."
+        ),
+        "heat_resilience": (
+            "Weights heat safety and urban heat safety together at 60% of the score, prioritizing hosts that "
+            "manage summer heat exposure well over first/last-mile access or venue-support advantages."
+        ),
+        "sustainability": (
+            "Spreads weight fairly evenly across all four criteria, with a slight lean toward urban heat safety "
+            "and venue support alongside first/last-mile access - a broader environmental-and-access lens rather "
+            "than a single dominant concern."
+        ),
+        "rice_supplied_data": (
+            "Uses only the criteria sourced from the original Rice WC Hack datasets (heat, urban heat, and venue "
+            "support) and excludes first/last-mile access entirely, since that score comes from separately sourced "
+            "live GTFS and OpenStreetMap data, not the Rice collection."
+        ),
+    }
     profile_options = list(DEFAULT_WEIGHTS)
 
     def _reset_to_profile() -> None:
@@ -89,17 +114,13 @@ def render_weight_settings() -> None:
             key=WEIGHT_PROFILE_KEY,
             on_change=_reset_to_profile,
         )
+        st.caption(profile_descriptions.get(profile, ""))
         st.caption("Readiness gives the high-level orientation; task-specific evidence below should drive decisions.")
         st.markdown("##### Tune score weights")
-        st.slider("Transit", 0.0, 1.0, step=0.05, key=WEIGHT_FIELD_KEYS["transit"])
+        st.slider("First/last-mile access", 0.0, 1.0, step=0.05, key=WEIGHT_FIELD_KEYS["gap"])
         st.slider("Heat safety", 0.0, 1.0, step=0.05, key=WEIGHT_FIELD_KEYS["heat"])
         st.slider("UHI safety", 0.0, 1.0, step=0.05, key=WEIGHT_FIELD_KEYS["uhi"])
         st.slider("Venue support", 0.0, 1.0, step=0.05, key=WEIGHT_FIELD_KEYS["access"])
-        if profile == "rice_supplied_data":
-            st.caption(
-                f"This lens uses only {RICE_COLLECTION} weather, UHI, and venue-support evidence; "
-                "it does not score transit service."
-            )
         st.checkbox(
             "Include estimated values",
             key=INCLUDE_ESTIMATES_KEY,
@@ -128,13 +149,6 @@ def metric_grid(items: list[MetricItem]) -> None:
                     ),
                     unsafe_allow_html=True,
                 )
-
-
-def navigate(workspace: str, city: str | None = None) -> None:
-    st.session_state["workspace"] = workspace
-    if city:
-        st.session_state["city_focus"] = city
-        st.session_state["selected_city_context"] = city
 
 
 def evaluate_custom_package(

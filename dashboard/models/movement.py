@@ -20,8 +20,8 @@ from dashboard.mobility_platform.contracts import (
 )
 
 DEFAULT_ATTENDANCE_RATES = {"low": 0.85, "base": 0.95, "high": 1.0}
-DEFAULT_ARRIVAL_PROFILE = {-4: 0.05, -3: 0.15, -2: 0.30, -1: 0.35, 0: 0.15}
-DEFAULT_DEPARTURE_PROFILE = {0: 0.45, 1: 0.35, 2: 0.15, 3: 0.05}
+DEFAULT_ARRIVAL_PROFILE = {-4: 0.05, -3: 0.15, -2: 0.30, -1: 0.35, 0: 0.10, 1: 0.05}
+DEFAULT_DEPARTURE_PROFILE = {-1: 0.02, 0: 0.43, 1: 0.35, 2: 0.15, 3: 0.05}
 VALIDATED_BASELINE = "validated baseline"
 PLANNING_SCENARIO = "planning scenario"
 

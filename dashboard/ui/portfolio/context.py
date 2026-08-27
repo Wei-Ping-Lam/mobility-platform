@@ -2,13 +2,14 @@
 
 from __future__ import annotations
 
-from collections.abc import Mapping
+from collections.abc import Mapping, Sequence
 from typing import Any
 
 import numpy as np
 import pandas as pd
 
 from dashboard.domain.overview import PACKAGE_NAMES, build_portfolio_overview
+from dashboard.mobility_platform.mappings import HOST_CITIES
 from dashboard.models.resilience import stress_access_capacity
 
 # Maps each named package to the column-name prefix used for its attached
@@ -34,7 +35,18 @@ def build_portfolio_frame(
     )
     frame = _with_track1_metrics(frame, artifacts)
     frame = _with_gap_evidence(frame, metrics, artifacts.get("gtfs", {}))
-    return _with_package_outcomes(frame, artifacts.get("intervention_outcomes", []))
+    frame = _with_parking_evidence(frame, artifacts.get("parking_density", {}))
+    frame = _with_package_outcomes(frame, artifacts.get("intervention_outcomes", []))
+    return _with_geography(frame)
+
+
+def _with_geography(frame: pd.DataFrame) -> pd.DataFrame:
+    """Attach each host city's pinned venue latitude/longitude for mapping."""
+
+    frame = frame.copy()
+    frame["lat"] = frame["city"].map(lambda city: HOST_CITIES.get(city, {}).get("lat"))
+    frame["lon"] = frame["city"].map(lambda city: HOST_CITIES.get(city, {}).get("lon"))
+    return frame
 
 
 def _outcome_row(
@@ -98,6 +110,11 @@ _GAP_EVIDENCE_METRICS_COLUMNS = (
     "capacity",
     "transit_score",
     "transit_status",
+    "parking_score",
+    "gap_score",
+    "gap_status",
+    "balanced_score",
+    "balanced_score_status",
     "first_last_mile_gap",
     "avg_temp_c",
     "transit_stops_0_5mi",
@@ -117,14 +134,49 @@ def _with_gap_evidence(
     for city in merged["city"]:
         entry = gtfs.get(str(city), {}) if isinstance(gtfs, Mapping) else {}
         agencies = entry.get("agencies") if isinstance(entry, Mapping) else None
+        stop_points = entry.get("stop_points_2mi") if isinstance(entry, Mapping) else None
+        nearest_stop_agency = None
+        if stop_points:
+            nearest_point = min(stop_points, key=lambda point: point.get("distance_mi", float("inf")))
+            candidate = nearest_point.get("agency")
+            nearest_stop_agency = candidate if candidate and candidate != "Agency unavailable" else None
         gtfs_rows.append(
             {
                 "gtfs_stops_1mi": entry.get("stops_1mi") if isinstance(entry, Mapping) else None,
                 "gtfs_stops_2mi": entry.get("stops_2mi") if isinstance(entry, Mapping) else None,
                 "gtfs_agencies": ", ".join(agencies) if agencies else None,
+                "nearest_stop_agency": nearest_stop_agency,
             }
         )
     return pd.concat([merged.reset_index(drop=True), pd.DataFrame(gtfs_rows)], axis=1)
+
+
+def _with_parking_evidence(frame: pd.DataFrame, parking: Mapping[str, Any]) -> pd.DataFrame:
+    """Attach each host city's real OSM parking-facility density, when the snapshot exists.
+
+    dashboard/pipeline/public/parking.py produces this snapshot offline (it needs live
+    OSM/Overpass network access); cities missing from the snapshot, or the whole
+    artifact if it hasn't been generated yet, simply get null columns here.
+    """
+
+    rows = []
+    for city in frame["city"]:
+        entry = parking.get(str(city), {}) if isinstance(parking, Mapping) else {}
+        entry = entry if isinstance(entry, Mapping) else {}
+        rows.append(
+            {
+                "parking_count_0_5mi": entry.get("facility_count_0_5mi"),
+                "parking_count_1mi": entry.get("facility_count_1mi"),
+                "parking_count_2mi": entry.get("facility_count_2mi"),
+                "parking_tagged_capacity_0_5mi": entry.get("tagged_capacity_0_5mi"),
+                "parking_tagged_capacity_1mi": entry.get("tagged_capacity_1mi"),
+                "parking_tagged_capacity_2mi": entry.get("tagged_capacity_2mi"),
+                "parking_facilities_with_capacity_tag": entry.get("facilities_with_capacity_tag"),
+                "parking_total_facilities": entry.get("total_facilities"),
+                "parking_status": entry.get("status", "unavailable"),
+            }
+        )
+    return pd.concat([frame.reset_index(drop=True), pd.DataFrame(rows)], axis=1)
 
 
 def _with_access_metrics(frame: pd.DataFrame) -> pd.DataFrame:
@@ -236,6 +288,42 @@ def _with_track1_metrics(frame: pd.DataFrame, artifacts: Mapping[str, Any]) -> p
     return pd.concat([result.reset_index(drop=True), pd.DataFrame(additions)], axis=1)
 
 
+# Ranks each real FIFA schedule stage by tournament depth so "furthest round
+# played" can be computed per city; bronze_final ties semi_final since both
+# require having reached the semifinal.
+_STAGE_RANK_BY_KEY = {
+    "group": 0,
+    "round of 32": 1,
+    "round of 16": 2,
+    "quarter-final": 3,
+    "semi-final": 4,
+    "bronze final": 4,
+    "final": 5,
+}
+_STAGE_DISPLAY_BY_KEY = {
+    "group": "Group",
+    "round of 32": "Round of 32",
+    "round of 16": "Round of 16",
+    "quarter-final": "Quarterfinal",
+    "semi-final": "Semifinal",
+    "bronze final": "3rd place",
+    "final": "Final",
+}
+
+
+def _stage_key(stage: Any) -> str:
+    normalized = str(stage or "").strip().lower()
+    return "group" if normalized.startswith("group") else normalized
+
+
+def _furthest_stage_label(forecasts: Sequence[Mapping[str, Any]]) -> str:
+    if not forecasts:
+        return "Not available"
+    furthest = max(forecasts, key=lambda row: _STAGE_RANK_BY_KEY.get(_stage_key(row.get("stage")), 0))
+    key = _stage_key(furthest.get("stage"))
+    return _STAGE_DISPLAY_BY_KEY.get(key, str(furthest.get("stage") or "Group"))
+
+
 def _city_forecast_summary(
     forecasts: list[Mapping[str, Any]],
 ) -> dict[str, Any]:
@@ -247,6 +335,7 @@ def _city_forecast_summary(
     )
     summary: dict[str, Any] = dict(anchor)
     summary["forecast_match_count"] = len(forecasts)
+    summary["furthest_stage"] = _furthest_stage_label(forecasts)
     for field in (
         "attendance_low",
         "attendance_base",
@@ -281,6 +370,7 @@ def _city_forecast_summary(
 def _forecast_fields(forecast: Mapping[str, Any]) -> dict[str, Any]:
     fields: dict[str, Any] = {
         "forecast_stage": forecast.get("stage"),
+        "forecast_furthest_stage": forecast.get("furthest_stage"),
         "forecast_anchor_match_id": forecast.get("match_id"),
         "forecast_match_count": forecast.get("forecast_match_count"),
         "forecast_status": str(forecast.get("status") or "unavailable"),
@@ -334,3 +424,42 @@ def _forecast_fields(forecast: Mapping[str, Any]) -> dict[str, Any]:
                 else None
             )
     return fields
+
+
+def build_city_hourly_movement(artifacts: Mapping[str, Any]) -> pd.DataFrame:
+    """Average each host city's modeled hourly arrival/departure movement across all its matches.
+
+    One row per (city, hours_from_kickoff), so the Visitor movement tab can plot a
+    single host city's average passenger curve without re-deriving it from raw
+    movement_scenarios each render.
+    """
+
+    totals: dict[tuple[str, float], dict[str, float]] = {}
+    match_ids: dict[str, set[str]] = {}
+    for scenario in artifacts.get("movement_scenarios", []):
+        city = str(scenario.get("city"))
+        match_ids.setdefault(city, set()).add(str(scenario.get("match_id")))
+        for hour_row in scenario.get("hourly_rows", []):
+            offset = pd.to_numeric(hour_row.get("hours_from_kickoff"), errors="coerce")
+            if pd.isna(offset):
+                continue
+            key = (city, round(float(offset), 2))
+            bucket = totals.setdefault(key, {"arrivals": 0.0, "departures": 0.0, "n": 0})
+            bucket["arrivals"] += float(hour_row.get("arrivals_base") or 0)
+            bucket["departures"] += float(hour_row.get("departures_base") or 0)
+            bucket["n"] += 1
+
+    columns = ["city", "hours_from_kickoff", "avg_arrivals_base", "avg_departures_base", "match_count"]
+    if not totals:
+        return pd.DataFrame(columns=columns)
+    rows = [
+        {
+            "city": city,
+            "hours_from_kickoff": offset,
+            "avg_arrivals_base": bucket["arrivals"] / bucket["n"],
+            "avg_departures_base": bucket["departures"] / bucket["n"],
+            "match_count": len(match_ids.get(city, ())),
+        }
+        for (city, offset), bucket in totals.items()
+    ]
+    return pd.DataFrame(rows)[columns].sort_values(["city", "hours_from_kickoff"]).reset_index(drop=True)

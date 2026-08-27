@@ -13,7 +13,8 @@ def test_default_landing_page_starts_with_all_city_portfolio():
     workspace = next(widget for widget in app.radio if widget.label == "Workspace")
     assert workspace.value == "Overview"
     assert workspace.options == ["Portfolio", "City action plan"]
-    assert not [widget for widget in app.selectbox if widget.label in {"City focus", "Match"}]
+    assert not [widget for widget in app.radio if widget.label == "City Focus"]
+    assert not [widget for widget in app.selectbox if widget.label == "Match"]
     assert not app.multiselect
     comparison = app.dataframe[0].value
     assert len(comparison) == 11
@@ -37,11 +38,8 @@ def test_default_landing_page_starts_with_all_city_portfolio():
         ":material/construction: Investments & transit",
     ]
     page_text = "\n".join(str(element.value) for element in app.markdown)
-    assert "Compare the portfolio-level objectives" in page_text
-    assert "Match-day traffic operations stay in each City action plan" in page_text
-    assert "How do hosts rank, and how much scheduled coverage survives a common stress?" in page_text
-    assert "Transportation stress test" in page_text
-    assert "City focus" not in page_text
+    assert "Host City Readiness Ranking" in page_text
+    assert "City Focus" not in page_text
     # Advanced comparison settings moved from the sidebar into the Overview tab.
     assert "Advanced comparison settings" in [e.label for e in app.get("expander")]
     assert next(w for w in app.selectbox if w.label == "Weight profile").value == "balanced"
@@ -53,8 +51,8 @@ def test_portfolio_tabs_make_cross_city_objectives_explicit():
 
     app.session_state["track1_objective"] = ":material/route: Visitor movement"
     app.run(timeout=60)
-    # index 0 is now the Attendee Origin assumptions table (stage percentages);
-    # the movement table is whichever dataframe actually has its columns.
+    # The movement table (exact values) is whichever dataframe actually has its columns,
+    # independent of which forecast view is currently selected.
     movement = next(df.value for df in app.dataframe if "Hosted matches" in df.value.columns)
     assert {
         "Hosted matches",
@@ -69,13 +67,12 @@ def test_portfolio_tabs_make_cross_city_objectives_explicit():
     forecast_view = next(
         widget for widget in app.segmented_control if widget.label == "Forecast view"
     )
-    assert forecast_view.value == "Attendee Origin"
-    assert forecast_view.options == ["Attendee Origin", "Transportation Mode Mix", "Peak timing"]
+    assert forecast_view.value == "Peak timing"
+    assert forecast_view.options == ["Peak timing", "Transportation Mode Mix", "Attendee Origin"]
+    planner_city = next(w for w in app.selectbox if w.label == "Select host city")
+    assert planner_city.value
     captions = "\n".join(str(element.value) for element in app.caption)
-    assert "Neither is observed FIFA fan behavior" in captions
-    assumptions_text = "\n".join(str(element.value) for element in app.markdown)
-    assert "not sourced from FIFA or any external data" in assumptions_text
-    assert "fifa.com" in assumptions_text
+    assert "not calibrated to ticket scans" in captions
 
     app.session_state["track1_objective"] = ":material/transfer_within_a_station: First/last mile"
     app.run(timeout=60)
@@ -102,44 +99,6 @@ def test_portfolio_tabs_make_cross_city_objectives_explicit():
     }.issubset(metric_labels)
     scenario_text = "\n".join(str(element.value) for element in app.caption)
     assert "not a fabricated formula" in scenario_text
-
-
-def test_priority_case_drills_into_the_same_city_action_plan():
-    app = _app()
-    explore = next(button for button in app.button if button.label == "Open New York/NJ action plan")
-    explore.click()
-    app.run(timeout=60)
-    assert not app.exception
-    workspace = next(widget for widget in app.radio if widget.label == "Workspace")
-    assert workspace.value == "City Brief"
-    city_focus = next(widget for widget in app.selectbox if widget.label == "City focus")
-    assert city_focus.value == "New York/NJ"
-    page_text = "\n".join(str(element.value) for element in app.markdown)
-    assert "New York/NJ: from access gap to action" in page_text
-    assert "Match-day traffic strategy" in page_text
-    assert "Planned operating footprint" in page_text
-    assert "Official benchmark" not in page_text
-    assert "Competition evidence" not in page_text
-    assert "Required deliverables" not in page_text
-    assert len(app.get("plotly_chart")) == 3
-    assert not app.tabs
-    assert len(app.dataframe) == 4
-    assert any("Candidate hub" in dataframe.value.columns for dataframe in app.dataframe)
-    strategy = next(frame.value for frame in app.dataframe if "Phase" in frame.value.columns)
-    assert list(strategy["Phase"]) == [
-        "Before match",
-        "Arrival and transfer",
-        "Curb and last mile",
-        "Egress",
-        "Contingency",
-    ]
-    investment_screen = next(frame.value for frame in app.dataframe if "Decision" in frame.value.columns)
-    assert set(investment_screen["Decision"]) >= {"Screen first"}
-    assert "Scope and location" in investment_screen
-    assert {"Per-match screening cost", "Screening cost ratio"}.issubset(investment_screen.columns)
-    composite_toggle = next(widget for widget in app.toggle if widget.label == "Show advanced composite model tests")
-    assert composite_toggle.value is False
-    assert not [button for button in app.button if "maps and scenarios" in button.label.lower()]
 
 
 def test_advanced_composites_define_every_modeled_quantity():

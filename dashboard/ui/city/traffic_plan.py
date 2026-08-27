@@ -9,7 +9,8 @@ import pandas as pd
 import streamlit as st
 
 from dashboard.ui.portfolio.shared import metric_grid, number
-from dashboard.viz.strategy_overlap import access_overlap_map, operating_overlap_map
+from dashboard.ui.theme import callout
+from dashboard.viz.strategy_overlap import operating_overlap_map
 
 
 def _actions(plan: Mapping[str, Any]) -> pd.DataFrame:
@@ -51,7 +52,6 @@ def render(
     plan: Mapping[str, Any],
     venue: Mapping[str, Any],
     *,
-    map_layers: Mapping[str, Any] | None = None,
     hub_candidates: list[Mapping[str, Any]] | None = None,
 ) -> None:
     """Render the decision summary first and keep audit detail collapsible."""
@@ -64,6 +64,24 @@ def render(
             f"### {plan.get('predicted_pattern') or plan.get('primary_pattern', 'Strategy unavailable')}"
         )
         st.write(plan.get("summary") or "No strategy summary is available.")
+        agreement = str(plan.get("benchmark_agreement") or "not benchmarked")
+        benchmark_pattern = plan.get("benchmark_pattern")
+        benchmark_url = plan.get("benchmark_source_url")
+        source_note = f" [Source]({benchmark_url})." if benchmark_url else ""
+        if agreement == "matches":
+            callout(
+                "success",
+                "Matches the real, published strategy",
+                "This engine-derived pattern agrees with the actual strategy already published for this host."
+                + source_note,
+            )
+        elif agreement == "differs" and benchmark_pattern:
+            callout(
+                "warning",
+                "Differs from the published strategy",
+                f'This engine-derived pattern does not match the published strategy for this host, which is "{benchmark_pattern}." Prefer the published strategy where the two disagree.'
+                + source_note,
+            )
 
     bus_range = (
         f"{number(plan.get('required_buses_per_hour_low'))} · "
@@ -125,15 +143,7 @@ def render(
             st.markdown("\n".join(f"- {reason}" for reason in reasons))
         st.caption("Rule strength describes evidence coverage; it is not a probability.")
 
-    with st.expander("Venue access evidence, candidates, and gaps", icon=":material/map:"):
-        st.plotly_chart(
-            access_overlap_map(venue, map_layers or {}),
-            width="stretch",
-            config={"displayModeBar": False},
-        )
-        st.caption(
-            "Overlap of the half-mile scheduled-service screen, event-valid GTFS routes and stops, and available walking geometry. Presence on the map does not prove capacity, accessibility, or match-day operation."
-        )
+    with st.expander("Hub candidates, screening method, and evidence gaps", icon=":material/checklist:"):
         candidates = _candidate_hubs(hub_candidates or [], plan.get("regional_hub_name"))
         if not candidates.empty:
             st.dataframe(candidates, hide_index=True, width="stretch", height=315)

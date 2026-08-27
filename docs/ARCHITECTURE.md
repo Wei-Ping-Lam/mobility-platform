@@ -56,7 +56,10 @@ or add match-operating detail to the Portfolio comparison frame.
 `dashboard/viz/strategy_overlap.py` separately owns the city overlap maps: one
 for the venue service screen against GTFS/walking evidence and one for the
 selected GTFS transfer anchor against the retained candidate shortlist. The
-portfolio remains map-free.
+Overview objective separately shows one portfolio-level readiness map: every
+host city plotted at its venue location, colored by readiness score under
+the current weights. It carries no other evidence layers and does not
+replace the city-level overlap maps.
 
 ### Planned city strategy sensitivity controls
 

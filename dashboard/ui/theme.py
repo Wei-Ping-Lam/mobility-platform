@@ -108,6 +108,10 @@ def apply_theme() -> None:
             background: rgba(255, 255, 255, .08);
             border-color: rgba(255, 255, 255, .1);
         }
+        [data-testid="stSidebar"] [role="radiogroup"] label:has(input:checked) {
+            background: rgba(215, 240, 106, .16);
+            border-color: rgba(215, 240, 106, .4);
+        }
         [data-testid="stSidebar"] [data-testid="stExpander"] {
             background: rgba(255, 255, 255, .055);
             border: 1px solid rgba(219, 238, 233, .14);
@@ -142,16 +146,6 @@ def apply_theme() -> None:
             margin: 1.4rem 0 .2rem;
             text-transform: uppercase;
         }
-        .sidebar-health {
-            border: 1px solid rgba(219, 238, 233, .14);
-            border-radius: 12px;
-            background: rgba(255, 255, 255, .055);
-            padding: .8rem .85rem;
-            margin-top: .7rem;
-        }
-        .sidebar-health strong { display: block; color: #eff8f5; font-size: .79rem; }
-        .sidebar-health span { display: block; color: #9fbbb6 !important; font-size: .7rem; line-height: 1.45; margin-top: .22rem; }
-
         /* Page hierarchy */
         .hero-shell {
             position: relative;
@@ -467,13 +461,6 @@ def brand_block() -> None:
             </div>
         </div>
         """,
-        unsafe_allow_html=True,
-    )
-
-
-def sidebar_status(title: str, detail: str) -> None:
-    st.markdown(
-        f"<div class='sidebar-health'><strong>{escape(title)}</strong><span>{escape(detail)}</span></div>",
         unsafe_allow_html=True,
     )
 
