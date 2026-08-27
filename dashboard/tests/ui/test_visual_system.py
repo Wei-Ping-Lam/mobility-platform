@@ -98,7 +98,7 @@ def test_every_city_renders_in_the_action_plan(city):
     workspace_selector = next(widget for widget in app.radio if widget.label == "Workspace")
     workspace_selector.set_value("City Brief")
     app.run(timeout=30)
-    city_selector = next(widget for widget in app.selectbox if widget.label == "City focus")
+    city_selector = next(widget for widget in app.radio if widget.label == "City Focus")
     city_selector.set_value(city)
     app.run(timeout=30)
     assert not app.exception

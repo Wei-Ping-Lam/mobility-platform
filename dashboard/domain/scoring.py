@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+from collections.abc import Mapping
 from typing import Any
 
 import numpy as np
@@ -12,15 +13,22 @@ from dashboard.mobility_platform.contracts import EvidenceMetric, EvidenceStatus
 from dashboard.mobility_platform.mappings import HOST_CITIES
 from dashboard.mobility_platform.sources import GTFS_SOURCE, rice_source
 
+# "gap" (first/last-mile access) replaces the old "transit" readiness dimension:
+# it blends real GTFS transit-stop density with real OSM parking-facility
+# density instead of transit density alone (see _parking_density_scores and the
+# first_last_mile_gap computation in build_city_metrics). metrics["transit_score"]
+# itself is left untouched by this - it still feeds the mode-split/private-vehicle
+# model in models/visitor_forecast.py and domain/decision_support.py, which need
+# pure transit density, not a transit+parking blend.
 DEFAULT_WEIGHTS = {
-    "balanced": {"transit": 0.35, "heat": 0.20, "uhi": 0.15, "access": 0.30},
-    "transit_access": {"transit": 0.50, "heat": 0.10, "uhi": 0.10, "access": 0.30},
-    "heat_resilience": {"transit": 0.25, "heat": 0.35, "uhi": 0.25, "access": 0.15},
-    "sustainability": {"transit": 0.30, "heat": 0.20, "uhi": 0.25, "access": 0.25},
-    "rice_supplied_data": {"transit": 0.00, "heat": 0.35, "uhi": 0.25, "access": 0.40},
+    "balanced": {"gap": 0.35, "heat": 0.20, "uhi": 0.15, "access": 0.30},
+    "transit_access": {"gap": 0.50, "heat": 0.10, "uhi": 0.10, "access": 0.30},
+    "heat_resilience": {"gap": 0.25, "heat": 0.35, "uhi": 0.25, "access": 0.15},
+    "sustainability": {"gap": 0.30, "heat": 0.20, "uhi": 0.25, "access": 0.25},
+    "rice_supplied_data": {"gap": 0.00, "heat": 0.35, "uhi": 0.25, "access": 0.40},
 }
 
-DIMENSIONS = ("transit", "heat", "uhi", "access")
+DIMENSIONS = ("gap", "heat", "uhi", "access")
 OBSERVED_STATUSES = {EvidenceStatus.OBSERVED.value, EvidenceStatus.DERIVED.value}
 
 
@@ -90,6 +98,40 @@ def evidence_allowed(status: str, include_estimates: bool) -> bool:
     return status in OBSERVED_STATUSES or (include_estimates and status == EvidenceStatus.ESTIMATED.value)
 
 
+def _parking_density_scores(parking: Mapping[str, Any]) -> dict[str, tuple[float | None, str]]:
+    """Score each city's real OSM parking-facility density, city -> (score, status).
+
+    Mirrors the GTFS transit-density methodology exactly: facilities closer to
+    the venue count more (weights 10/5/2 for the 0.5/1/2-mile rings, reusing
+    transit's own per-band weights), normalized so the best-covered host among
+    cities with a real snapshot scores 100. Cities missing from the snapshot -
+    the whole artifact requires the offline dashboard/pipeline/public/parking.py
+    OSM/Overpass fetch to have been run - score None, not zero.
+    """
+
+    raw_values: dict[str, float] = {}
+    for city in HOST_CITIES:
+        entry = parking.get(city, {}) if isinstance(parking, Mapping) else {}
+        if not isinstance(entry, Mapping) or entry.get("status") != "derived":
+            continue
+        counts = (
+            entry.get("facility_count_0_5mi"),
+            entry.get("facility_count_1mi"),
+            entry.get("facility_count_2mi"),
+        )
+        if any(count is None for count in counts):
+            continue
+        raw_values[city] = float(counts[0]) * 10 + float(counts[1]) * 5 + float(counts[2]) * 2
+    maximum = max(raw_values.values(), default=0.0)
+    scores: dict[str, tuple[float | None, str]] = {}
+    for city in HOST_CITIES:
+        if city in raw_values and maximum > 0:
+            scores[city] = (round(raw_values[city] / maximum * 100, 1), EvidenceStatus.DERIVED.value)
+        else:
+            scores[city] = (None, EvidenceStatus.UNAVAILABLE.value)
+    return scores
+
+
 def _evidence_status(value: str) -> EvidenceStatus:
     try:
         return EvidenceStatus(value)
@@ -152,7 +194,9 @@ def build_city_metrics(
     gtfs: dict[str, dict[str, Any]],
     weights: dict[str, float] | None = None,
     include_estimates: bool = False,
+    parking: Mapping[str, Any] | None = None,
 ) -> pd.DataFrame:
+    parking_scores = _parking_density_scores(parking or {})
     rows: list[dict[str, Any]] = []
     for city, meta in HOST_CITIES.items():
         weather_columns = {"city", "date", "avg_temp_c", "humidity"}
@@ -236,6 +280,7 @@ def build_city_metrics(
             str(visits_city.iloc[0].get("source_market", city)) if not visits_city.empty else None
         )
         peak_visitors = int(float(meta["capacity"]) * 0.95) if meta.get("capacity") else None
+        parking_value, parking_status = parking_scores.get(city, (None, EvidenceStatus.UNAVAILABLE.value))
 
         row: dict[str, Any] = {
             "city": city,
@@ -247,6 +292,8 @@ def build_city_metrics(
             "games": meta["games"],
             "transit_score": transit_value,
             "transit_status": transit_status,
+            "parking_score": parking_value,
+            "parking_status": parking_status,
             "heat_score": heat_safety_score(heat_index),
             "heat_status": heat_status,
             "uhi_score": uhi_safety_score(float(uhi_value)) if uhi_value is not None and not pd.isna(uhi_value) else None,
@@ -269,17 +316,25 @@ def build_city_metrics(
             "route_count": gtfs_row.get("route_count"),
             "feed_status": gtfs_row.get("feed_status", "unavailable"),
         }
-        gap_inputs_eligible = (
-            transit_value is not None
-            and heat_index is not None
-            and evidence_allowed(str(transit_status), include_estimates)
-            and evidence_allowed(str(heat_status), include_estimates)
-        )
-        row["first_last_mile_gap"] = (
-            round(max(0.0, (100 - transit_value) * (1 + max(0.0, heat_index - 25) / 35)), 1)
-            if gap_inputs_eligible
-            else None
-        )
+        # First/last-mile gap: how much of the venue-side journey real transit-stop
+        # density and real parking-facility density DON'T already cover. Transit
+        # is weighted more heavily (75/25) since GTFS-derived transit density is
+        # more reliable evidence than the OSM parking-facility count. Falls back
+        # to transit density alone when parking data isn't available yet for a
+        # city (dashboard/pipeline/public/parking.py hasn't been run, or that
+        # city's OSM/Overpass fetch failed) - it does not factor in heat, so it
+        # stays orthogonal to the heat/urban-heat readiness criteria.
+        gap_inputs_eligible = transit_value is not None and evidence_allowed(str(transit_status), include_estimates)
+        if gap_inputs_eligible:
+            combined_access = (
+                0.75 * transit_value + 0.25 * parking_value if parking_value is not None else transit_value
+            )
+            first_last_mile_gap = round(max(0.0, 100.0 - combined_access), 1)
+        else:
+            first_last_mile_gap = None
+        row["first_last_mile_gap"] = first_last_mile_gap
+        row["gap_score"] = clip_score(100.0 - first_last_mile_gap) if first_last_mile_gap is not None else None
+        row["gap_status"] = transit_status
         row["transit_status"] = transit_status
         row["heat_status"] = heat_status
         row["uhi_status"] = uhi_status
@@ -288,6 +343,14 @@ def build_city_metrics(
         row["rankable"] = bool(
             row["data_coverage"] >= 1.0
             and (include_estimates or row["score_status"] == EvidenceStatus.DERIVED.value)
+        )
+        # Always computed under the fixed "balanced" profile, regardless of
+        # whatever weights are currently active elsewhere in the app (Overview's
+        # Advanced comparison settings) - a stable reference point for tabs that
+        # don't have their own weight controls, e.g. First/last-mile's readiness
+        # vs. gap-score comparison.
+        row["balanced_score"], row["balanced_score_status"], _ = composite_score(
+            row, DEFAULT_WEIGHTS["balanced"], include_estimates
         )
         weather_is_noaa_supplement = weather_source_dataset == "noaa-global-hourly-supplement"
         heat_source = (
@@ -363,6 +426,18 @@ def build_city_metrics(
                 source=rice_source("core-poi-geometry-rice", "POI counts within one mile of venue"),
                 sample_size=int(poi_count) if access_value is not None else None,
                 assumptions=("POI density is a venue-support proxy, not a safe-route or accessibility audit.",),
+            ),
+            "gap": _metric_payload(
+                row["gap_score"],
+                unit="access score (0-100)",
+                status=transit_status,
+                source=f"{GTFS_SOURCE} + OpenStreetMap two-mile parking-facility extract",
+                assumptions=(
+                    "75/25 blend of GTFS transit-stop density and OSM parking-facility density (transit "
+                    "weighted more heavily as more reliable evidence); falls back to transit density alone "
+                    "where parking data is not yet available.",
+                    "Does not factor in heat - heat safety and urban heat safety are scored separately.",
+                ),
             ),
         }
         row["evidence_json"] = json.dumps(evidence, default=str)

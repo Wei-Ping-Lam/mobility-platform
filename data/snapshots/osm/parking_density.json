@@ -1,0 +1,447 @@
+{
+  "artifact_sha256": "18aab40d19144a825aba94541cca98ae4de14075be1f7b48216f32b4f3cf7fdf",
+  "cities": {
+    "Atlanta": {
+      "city": "Atlanta",
+      "facilities_with_capacity_tag": 122,
+      "facility_count_0_5mi": 66,
+      "facility_count_1mi": 234,
+      "facility_count_2mi": 710,
+      "query": {
+        "center": [
+          33.7554,
+          -84.4009
+        ],
+        "distance_m": 3218.688,
+        "tags": {
+          "amenity": "parking"
+        }
+      },
+      "schema_version": "1.0.0",
+      "snapshot_kind": "osm_parking_density",
+      "source": {
+        "license": "Open Database License (ODbL)",
+        "notes": "Facility counts and any tagged capacity are OSM planning evidence, not a verified stadium event-day parking supply or operator-confirmed capacity.",
+        "publisher": "OpenStreetMap contributors",
+        "retrieved_at_utc": "2026-08-23T22:39:59.866341Z",
+        "sha256": "b90d298ccbf7cc516ffc79bfdd30252afcc6ee060216bf791066d7d41ef85e58",
+        "source": "OpenStreetMap two-mile parking-facility extract",
+        "status": "derived",
+        "url": "https://www.openstreetmap.org/copyright",
+        "version": "OSMnx 2.1.0"
+      },
+      "status": "derived",
+      "tagged_capacity_0_5mi": 1348,
+      "tagged_capacity_1mi": 4435,
+      "tagged_capacity_2mi": 8754,
+      "total_facilities": 776,
+      "venue": "Mercedes-Benz Stadium",
+      "venue_lat": 33.7554,
+      "venue_lon": -84.4009
+    },
+    "Boston": {
+      "city": "Boston",
+      "facilities_with_capacity_tag": 2,
+      "facility_count_0_5mi": 40,
+      "facility_count_1mi": 51,
+      "facility_count_2mi": 86,
+      "query": {
+        "center": [
+          42.0909,
+          -71.2643
+        ],
+        "distance_m": 3218.688,
+        "tags": {
+          "amenity": "parking"
+        }
+      },
+      "schema_version": "1.0.0",
+      "snapshot_kind": "osm_parking_density",
+      "source": {
+        "license": "Open Database License (ODbL)",
+        "notes": "Facility counts and any tagged capacity are OSM planning evidence, not a verified stadium event-day parking supply or operator-confirmed capacity.",
+        "publisher": "OpenStreetMap contributors",
+        "retrieved_at_utc": "2026-08-23T22:39:59.866341Z",
+        "sha256": "c564b8965703bf955aeb4271471ffdee5c4e50738669b6dc69b16a8798a0ce36",
+        "source": "OpenStreetMap two-mile parking-facility extract",
+        "status": "derived",
+        "url": "https://www.openstreetmap.org/copyright",
+        "version": "OSMnx 2.1.0"
+      },
+      "status": "derived",
+      "tagged_capacity_0_5mi": 0,
+      "tagged_capacity_1mi": 76,
+      "tagged_capacity_2mi": 84,
+      "total_facilities": 92,
+      "venue": "Gillette Stadium",
+      "venue_lat": 42.0909,
+      "venue_lon": -71.2643
+    },
+    "Dallas": {
+      "city": "Dallas",
+      "facilities_with_capacity_tag": 51,
+      "facility_count_0_5mi": 44,
+      "facility_count_1mi": 133,
+      "facility_count_2mi": 288,
+      "query": {
+        "center": [
+          32.748,
+          -97.0929
+        ],
+        "distance_m": 3218.688,
+        "tags": {
+          "amenity": "parking"
+        }
+      },
+      "schema_version": "1.0.0",
+      "snapshot_kind": "osm_parking_density",
+      "source": {
+        "license": "Open Database License (ODbL)",
+        "notes": "Facility counts and any tagged capacity are OSM planning evidence, not a verified stadium event-day parking supply or operator-confirmed capacity.",
+        "publisher": "OpenStreetMap contributors",
+        "retrieved_at_utc": "2026-08-23T22:39:59.866341Z",
+        "sha256": "a0180b6321018ef9991bcf0af81d7b4ebc21ae105752e013c19e45d2a32df695",
+        "source": "OpenStreetMap two-mile parking-facility extract",
+        "status": "derived",
+        "url": "https://www.openstreetmap.org/copyright",
+        "version": "OSMnx 2.1.0"
+      },
+      "status": "derived",
+      "tagged_capacity_0_5mi": 260,
+      "tagged_capacity_1mi": 328,
+      "tagged_capacity_2mi": 635,
+      "total_facilities": 323,
+      "venue": "AT&T Stadium",
+      "venue_lat": 32.748,
+      "venue_lon": -97.0929
+    },
+    "Houston": {
+      "city": "Houston",
+      "facilities_with_capacity_tag": 14,
+      "facility_count_0_5mi": 20,
+      "facility_count_1mi": 63,
+      "facility_count_2mi": 214,
+      "query": {
+        "center": [
+          29.6851,
+          -95.4106
+        ],
+        "distance_m": 3218.688,
+        "tags": {
+          "amenity": "parking"
+        }
+      },
+      "schema_version": "1.0.0",
+      "snapshot_kind": "osm_parking_density",
+      "source": {
+        "license": "Open Database License (ODbL)",
+        "notes": "Facility counts and any tagged capacity are OSM planning evidence, not a verified stadium event-day parking supply or operator-confirmed capacity.",
+        "publisher": "OpenStreetMap contributors",
+        "retrieved_at_utc": "2026-08-23T22:39:59.866341Z",
+        "sha256": "d7c8247979310b62afd1f484f64405a69951c01f441b1e122afda86dbe27fe62",
+        "source": "OpenStreetMap two-mile parking-facility extract",
+        "status": "derived",
+        "url": "https://www.openstreetmap.org/copyright",
+        "version": "OSMnx 2.1.0"
+      },
+      "status": "derived",
+      "tagged_capacity_0_5mi": 27902,
+      "tagged_capacity_1mi": 27902,
+      "tagged_capacity_2mi": 27947,
+      "total_facilities": 282,
+      "venue": "NRG Stadium",
+      "venue_lat": 29.6851,
+      "venue_lon": -95.4106
+    },
+    "Kansas City": {
+      "city": "Kansas City",
+      "facilities_with_capacity_tag": 1,
+      "facility_count_0_5mi": 19,
+      "facility_count_1mi": 29,
+      "facility_count_2mi": 74,
+      "query": {
+        "center": [
+          39.0489,
+          -94.4839
+        ],
+        "distance_m": 3218.688,
+        "tags": {
+          "amenity": "parking"
+        }
+      },
+      "schema_version": "1.0.0",
+      "snapshot_kind": "osm_parking_density",
+      "source": {
+        "license": "Open Database License (ODbL)",
+        "notes": "Facility counts and any tagged capacity are OSM planning evidence, not a verified stadium event-day parking supply or operator-confirmed capacity.",
+        "publisher": "OpenStreetMap contributors",
+        "retrieved_at_utc": "2026-08-23T22:39:59.866341Z",
+        "sha256": "8c41c6ecf1a499c13d0accf345dcd7a3a37011c0c3269b4079a61c89ad0468f5",
+        "source": "OpenStreetMap two-mile parking-facility extract",
+        "status": "derived",
+        "url": "https://www.openstreetmap.org/copyright",
+        "version": "OSMnx 2.1.0"
+      },
+      "status": "derived",
+      "tagged_capacity_0_5mi": 0,
+      "tagged_capacity_1mi": 0,
+      "tagged_capacity_2mi": 2,
+      "total_facilities": 85,
+      "venue": "Arrowhead Stadium",
+      "venue_lat": 39.0489,
+      "venue_lon": -94.4839
+    },
+    "Los Angeles": {
+      "city": "Los Angeles",
+      "facilities_with_capacity_tag": 13,
+      "facility_count_0_5mi": 29,
+      "facility_count_1mi": 65,
+      "facility_count_2mi": 166,
+      "query": {
+        "center": [
+          33.9534,
+          -118.3387
+        ],
+        "distance_m": 3218.688,
+        "tags": {
+          "amenity": "parking"
+        }
+      },
+      "schema_version": "1.0.0",
+      "snapshot_kind": "osm_parking_density",
+      "source": {
+        "license": "Open Database License (ODbL)",
+        "notes": "Facility counts and any tagged capacity are OSM planning evidence, not a verified stadium event-day parking supply or operator-confirmed capacity.",
+        "publisher": "OpenStreetMap contributors",
+        "retrieved_at_utc": "2026-08-23T22:39:59.866341Z",
+        "sha256": "4647bc41eac5deb3e18efc07714c5910f2b9e3acdaaf682899714ba9cbac7120",
+        "source": "OpenStreetMap two-mile parking-facility extract",
+        "status": "derived",
+        "url": "https://www.openstreetmap.org/copyright",
+        "version": "OSMnx 2.1.0"
+      },
+      "status": "derived",
+      "tagged_capacity_0_5mi": 6500,
+      "tagged_capacity_1mi": 7535,
+      "tagged_capacity_2mi": 7920,
+      "total_facilities": 198,
+      "venue": "SoFi Stadium",
+      "venue_lat": 33.9534,
+      "venue_lon": -118.3387
+    },
+    "Miami": {
+      "city": "Miami",
+      "facilities_with_capacity_tag": 0,
+      "facility_count_0_5mi": 22,
+      "facility_count_1mi": 32,
+      "facility_count_2mi": 40,
+      "query": {
+        "center": [
+          25.9579,
+          -80.2388
+        ],
+        "distance_m": 3218.688,
+        "tags": {
+          "amenity": "parking"
+        }
+      },
+      "schema_version": "1.0.0",
+      "snapshot_kind": "osm_parking_density",
+      "source": {
+        "license": "Open Database License (ODbL)",
+        "notes": "Facility counts and any tagged capacity are OSM planning evidence, not a verified stadium event-day parking supply or operator-confirmed capacity.",
+        "publisher": "OpenStreetMap contributors",
+        "retrieved_at_utc": "2026-08-23T22:39:59.866341Z",
+        "sha256": "28c42a26e83d69cff5fda215671504395712e4e949927494d9e0e12c22ba563d",
+        "source": "OpenStreetMap two-mile parking-facility extract",
+        "status": "derived",
+        "url": "https://www.openstreetmap.org/copyright",
+        "version": "OSMnx 2.1.0"
+      },
+      "status": "derived",
+      "tagged_capacity_0_5mi": 0,
+      "tagged_capacity_1mi": 0,
+      "tagged_capacity_2mi": 0,
+      "total_facilities": 51,
+      "venue": "Hard Rock Stadium",
+      "venue_lat": 25.9579,
+      "venue_lon": -80.2388
+    },
+    "New York/NJ": {
+      "city": "New York/NJ",
+      "facilities_with_capacity_tag": 3,
+      "facility_count_0_5mi": 28,
+      "facility_count_1mi": 52,
+      "facility_count_2mi": 131,
+      "query": {
+        "center": [
+          40.8135,
+          -74.0745
+        ],
+        "distance_m": 3218.688,
+        "tags": {
+          "amenity": "parking"
+        }
+      },
+      "schema_version": "1.0.0",
+      "snapshot_kind": "osm_parking_density",
+      "source": {
+        "license": "Open Database License (ODbL)",
+        "notes": "Facility counts and any tagged capacity are OSM planning evidence, not a verified stadium event-day parking supply or operator-confirmed capacity.",
+        "publisher": "OpenStreetMap contributors",
+        "retrieved_at_utc": "2026-08-23T22:39:59.866341Z",
+        "sha256": "39bbba5ba104fa99e6340bc9deb86e70a744d06dd074b6d7ec9db5d4fe181790",
+        "source": "OpenStreetMap two-mile parking-facility extract",
+        "status": "derived",
+        "url": "https://www.openstreetmap.org/copyright",
+        "version": "OSMnx 2.1.0"
+      },
+      "status": "derived",
+      "tagged_capacity_0_5mi": 0,
+      "tagged_capacity_1mi": 0,
+      "tagged_capacity_2mi": 33,
+      "total_facilities": 159,
+      "venue": "MetLife Stadium",
+      "venue_lat": 40.8135,
+      "venue_lon": -74.0745
+    },
+    "Philadelphia": {
+      "city": "Philadelphia",
+      "facilities_with_capacity_tag": 9,
+      "facility_count_0_5mi": 39,
+      "facility_count_1mi": 99,
+      "facility_count_2mi": 222,
+      "query": {
+        "center": [
+          39.9008,
+          -75.1675
+        ],
+        "distance_m": 3218.688,
+        "tags": {
+          "amenity": "parking"
+        }
+      },
+      "schema_version": "1.0.0",
+      "snapshot_kind": "osm_parking_density",
+      "source": {
+        "license": "Open Database License (ODbL)",
+        "notes": "Facility counts and any tagged capacity are OSM planning evidence, not a verified stadium event-day parking supply or operator-confirmed capacity.",
+        "publisher": "OpenStreetMap contributors",
+        "retrieved_at_utc": "2026-08-23T22:39:59.866341Z",
+        "sha256": "53d23e7e7e8544ad59300876d4e630d23a1e6c24378daeb913743904c20a04c7",
+        "source": "OpenStreetMap two-mile parking-facility extract",
+        "status": "derived",
+        "url": "https://www.openstreetmap.org/copyright",
+        "version": "OSMnx 2.1.0"
+      },
+      "status": "derived",
+      "tagged_capacity_0_5mi": 0,
+      "tagged_capacity_1mi": 407,
+      "tagged_capacity_2mi": 860,
+      "total_facilities": 255,
+      "venue": "Lincoln Financial Field",
+      "venue_lat": 39.9008,
+      "venue_lon": -75.1675
+    },
+    "San Francisco": {
+      "city": "San Francisco",
+      "error": "OSM parking refresh failed after 3 attempts: HTTPSConnectionPool(host='overpass-api.de', port=443): Max retries exceeded with url: /api/interpreter (Caused by ConnectTimeoutError(<HTTPSConnection(host='overpass-api.de', port=443) at 0x1c982bb5e10>, 'Connection to overpass-api.de timed out. (connect timeout=180)'))",
+      "facilities_with_capacity_tag": null,
+      "facility_count_0_5mi": null,
+      "facility_count_1mi": null,
+      "facility_count_2mi": null,
+      "query": {
+        "center": [
+          37.4033,
+          -121.97
+        ],
+        "distance_m": 3218.688,
+        "tags": {
+          "amenity": "parking"
+        }
+      },
+      "schema_version": "1.0.0",
+      "snapshot_kind": "osm_parking_density",
+      "source": {
+        "license": "Open Database License (ODbL)",
+        "notes": "No facility evidence is published for this failed refresh.",
+        "publisher": "OpenStreetMap contributors",
+        "retrieved_at_utc": "2026-08-23T22:54:12.611125Z",
+        "sha256": "0eb85a69dab25613b9dfa21d025573f8a2e1a81eb53f10061c9ced8ffefcf5d9",
+        "source": "OpenStreetMap parking-facility refresh attempt",
+        "status": "unavailable",
+        "url": "https://www.openstreetmap.org/copyright",
+        "version": "OSMnx 2.1.0"
+      },
+      "status": "unavailable",
+      "tagged_capacity_0_5mi": null,
+      "tagged_capacity_1mi": null,
+      "tagged_capacity_2mi": null,
+      "total_facilities": null,
+      "venue": "Levi's Stadium",
+      "venue_lat": 37.4033,
+      "venue_lon": -121.97
+    },
+    "Seattle": {
+      "city": "Seattle",
+      "error": "OSM parking refresh failed after 3 attempts: HTTPSConnectionPool(host='overpass-api.de', port=443): Max retries exceeded with url: /api/interpreter (Caused by ConnectTimeoutError(<HTTPSConnection(host='overpass-api.de', port=443) at 0x1c982bafc90>, 'Connection to overpass-api.de timed out. (connect timeout=180)'))",
+      "facilities_with_capacity_tag": null,
+      "facility_count_0_5mi": null,
+      "facility_count_1mi": null,
+      "facility_count_2mi": null,
+      "query": {
+        "center": [
+          47.5952,
+          -122.3316
+        ],
+        "distance_m": 3218.688,
+        "tags": {
+          "amenity": "parking"
+        }
+      },
+      "schema_version": "1.0.0",
+      "snapshot_kind": "osm_parking_density",
+      "source": {
+        "license": "Open Database License (ODbL)",
+        "notes": "No facility evidence is published for this failed refresh.",
+        "publisher": "OpenStreetMap contributors",
+        "retrieved_at_utc": "2026-08-23T22:54:12.611125Z",
+        "sha256": "61ba67ce59445a8820b13348fbcabcfdc69cbc56b9d890abdac8c6194c85c5f0",
+        "source": "OpenStreetMap parking-facility refresh attempt",
+        "status": "unavailable",
+        "url": "https://www.openstreetmap.org/copyright",
+        "version": "OSMnx 2.1.0"
+      },
+      "status": "unavailable",
+      "tagged_capacity_0_5mi": null,
+      "tagged_capacity_1mi": null,
+      "tagged_capacity_2mi": null,
+      "total_facilities": null,
+      "venue": "Lumen Field",
+      "venue_lat": 47.5952,
+      "venue_lon": -122.3316
+    }
+  },
+  "contract_version": "0.3.0",
+  "generated_at_utc": "2026-08-23T22:54:12.611125Z",
+  "policy": {
+    "capacity": "Tagged capacity is reported only where OSM has it; missing tags are not estimated",
+    "runtime": "cache-only; no OSM request during dashboard use",
+    "scope": "amenity=parking facilities only - not curb space, loading zones, or private lots without that tag"
+  },
+  "radius_miles": 2.0,
+  "schema_version": "1.0.0",
+  "snapshot_kind": "osm_parking_density",
+  "source": {
+    "license": "Open Database License (ODbL)",
+    "notes": "Hashes identify each city's extract descriptor; compact derived counts are tracked, not raw OSM geometry.",
+    "publisher": "OpenStreetMap contributors",
+    "retrieved_at_utc": "2026-08-23T22:54:12.611125Z",
+    "sha256": "ccfca07cc4409073642353bdeebd351b9069653f305511c2a10e7317b6339858",
+    "source": "OpenStreetMap two-mile parking-facility extracts",
+    "status": "partial",
+    "url": "https://www.openstreetmap.org/copyright",
+    "version": "OSMnx 2.1.0"
+  },
+  "status": "partial"
+}

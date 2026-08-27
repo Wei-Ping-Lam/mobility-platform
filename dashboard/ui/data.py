@@ -157,6 +157,7 @@ def _load_public_supplements(paths: ProjectPaths) -> dict[str, Any]:
     schedule = _load_json(snapshot_root / "fifa" / "fifa_2026_us_schedule.json")
     factors = _load_json(snapshot_root / "factors" / "planning_factors.json")
     walking = _load_json(snapshot_root / "osm" / "walking_networks.json")
+    parking = _load_json(snapshot_root / "osm" / "parking_density.json")
     gtfs = _load_json(snapshot_root / "gtfs" / "gtfs_venue_access.json")
     operations = _load_json(snapshot_root / "operations" / "world_cup_2026_operations.json")
     traffic_management = _load_json(snapshot_root / "operations" / "world_cup_2026_traffic_management.json")
@@ -178,6 +179,9 @@ def _load_public_supplements(paths: ProjectPaths) -> dict[str, Any]:
         bundle["walking_networks"] = walking.get("cities", {})
         bundle.setdefault("network_coverage", list(walking.get("cities", {}).values()))
         bundle.setdefault("source_references", []).append(walking.get("source", {}))
+    if isinstance(parking, dict):
+        bundle["parking_density"] = parking.get("cities", {})
+        bundle.setdefault("source_references", []).append(parking.get("source", {}))
     if isinstance(gtfs, dict):
         bundle["gtfs_snapshot"] = gtfs.get("cities", {})
         for city, city_gtfs in gtfs.get("cities", {}).items():

@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from collections.abc import Mapping
+from datetime import datetime
 from typing import Any
 
 import pandas as pd
@@ -17,7 +18,28 @@ from dashboard.models.interventions import factor_registry_from_snapshot, recomm
 from dashboard.ui.city.traffic_plan import render as render_traffic_plan
 from dashboard.ui.presentation import build_presentation
 from dashboard.ui.theme import callout, metric_card, page_header, section_header
+from dashboard.viz.strategy_overlap import access_overlap_map
 from dashboard.viz.style import COLORS, STATUS_COLORS, style_figure
+
+_US_TIME_ZONE_ABBREVIATIONS = {-4: "ET", -5: "CT", -6: "MT", -7: "PT"}
+
+
+def _format_kickoff(value: str | None) -> str:
+    """Render an ISO 8601 kickoff timestamp (e.g. 2026-06-27T19:30:00-04:00) for readability."""
+
+    if not value:
+        return "Kickoff unavailable"
+    try:
+        moment = datetime.fromisoformat(value)
+    except ValueError:
+        return value
+    offset = moment.utcoffset()
+    zone = _US_TIME_ZONE_ABBREVIATIONS.get(int(offset.total_seconds() // 3600)) if offset is not None else None
+    hour_12 = moment.hour % 12 or 12
+    period = "AM" if moment.hour < 12 else "PM"
+    date_label = f"{moment.strftime('%B')} {moment.day}, {moment.year}"
+    time_label = f"{hour_12}:{moment.minute:02d}{period}"
+    return f"{date_label} {time_label}" + (f" {zone}" if zone else "")
 
 
 def _number(value: Any, suffix: str = "", decimals: int = 0) -> str:
@@ -229,6 +251,61 @@ def _readiness_components(metric: Mapping[str, Any]) -> tuple[go.Figure, pd.Data
     return style_figure(figure, 300, legend=False), rows
 
 
+def _current_strategies_summary(city: str, venue: Mapping[str, Any], artifacts: dict[str, Any]) -> None:
+    """Show what real transit service already exists for a host, sourced to the transit agency.
+
+    Independent of anything this app recommends further down the page. The map
+    reuses the same real GTFS stop/route evidence layers as the venue-access
+    map further down the page - it illustrates where that service actually
+    runs, not the strategy_benchmarks text itself, which has no coordinates.
+    """
+
+    section_header("Current strategies")
+    col_text, col_map = st.columns([1.3, 1])
+
+    with col_text:
+        benchmark = artifacts.get("strategy_benchmarks", {}).get(city, {})
+        if benchmark:
+            st.markdown(f"**{benchmark.get('strategy_family', 'Strategy not labeled')}**")
+            signals = benchmark.get("official_service_signals", []) or []
+            for signal in signals or ["No specific service signals published"]:
+                st.markdown(f"- {signal}")
+            source_title = benchmark.get("source_title")
+            source_url = benchmark.get("source_url")
+            source_text = (
+                f"[{source_title}]({source_url})" if source_title and source_url else "Source not available"
+            )
+            st.caption(
+                f"{benchmark.get('publisher', 'Publisher not available')} · {source_text} · "
+                f"Evidence level: {benchmark.get('evidence_level', 'Not available')}"
+            )
+        else:
+            st.caption(f"No published transit-service benchmark found for {city}.")
+
+    with col_map:
+        layers = dict(artifacts.get("map_layers", {}).get(city, {}))
+        # Keep the 15/30-minute walking isochrones (real evidence of walkable
+        # range) but drop the "Network path to event-relevant stop" line -
+        # that's about one specific walking route, not this map's subject.
+        layers["walk"] = [
+            row for row in layers.get("walk", []) if isinstance(row, Mapping) and "minutes" in row
+        ]
+        agencies = artifacts.get("gtfs", {}).get(city, {}).get("agencies", [])
+        agency_label = " & ".join(agencies) if agencies else "Transit"
+        st.plotly_chart(
+            access_overlap_map(
+                venue,
+                layers,
+                route_label=f"{agency_label} routes",
+                stop_label=f"{agency_label} stops",
+            ),
+            width="stretch",
+            config={"displayModeBar": False},
+            key=f"current_strategies_map_{city}",
+        )
+        st.caption(f"Real {agency_label} routes and stops, and modeled 15/30-minute walking isochrones.")
+
+
 def render_decision_brief(
     metrics: pd.DataFrame,
     artifacts: dict[str, Any],
@@ -257,34 +334,28 @@ def render_decision_brief(
 
     page_header(
         "City action plan",
-        f"{city}: from access gap to action",
+        city,
         f"Representative match {match.match_id} at {match.venue}.",
         (
             match.stage,
-            match.kickoff_local or "Kickoff unavailable",
+            _format_kickoff(match.kickoff_local),
             f"Readiness rank {row.get('strict_rank', '—')} of 11",
         ),
     )
-    section_header(
-        "Why readiness differs", "The readiness score combines four independently labeled components.", "Why"
+    _current_strategies_summary(
+        city,
+        {"name": match.venue, "lat": HOST_CITIES.get(city, {}).get("lat"), "lon": HOST_CITIES.get(city, {}).get("lon")},
+        artifacts,
     )
-    readiness_figure, readiness_table = _readiness_components(decision.metric)
+    section_header("Readiness Scores")
+    readiness_figure, _ = _readiness_components(decision.metric)
     st.plotly_chart(readiness_figure, width="stretch", config={"displayModeBar": False})
-    with st.expander("Readiness component table"):
-        st.dataframe(readiness_table, hide_index=True, width="stretch")
 
     section_header(
         "Access challenge", "Peak-hour demand and scheduled transit capacity for the representative match.", "Problem"
     )
     _metric_row(
         [
-            (
-                f"#{int(row['strict_rank'])}" if pd.notna(row.get("strict_rank")) else "Not ranked",
-                "Readiness rank",
-                "derived",
-                "Selected weight profile",
-                "teal",
-            ),
             (
                 _number(access.peak_demand_per_hour, " / hr"),
                 "Peak movement demand",
@@ -349,7 +420,6 @@ def render_decision_brief(
                 "lat": venue_context.get("lat"),
                 "lon": venue_context.get("lon"),
             },
-            map_layers=artifacts.get("map_layers", {}).get(city, {}),
             hub_candidates=artifacts.get("gtfs", {}).get(city, {}).get("regional_hubs", []),
         )
     else:
@@ -421,13 +491,10 @@ def render_decision_brief(
             (option for option in recommendations if option.intervention == "Added transit frequency"),
             None,
         )
-        if frequency_option is not None and not frequency_option.evidence_qualified:
-            callout(
-                "warning",
-                "Added frequency is not route-assigned",
-                f"Nearest GTFS candidate: {_added_frequency_candidate(artifacts, city)}. "
-                "It remains exploratory until the transit agency assigns a route, direction, terminal or turnback, vehicle type, fleet, and event-window timetable.",
-            )
+        # Every host currently lacks a transit-agency route assignment for this
+        # measure (it's a structural evidence gap, not city-specific insight),
+        # so it's surfaced once in the table's "Scope and location" column
+        # below rather than as a repeated per-city warning callout.
 
         lens_table = pd.DataFrame(
             [

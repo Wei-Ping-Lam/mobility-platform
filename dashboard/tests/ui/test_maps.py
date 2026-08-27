@@ -1,19 +1,21 @@
 import pandas as pd
+import pytest
 
 from dashboard.ui.presentation import CityDecisionView, ScenarioView
 from dashboard.ui.views import _layer_map, _traffic_pressure_envelope, _traffic_pressure_table
 from dashboard.viz.portfolio import (
-    portfolio_access_chart,
+    city_hourly_movement_chart,
+    portfolio_access_density_chart,
+    portfolio_access_score_chart,
     portfolio_climate_chart,
     portfolio_custom_scenario_chart,
     portfolio_gap_quadrant_chart,
     portfolio_movement_chart,
-    portfolio_resilience_chart,
-    portfolio_stop_density_chart,
     portfolio_traffic_chart,
-    portfolio_transit_capacity_chart,
     portfolio_visitor_forecast_chart,
     readiness_components_chart,
+    readiness_map_chart,
+    readiness_ranking_chart,
 )
 from dashboard.viz.strategy_overlap import access_overlap_map, operating_overlap_map
 
@@ -45,6 +47,7 @@ def _portfolio_frame() -> pd.DataFrame:
                 "forecast_attendance_base": 500_000,
                 "forecast_non_host_share_pct": 60.0,
                 "forecast_anchor_match_id": "M095",
+                "forecast_furthest_stage": "Quarterfinal",
                 "forecast_arrival_peak_low": 12_000,
                 "forecast_arrival_peak_base": 16_000,
                 "forecast_arrival_peak_high": 19_000,
@@ -88,6 +91,8 @@ def _portfolio_frame() -> pd.DataFrame:
                 "screening_confidence": "medium",
                 "capacity": 70_000,
                 "transit_score": 70.0,
+                "balanced_score": 70.0,
+                "gap_score": 68.0,
                 "first_last_mile_gap": 30.0,
                 "avg_temp_c": 26.0,
                 "transit_stops_0_5mi": 20,
@@ -95,6 +100,14 @@ def _portfolio_frame() -> pd.DataFrame:
                 "gtfs_stops_2mi": 300,
                 "nearest_stop_mi": 0.10,
                 "gtfs_agencies": "MARTA",
+                "parking_count_0_5mi": 66,
+                "parking_count_1mi": 234,
+                "parking_count_2mi": 710,
+                "parking_tagged_capacity_0_5mi": 1_348,
+                "parking_tagged_capacity_1mi": 4_435,
+                "parking_tagged_capacity_2mi": 8_754,
+                "parking_facilities_with_capacity_tag": 122,
+                "parking_total_facilities": 776,
             },
             {
                 "city": "Seattle",
@@ -120,6 +133,7 @@ def _portfolio_frame() -> pd.DataFrame:
                 "forecast_attendance_base": 400_000,
                 "forecast_non_host_share_pct": 65.0,
                 "forecast_anchor_match_id": "M088",
+                "forecast_furthest_stage": "Semifinal",
                 "forecast_arrival_peak_low": 12_500,
                 "forecast_arrival_peak_base": 15_000,
                 "forecast_arrival_peak_high": 18_000,
@@ -163,6 +177,8 @@ def _portfolio_frame() -> pd.DataFrame:
                 "screening_confidence": "high",
                 "capacity": 72_000,
                 "transit_score": 90.0,
+                "balanced_score": 90.0,
+                "gap_score": 92.0,
                 "first_last_mile_gap": 10.0,
                 "avg_temp_c": 18.0,
                 "transit_stops_0_5mi": 50,
@@ -170,31 +186,95 @@ def _portfolio_frame() -> pd.DataFrame:
                 "gtfs_stops_2mi": 400,
                 "nearest_stop_mi": 0.12,
                 "gtfs_agencies": "Sound Transit, King County Metro",
+                "parking_count_0_5mi": 12,
+                "parking_count_1mi": 40,
+                "parking_count_2mi": 95,
+                "parking_tagged_capacity_0_5mi": 300,
+                "parking_tagged_capacity_1mi": 900,
+                "parking_tagged_capacity_2mi": 1_500,
+                "parking_facilities_with_capacity_tag": 15,
+                "parking_total_facilities": 95,
             },
         ]
     )
 
 
-def test_portfolio_access_chart_separates_scheduled_capacity_from_remaining_gap() -> None:
-    figure = portfolio_access_chart(_portfolio_frame())
+def test_readiness_ranking_chart_hover_includes_hosted_matches_and_capacity() -> None:
+    figure = readiness_ranking_chart(_portfolio_frame())
 
-    assert [trace.name for trace in figure.data] == ["Scheduled transit capacity", "Remaining peak gap"]
-    assert list(figure.data[0].y) == ["Seattle", "Atlanta"]
-    assert list(figure.data[0].x) == [15_000, 8_000]
-    assert list(figure.data[1].x) == [5_000, 12_000]
-    assert list(figure.data[1].text) == ["75% covered", "40% covered"]
-    assert figure.layout.barmode == "stack"
+    trace = figure.data[0]
+    # Sorted ascending by score: Atlanta (62.0, 8 matches, 70k capacity) then Seattle (78.0, 6, 72k).
+    assert list(trace.y) == ["Atlanta", "Seattle"]
+    assert "Evidence confidence" not in trace.hovertemplate
+    assert "Hosted matches: %{customdata[1]:.0f}" in trace.hovertemplate
+    assert "Venue capacity: %{customdata[2]:,.0f}" in trace.hovertemplate
+    assert "Furthest round played: %{customdata[3]}" in trace.hovertemplate
+    assert list(trace.customdata[:, 1]) == [8.0, 6.0]
+    assert list(trace.customdata[:, 2]) == [70_000.0, 72_000.0]
+    assert list(trace.customdata[:, 3]) == ["Quarterfinal", "Semifinal"]
 
 
-def test_portfolio_resilience_chart_compares_the_same_common_stress() -> None:
-    figure = portfolio_resilience_chart(_portfolio_frame())
+def test_portfolio_access_score_chart_ranks_by_gap_score_not_balanced_score() -> None:
+    figure = portfolio_access_score_chart(_portfolio_frame())
 
-    assert [trace.name for trace in figure.data] == [
-        "Baseline scheduled coverage",
-        "Coverage after common stress",
-    ]
-    assert list(figure.data[1].x) == [29.1, 54.5]
-    assert figure.layout.barmode == "group"
+    trace = figure.data[0]
+    # Sorted ascending by gap_score: Atlanta (68.0) then Seattle (92.0) -
+    # distinct from balanced_score (70.0/90.0) and strict_score (62.0/78.0),
+    # neither of which this chart uses.
+    assert list(trace.y) == ["Atlanta", "Seattle"]
+    assert list(trace.x) == [68.0, 92.0]
+    assert "First/last-mile access score" in trace.hovertemplate
+    assert list(trace.customdata[:, 0]) == [2.0, 1.0]
+    assert figure.layout.xaxis.title.text == "First/last-mile access score (0–100)"
+
+
+def test_readiness_map_chart_plots_one_colored_dot_per_city() -> None:
+    figure = readiness_map_chart(_portfolio_frame())
+
+    assert len(figure.data) == 1
+    trace = figure.data[0]
+    assert trace.type == "scattermap"
+    assert trace.mode == "markers+text"
+    assert list(trace.text) == ["Atlanta", "Seattle"]
+    assert list(trace.lat) == [33.755, 47.595]
+    assert list(trace.lon) == [-84.401, -122.332]
+    assert list(trace.marker.color) == [62.0, 78.0]
+    assert trace.marker.cmin == 0
+    assert trace.marker.cmax == 100
+    assert trace.showlegend is False
+    # Atlanta and Seattle share a fixed label position, so they land in one trace;
+    # cities with different fixed positions would split into separate traces.
+    assert trace.textposition == "top center"
+    assert "Hosted matches: %{customdata[2]:.0f}" in trace.hovertemplate
+    assert "Venue capacity: %{customdata[3]:,.0f}" in trace.hovertemplate
+    assert "Furthest round played: %{customdata[4]}" in trace.hovertemplate
+    assert list(trace.customdata[:, 2]) == [8.0, 6.0]
+    assert list(trace.customdata[:, 3]) == [70_000.0, 72_000.0]
+    assert list(trace.customdata[:, 4]) == ["Quarterfinal", "Semifinal"]
+    # Dot size is min-max normalized to a wide pixel range so a modest real
+    # capacity spread (70k vs 72k) still reads as a clear visual difference:
+    # the smaller venue (Atlanta) lands at the floor, the larger (Seattle) at the ceiling.
+    assert trace.marker.size[0] == pytest.approx(20.0)
+    assert trace.marker.size[1] == pytest.approx(54.0)
+    # Colorbar sits horizontally above the plot for the side-by-side layout.
+    assert trace.marker.showscale is True
+    assert trace.marker.colorbar.orientation == "h"
+    assert trace.marker.colorbar.x == .5
+    assert trace.marker.colorbar.y == 1.05
+
+
+def test_readiness_map_chart_splits_cities_by_label_position_and_shows_one_colorbar() -> None:
+    frame = _portfolio_frame().copy()
+    # Atlanta -> "top center", Seattle -> "top center" by default; force Seattle
+    # into a distinct city name that maps to a different fixed position.
+    frame.loc[frame["city"] == "Seattle", "city"] = "Houston"
+    figure = readiness_map_chart(frame)
+
+    assert len(figure.data) == 2
+    positions = {trace.textposition for trace in figure.data}
+    assert positions == {"top center", "bottom right"}
+    showscale_flags = [bool(trace.marker.showscale) for trace in figure.data]
+    assert showscale_flags == [True, False]
 
 
 def test_portfolio_movement_chart_is_a_dumbbell_of_arrival_and_departure_peaks() -> None:
@@ -212,42 +292,30 @@ def test_portfolio_movement_chart_is_a_dumbbell_of_arrival_and_departure_peaks()
     assert list(line_traces[0].x) == [16_000, 20_000, None, 15_000, 20_000, None]
 
 
-def test_portfolio_transit_capacity_chart_ranks_hosts_by_departure_pressure() -> None:
-    frame = pd.DataFrame(
+def test_city_hourly_movement_chart_plots_arrivals_and_departures_for_one_city() -> None:
+    # Mirrors the real data shape: arrival buckets exist at hours <= 1 (a small
+    # latecomer tail lands one hour after kickoff) and departure buckets at
+    # hours >= 1 (a small early-leaver share lands one hour after kickoff too,
+    # one hour before the assumed match end) - hour 1 genuinely has both.
+    hourly_movement = pd.DataFrame(
         [
-            {
-                "city": "HighCapacity",
-                "forecast_arrival_peak_base": 10_000,
-                "forecast_departure_peak_base": 20_000,
-                "mode_scheduled_transit_share_pct": 50.0,
-                "scheduled_transit_capacity_pph": 10_000,
-            },
-            {
-                "city": "LowCapacity",
-                "forecast_arrival_peak_base": 10_000,
-                "forecast_departure_peak_base": 20_000,
-                "mode_scheduled_transit_share_pct": 50.0,
-                "scheduled_transit_capacity_pph": 1_000,
-            },
-            {
-                "city": "NoCapacity",
-                "forecast_arrival_peak_base": 10_000,
-                "forecast_departure_peak_base": 20_000,
-                "mode_scheduled_transit_share_pct": 50.0,
-                "scheduled_transit_capacity_pph": 0,
-            },
+            {"city": "Atlanta", "hours_from_kickoff": -1, "avg_arrivals_base": 8_000, "avg_departures_base": 0, "match_count": 8},
+            {"city": "Atlanta", "hours_from_kickoff": 0, "avg_arrivals_base": 2_000, "avg_departures_base": 0, "match_count": 8},
+            {"city": "Atlanta", "hours_from_kickoff": 1, "avg_arrivals_base": 700, "avg_departures_base": 400, "match_count": 8},
+            {"city": "Atlanta", "hours_from_kickoff": 2, "avg_arrivals_base": 0, "avg_departures_base": 9_000, "match_count": 8},
+            {"city": "Seattle", "hours_from_kickoff": -1, "avg_arrivals_base": 500, "avg_departures_base": 0, "match_count": 6},
         ]
     )
-    figure = portfolio_transit_capacity_chart(frame)
+    figure = city_hourly_movement_chart(hourly_movement, "Atlanta")
 
-    assert [trace.name for trace in figure.data] == ["Arrival peak", "Departure peak"]
-    # Sorted by departure % descending: LowCapacity (1000%) outranks HighCapacity (100%).
-    # NoCapacity is excluded from the bars entirely - a ratio against zero is undefined.
-    assert list(figure.data[0].x) == ["LowCapacity", "HighCapacity"]
-    assert list(figure.data[0].y) == [500.0, 50.0]
-    assert list(figure.data[1].y) == [1_000.0, 100.0]
-    assert figure.layout.yaxis.type == "log"
-    assert any("NoCapacity" in str(annotation.text) for annotation in figure.layout.annotations)
+    assert [trace.name for trace in figure.data] == ["Arrivals", "Departures"]
+    # Arrivals never show at hour 2+, departures never show before hour 1 -
+    # each line is restricted to its own real domain from the model.
+    assert list(figure.data[0].x) == [-1, 0, 1]
+    assert list(figure.data[0].y) == [8_000, 2_000, 700]
+    assert list(figure.data[1].x) == [1, 2]
+    assert list(figure.data[1].y) == [400, 9_000]
+    assert figure.layout.xaxis.title.text == "Hours from kickoff"
 
 
 def test_portfolio_gap_quadrant_chart_encodes_capacity_size_and_temperature_color() -> None:
@@ -256,22 +324,75 @@ def test_portfolio_gap_quadrant_chart_encodes_capacity_size_and_temperature_colo
     assert len(figure.data) == 1
     trace = figure.data[0]
     assert list(trace.x) == [70.0, 90.0]
-    assert list(trace.y) == [30.0, 10.0]
+    assert list(trace.y) == [68.0, 92.0]
     assert list(trace.text) == ["Atlanta", "Seattle"]
     assert list(trace.marker.size) == [70_000, 72_000]
     assert list(trace.marker.color) == [26.0, 18.0]
-    assert figure.layout.yaxis.title.text == "First/last-mile gap score"
+    assert figure.layout.yaxis.title.text == "First/last-mile access score"
 
 
-def test_portfolio_stop_density_chart_sorts_hosts_by_stops_within_one_mile() -> None:
-    figure = portfolio_stop_density_chart(_portfolio_frame())
+def test_portfolio_access_density_chart_groups_transit_left_and_parking_right() -> None:
+    figure = portfolio_access_density_chart(_portfolio_frame())
 
-    assert [trace.name for trace in figure.data] == ["Within 0.5 mi", "Within 1 mi", "Within 2 mi"]
+    # All three transit bars first, then all three parking bars, so
+    # barmode="group" clusters transit on the left half of each city's group
+    # and parking on the right half.
+    assert [trace.name for trace in figure.data] == [
+        "Transit stops (0.5 mi)",
+        "Transit stops (1 mi)",
+        "Transit stops (2 mi)",
+        "Parking facilities (0.5 mi)",
+        "Parking facilities (1 mi)",
+        "Parking facilities (2 mi)",
+    ]
+    assert [trace.type for trace in figure.data] == ["bar"] * 6
+    assert figure.layout.barmode == "group"
+
+    # Sorted by transit stops within 1 mi descending: Seattle (150) > Atlanta (100) -
+    # the opposite order parking facilities alone would sort in (Atlanta 234 >
+    # Seattle 40), so the parking bars follow the transit-driven city order too.
     assert list(figure.data[0].x) == ["Seattle", "Atlanta"]
     assert list(figure.data[0].y) == [50, 20]
     assert list(figure.data[1].y) == [150, 100]
     assert list(figure.data[2].y) == [400, 300]
-    assert figure.layout.barmode == "group"
+    assert list(figure.data[3].y) == [12, 66]
+    assert list(figure.data[4].y) == [40, 234]
+    assert list(figure.data[5].y) == [95, 710]
+
+    # Each ring's transit/parking pair shares a color, distinguished by shade (opacity).
+    assert figure.data[1].marker.color == figure.data[4].marker.color
+    assert figure.data[1].opacity == 1.0
+    assert figure.data[4].opacity < figure.data[1].opacity
+
+    # Hover exposes tagged capacity for that ring, plus the overall tagged/total ratio.
+    within_1mi = figure.data[4]
+    assert "Spaces recorded in this ring: %{customdata[0]:,.0f}" in within_1mi.hovertemplate
+    assert list(within_1mi.customdata[:, 0]) == [900.0, 4_435.0]
+    assert list(within_1mi.customdata[:, 1]) == [15.0, 122.0]
+    assert list(within_1mi.customdata[:, 2]) == [95.0, 776.0]
+
+    assert figure.layout.yaxis.title.text == "Transit stops / parking facilities within ring"
+    # Both cities have real parking data, so no "missing data" note is drawn.
+    assert figure.layout.annotations == ()
+
+
+def test_portfolio_access_density_chart_notes_cities_missing_the_parking_snapshot() -> None:
+    frame = _portfolio_frame().copy()
+    frame.loc[frame["city"] == "Seattle", ["parking_count_0_5mi", "parking_count_1mi", "parking_count_2mi"]] = None
+    figure = portfolio_access_density_chart(frame)
+
+    # Seattle still gets its transit bars even though it has no parking snapshot.
+    assert list(figure.data[0].x) == ["Seattle", "Atlanta"]
+    assert list(figure.data[1].y) == [150, 100]
+    # The parking bar still carries both cities on the x-axis, but Seattle's
+    # value is a real gap (NaN), not a fabricated zero.
+    assert list(figure.data[4].x) == ["Seattle", "Atlanta"]
+    assert pd.isna(figure.data[4].y[0])
+    assert figure.data[4].y[1] == 234
+    # A note marks Seattle's missing parking data directly on the chart.
+    assert len(figure.layout.annotations) == 1
+    assert figure.layout.annotations[0].x == "Seattle"
+    assert figure.layout.annotations[0].text == "No parking data"
 
 
 def test_portfolio_visitor_forecast_compares_origin_and_mode_mix_without_extra_panels() -> None:
@@ -285,7 +406,7 @@ def test_portfolio_visitor_forecast_compares_origin_and_mode_mix_without_extra_p
         "International / unobserved",
     ]
     assert [trace.name for trace in modes.data] == [
-        "Scheduled transit demand",
+        "Scheduled transit demand (bus, rail, subway)",
         "Shuttle / coach demand",
         "Private vehicle / taxi demand",
         "Walk / bike demand",
@@ -295,6 +416,10 @@ def test_portfolio_visitor_forecast_compares_origin_and_mode_mix_without_extra_p
     for figure in (origins, modes):
         for city_index in range(2):
             assert sum(float(trace.x[city_index]) for trace in figure.data) == 100.0
+        # Plotly defaults stacked bar legends to the opposite of trace-add order;
+        # this must be forced to "normal" so the legend reads Host market first,
+        # matching the leftmost (first-added) segment in the stacked bar.
+        assert figure.layout.legend.traceorder == "normal"
 
 
 def test_portfolio_custom_scenario_chart_zeros_baseline_and_nets_vehicle_trips() -> None:
@@ -324,8 +449,8 @@ def test_readiness_components_chart_exposes_all_four_defined_criteria() -> None:
         [
             {
                 "city": "Atlanta",
-                "transit_score": 71,
-                "transit_status": "observed",
+                "gap_score": 71,
+                "gap_status": "observed",
                 "heat_score": 74,
                 "heat_status": "derived",
                 "uhi_score": 30,
@@ -335,8 +460,8 @@ def test_readiness_components_chart_exposes_all_four_defined_criteria() -> None:
             },
             {
                 "city": "Seattle",
-                "transit_score": 100,
-                "transit_status": "observed",
+                "gap_score": 100,
+                "gap_status": "observed",
                 "heat_score": 96,
                 "heat_status": "derived",
                 "uhi_score": 30,
@@ -349,7 +474,7 @@ def test_readiness_components_chart_exposes_all_four_defined_criteria() -> None:
 
     figure = readiness_components_chart(metrics, ["Atlanta", "Seattle"])
 
-    assert list(figure.data[0].x) == ["Transit<br>proximity", "Heat<br>safety", "Urban heat<br>safety", "Venue<br>support"]
+    assert list(figure.data[0].x) == ["First/last-mile<br>access", "Heat<br>safety", "Urban heat<br>safety", "Venue<br>support"]
     assert list(figure.data[0].y) == ["Atlanta", "Seattle"]
     assert list(figure.data[0].z[0]) == [71, 74, 30, 72]
 

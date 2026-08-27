@@ -35,7 +35,7 @@ def test_weights_and_scores_stay_in_release_bounds():
     weights = normalize_weights()
     assert math.isclose(sum(weights.values()), 1.0)
     row = {
-        "transit_score": 0, "transit_status": "observed",
+        "gap_score": 0, "gap_status": "observed",
         "heat_score": 100, "heat_status": "derived",
         "uhi_score": 0, "uhi_status": "derived",
         "access_score": 100, "access_status": "derived",

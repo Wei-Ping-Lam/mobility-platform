@@ -382,7 +382,7 @@ def _adapt_scenario(raw: Mapping[str, Any], name: str) -> ScenarioView:
 def _sensitivity(metrics: pd.DataFrame) -> list[dict[str, Any]]:
     rows: list[dict[str, Any]] = []
     components = {
-        "transit": ("transit_score", "transit_status"),
+        "gap": ("gap_score", "gap_status"),
         "heat": ("heat_score", "heat_status"),
         "uhi": ("uhi_score", "uhi_status"),
         "access": ("access_score", "access_status"),

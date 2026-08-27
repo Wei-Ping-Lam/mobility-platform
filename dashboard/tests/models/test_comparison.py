@@ -14,8 +14,8 @@ def _metrics() -> pd.DataFrame:
                 "venue": "A",
                 "score": 70,
                 "rankable": True,
-                "transit_score": 80,
-                "transit_status": "observed",
+                "gap_score": 80,
+                "gap_status": "observed",
                 "heat_score": 60,
                 "heat_status": "derived",
                 "uhi_score": 65,
@@ -28,8 +28,8 @@ def _metrics() -> pd.DataFrame:
                 "venue": "B",
                 "score": 75,
                 "rankable": False,
-                "transit_score": 90,
-                "transit_status": "partial",
+                "gap_score": 90,
+                "gap_status": "partial",
                 "heat_score": 70,
                 "heat_status": "derived",
                 "uhi_score": 75,
@@ -42,8 +42,8 @@ def _metrics() -> pd.DataFrame:
                 "venue": "C",
                 "score": 50,
                 "rankable": False,
-                "transit_score": None,
-                "transit_status": "unavailable",
+                "gap_score": None,
+                "gap_status": "unavailable",
                 "heat_score": 50,
                 "heat_status": "derived",
                 "uhi_score": 50,
@@ -70,7 +70,7 @@ def test_partial_and_missing_components_create_honest_ranges_not_silent_zeroes()
     assert frame.loc["Partial", "screening_low"] < frame.loc["Partial", "screening_high"]
     assert frame.loc["Missing", "screening_low"] < frame.loc["Missing", "screening_high"]
     assert frame.loc["Partial", "screening_confidence"] != "high"
-    assert "transit" in frame.loc["Missing", "strict_exclusion_reason"]
+    assert "gap" in frame.loc["Missing", "strict_exclusion_reason"]
 
 
 def test_event_summary_uses_only_the_representative_match_recommendations():
