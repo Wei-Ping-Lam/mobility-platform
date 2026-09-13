@@ -216,6 +216,7 @@ class RecommendationView:
     gap_resolved_passengers: float | None = None
     cost_per_passenger: float | None = None
     net_co2e_kg: float | None = None
+    net_vmt_base: float | None = None
     lead_time_band: str = "Not available"
     responsible_actor: str = "Not assigned"
     dependencies: tuple[str, ...] = field(default_factory=tuple)
@@ -384,8 +385,8 @@ def _sensitivity(metrics: pd.DataFrame) -> list[dict[str, Any]]:
     components = {
         "gap": ("gap_score", "gap_status"),
         "heat": ("heat_score", "heat_status"),
-        "uhi": ("uhi_score", "uhi_status"),
         "access": ("access_score", "access_status"),
+        "traffic": ("traffic_score", "traffic_status"),
     }
     for profile, weights in DEFAULT_WEIGHTS.items():
         scored: list[dict[str, Any]] = []
@@ -537,6 +538,7 @@ def build_presentation(metrics: pd.DataFrame, artifacts: Mapping[str, Any]) -> P
                     gap_resolved_passengers=_number(item.get("gap_resolved_passengers")),
                     cost_per_passenger=_number(item.get("cost_per_passenger")),
                     net_co2e_kg=_number(item.get("net_co2e_kg")),
+                    net_vmt_base=_number(item.get("net_vmt_base")),
                     lead_time_band=str(item.get("lead_time_band") or "Not available"),
                     responsible_actor=str(item.get("responsible_actor") or "Not assigned"),
                     dependencies=tuple(str(value) for value in item.get("dependencies", ()) or ()),

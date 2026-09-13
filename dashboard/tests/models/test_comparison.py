@@ -18,10 +18,10 @@ def _metrics() -> pd.DataFrame:
                 "gap_status": "observed",
                 "heat_score": 60,
                 "heat_status": "derived",
-                "uhi_score": 65,
-                "uhi_status": "derived",
                 "access_score": 70,
                 "access_status": "derived",
+                "traffic_score": 65,
+                "traffic_status": "derived",
             },
             {
                 "city": "Partial",
@@ -32,10 +32,10 @@ def _metrics() -> pd.DataFrame:
                 "gap_status": "partial",
                 "heat_score": 70,
                 "heat_status": "derived",
-                "uhi_score": 75,
-                "uhi_status": "derived",
                 "access_score": 80,
                 "access_status": "derived",
+                "traffic_score": 75,
+                "traffic_status": "derived",
             },
             {
                 "city": "Missing",
@@ -46,10 +46,10 @@ def _metrics() -> pd.DataFrame:
                 "gap_status": "unavailable",
                 "heat_score": 50,
                 "heat_status": "derived",
-                "uhi_score": 50,
-                "uhi_status": "derived",
                 "access_score": 50,
                 "access_status": "derived",
+                "traffic_score": 50,
+                "traffic_status": "derived",
             },
         ]
     )

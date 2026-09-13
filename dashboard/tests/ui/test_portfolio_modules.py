@@ -6,7 +6,6 @@ TAB_MODULES = {
     "resilience",
     "visitor_movement",
     "first_last_mile",
-    "investments",
 }
 
 

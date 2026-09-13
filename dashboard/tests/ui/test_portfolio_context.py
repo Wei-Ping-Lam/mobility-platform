@@ -11,7 +11,13 @@ def test_build_city_hourly_movement_averages_across_a_citys_matches() -> None:
                 "match_id": "M001",
                 "hourly_rows": [
                     {"hours_from_kickoff": -1, "arrivals_base": 10_000, "departures_base": 0},
-                    {"hours_from_kickoff": 2, "arrivals_base": 0, "departures_base": 8_000},
+                    {
+                        "hours_from_kickoff": 2,
+                        "arrivals_base": 0,
+                        "departures_low": 7_000,
+                        "departures_base": 8_000,
+                        "departures_high": 9_000,
+                    },
                 ],
             },
             {
@@ -19,7 +25,13 @@ def test_build_city_hourly_movement_averages_across_a_citys_matches() -> None:
                 "match_id": "M002",
                 "hourly_rows": [
                     {"hours_from_kickoff": -1, "arrivals_base": 6_000, "departures_base": 0},
-                    {"hours_from_kickoff": 2, "arrivals_base": 0, "departures_base": 4_000},
+                    {
+                        "hours_from_kickoff": 2,
+                        "arrivals_base": 0,
+                        "departures_low": 3_000,
+                        "departures_base": 4_000,
+                        "departures_high": 5_000,
+                    },
                 ],
             },
             {
@@ -36,7 +48,11 @@ def test_build_city_hourly_movement_averages_across_a_citys_matches() -> None:
 
     atlanta = result[result["city"] == "Atlanta"].set_index("hours_from_kickoff")
     assert atlanta.loc[-1.0, "avg_arrivals_base"] == 8_000
+    assert atlanta.loc[-1.0, "avg_arrivals_low"] == 0
+    assert atlanta.loc[-1.0, "avg_arrivals_high"] == 0
+    assert atlanta.loc[2.0, "avg_departures_low"] == 5_000
     assert atlanta.loc[2.0, "avg_departures_base"] == 6_000
+    assert atlanta.loc[2.0, "avg_departures_high"] == 7_000
     assert atlanta["match_count"].iloc[0] == 2
 
     seattle = result[result["city"] == "Seattle"]
@@ -50,8 +66,12 @@ def test_build_city_hourly_movement_handles_empty_artifacts() -> None:
     assert list(result.columns) == [
         "city",
         "hours_from_kickoff",
+        "avg_arrivals_low",
         "avg_arrivals_base",
+        "avg_arrivals_high",
+        "avg_departures_low",
         "avg_departures_base",
+        "avg_departures_high",
         "match_count",
     ]
     assert result.empty

@@ -11,8 +11,8 @@ from dashboard.viz.style import STATUS_COLORS
 @pytest.mark.parametrize(
     ("mode", "expected_tabs"),
     [
-        ("Overview", 4),
-        ("City Brief", 0),
+        ("Overview", 3),
+        ("City Brief", 3),
     ],
 )
 def test_every_workspace_renders_without_exception(mode, expected_tabs):
@@ -48,7 +48,6 @@ def test_ui_sources_have_no_mojibake_or_retired_dark_theme():
             "ui/pages/overview.py",
             "ui/portfolio/context.py",
             "ui/portfolio/first_last_mile.py",
-            "ui/portfolio/investments.py",
             "ui/portfolio/page.py",
             "ui/portfolio/resilience.py",
             "ui/portfolio/shared.py",
@@ -103,4 +102,13 @@ def test_every_city_renders_in_the_action_plan(city):
     app.run(timeout=30)
     assert not app.exception
     assert city_selector.value == city
-    assert not app.tabs
+    tab_labels = [tab.label for tab in app.tabs]
+    assert tab_labels == [
+        ":material/location_city: City overview",
+        ":material/directions_bus: Transit solution",
+        ":material/traffic: Traffic management solution",
+    ]
+    for label in tab_labels:
+        app.session_state["city_brief_objective"] = label
+        app.run(timeout=30)
+        assert not app.exception, f"{city} - {label}"

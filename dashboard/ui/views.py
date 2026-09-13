@@ -101,7 +101,7 @@ def _fallback_recommendation(decision: CityDecisionView, access: AccessView) -> 
             dependencies=("Package-level cost and operations evidence",),
         )
     weakest = min(
-        ((label, metric.get(column)) for label, column in (("heat protection", "heat_score"), ("venue access", "access_score"), ("transit service", "transit_score")) if metric.get(column) is not None),
+        ((label, metric.get(column)) for label, column in (("heat protection", "heat_score"), ("venue access", "access_score"), ("transit service", "transit_score"), ("traffic management", "traffic_score")) if metric.get(column) is not None),
         key=lambda item: float(item[1]),
         default=("access operations", 0),
     )[0]
@@ -653,7 +653,7 @@ def _layer_map(
         source_total = max((int(record.get("source_total_records", 0) or 0) for record in raw_rows), default=len(raw_rows))
         readiness.append({"Layer": label, "Status": "Available" if available else "Unavailable", "Mapped records": str(available), "Source records": str(max(source_total, len(raw_rows))), "Meaning": "Planning context; not an audited accessibility finding" if key == "walk" else "Evidence layer"})
     if decision.lat is not None and decision.lon is not None:
-        figure.add_trace(go.Scattermap(lat=[decision.lat], lon=[decision.lon], mode="markers", marker=dict(size=20, color=COLORS["ink"]), name="Venue", text=[decision.venue], hovertemplate="%{text}<extra></extra>"))
+        figure.add_trace(go.Scattermap(lat=[decision.lat], lon=[decision.lon], mode="markers", marker=dict(size=20, color=COLORS["ink"]), name=decision.venue, text=[decision.venue], hovertemplate="%{text}<extra></extra>"))
     return style_map(figure, 465, zoom=11, lat=decision.lat or 38.5, lon=decision.lon or -96), pd.DataFrame(readiness)
 
 
@@ -1028,6 +1028,7 @@ def render_explorer(metrics: pd.DataFrame, artifacts: dict[str, Any], selected_c
             ("Heat", str(decision.metric.get("heat_status", "unavailable")), rice_source("daily-weather-rice", "event-window heat")),
             ("Urban heat", str(decision.metric.get("uhi_status", "unavailable")), rice_source("urban-heat-index-rice", "venue context")),
             ("Venue support", str(decision.metric.get("access_status", "unavailable")), rice_source("core-poi-geometry-rice", "venue buffer")),
+            ("Traffic management", str(decision.metric.get("traffic_status", "unavailable")), "Analyst synthesis of real, cited traffic-management reporting"),
         ]
         st.markdown(f"<div class='evidence-list'>{''.join(evidence_row(*item) for item in evidence)}</div>", unsafe_allow_html=True)
         selected = _focused_scenario()
@@ -1060,7 +1061,13 @@ def render_explorer(metrics: pd.DataFrame, artifacts: dict[str, Any], selected_c
 
 
 def _coverage_heatmap(metrics: pd.DataFrame) -> go.Figure:
-    dimensions = {"Transit": "transit_status", "Heat": "heat_status", "Urban heat": "uhi_status", "Venue support": "access_status"}
+    dimensions = {
+        "Transit": "transit_status",
+        "Heat": "heat_status",
+        "Urban heat": "uhi_status",
+        "Venue support": "access_status",
+        "Traffic": "traffic_status",
+    }
     status_order = ["unavailable", "partial", "estimated", "scenario", "derived", "observed"]
     colorscale, mapping = discrete_status_scale(status_order)
     available_columns = [column for column in dimensions.values() if column in metrics]
@@ -1117,7 +1124,19 @@ def render_methods(metrics: pd.DataFrame, artifacts: dict[str, Any]) -> None:
     def _render_sources() -> None:
         section_header("Evidence eligibility by city", "Text appears inside every status cell; the table is the accessible equivalent.", "Coverage")
         st.plotly_chart(_coverage_heatmap(metrics), width="stretch", config={"displayModeBar": False})
-        coverage_columns = [column for column in ("city", "transit_status", "heat_status", "uhi_status", "access_status", "data_coverage") if column in metrics]
+        coverage_columns = [
+            column
+            for column in (
+                "city",
+                "transit_status",
+                "heat_status",
+                "uhi_status",
+                "access_status",
+                "traffic_status",
+                "data_coverage",
+            )
+            if column in metrics
+        ]
         with st.expander("Accessible coverage table", icon=":material/table_chart:"):
             st.dataframe(_present_table(metrics[coverage_columns]), hide_index=True, width="stretch")
         section_header("Source registry", "URLs, publishers, versions, retrieval times, licenses, coverage, and SHA-256 values must come from deterministic pipelines.", "Provenance")

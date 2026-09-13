@@ -7,19 +7,74 @@ import streamlit as st
 
 from dashboard.ui.portfolio.tables import access_table
 from dashboard.viz.portfolio import (
+    access_sustainability_components_chart,
     portfolio_access_density_chart,
-    portfolio_access_score_chart,
-    portfolio_gap_quadrant_chart,
+    portfolio_frequency_benchmark_chart,
+    portfolio_sustainability_access_chart,
 )
 
 
 def render(frame: pd.DataFrame) -> None:
     st.markdown("#### Where does the venue-side journey fail in the modeled peak hour?")
+    access = pd.to_numeric(frame.get("gap_score"), errors="coerce")
+    if access.notna().any():
+        strongest = frame.loc[access.idxmax()]
+        weakest = frame.loc[access.idxmin()]
+        st.info(
+            f"Access takeaway: {strongest['city']} has the strongest venue-side access score, "
+            f"while {weakest['city']} has the weakest. "
+            "Atlanta stands out for strong access but a low sustainability score, "
+            "showing that good venue access does not necessarily mean sustainable mobility."
+        )
+    st.markdown("##### Sustainability score vs. first/last-mile access score")
+    st.plotly_chart(
+        portfolio_sustainability_access_chart(frame),
+        width="stretch",
+        config={"displayModeBar": False},
+        key="portfolio_sustainability_access",
+    )
+    with st.expander("How the two scores are calculated"):
+        st.markdown("**Access score (0-100)**")
+        st.markdown(
+            "75% transit-access score + 25% parking-density score. "
+            "The transit-access score combines stop density (30%), event-window departure frequency (20%), "
+            "published dedicated-service evidence (35%), and pedestrian infrastructure (15%)."
+        )
+        st.markdown("**Sustainability score (0-100)**")
+        st.markdown(
+            "50% low-parking score + 30% transit-fleet electrification score + 20% pedestrian-infrastructure score. "
+            "The low-parking score equals 100 minus the parking-density score."
+        )
+        st.caption(
+            "Weights apply to normalized 0-100 component scores, not raw stop or facility counts. "
+            "Parking uses facilities within 0.5 miles, not parking spaces. More parking raises access but "
+            "lowers sustainability, treating parking availability as an access benefit and car dependence as "
+            "a sustainability drawback. These are planning indices, not percentages of passengers served "
+            "or measured emissions reductions. Missing components are omitted and remaining weights rescaled; "
+            "access requires an eligible transit-stop-density input. Heat affects neither score."
+        )
 
+    st.markdown("##### What drives access and sustainability?")
+    ranked = frame.dropna(subset=["gap_score"]).sort_values("gap_score", ascending=False)
+    access_order = ranked["city"].tolist() + [
+        city for city in frame["city"].tolist() if city not in set(ranked["city"])
+    ]
+    st.plotly_chart(
+        access_sustainability_components_chart(frame, access_order),
+        width="stretch",
+        config={"displayModeBar": False},
+        key="portfolio_access_sustainability_components",
+    )
+    st.caption(
+        "Inputs, left to right: transit-stop density, event-window frequency, and dedicated-service evidence "
+        "(access); pedestrian infrastructure (both scores); parking-facility density within 0.5 miles "
+        "(raises access but lowers sustainability); and fleet electrification (sustainability). "
+        "Sorted by access score, matching the exact values table below."
+    )
     parking_available = pd.to_numeric(frame.get("parking_count_1mi"), errors="coerce").notna()
     missing_parking = sorted(frame.loc[~parking_available, "city"].dropna().tolist())
 
-    st.markdown("##### Transit stop and parking density around each venue")
+    st.markdown("##### Evidence: Transit stop and parking density around each venue")
     st.plotly_chart(
         portfolio_access_density_chart(frame),
         width="stretch",
@@ -32,84 +87,51 @@ def render(frame: pd.DataFrame) -> None:
         "amenity=parking facilities. Parking bars are facility counts, not total spaces, since most OSM parking "
         "facilities have no recorded space count; hover for the real space count where one is tagged, plus "
         "nearest-stop distance and serving agencies. Sorted by transit stops within 1 mi, the more heavily "
-        "weighted signal in the access score below, so the two metrics don't always agree on host order. Cities "
-        "marked \"No parking data\" have no OSM parking snapshot at all - not a real zero. This is "
+        "weighted signal in the access score above, so the two metrics don't always agree on host order. Only "
+        "the within-0.5-mile parking ring feeds the access and sustainability scores above - a lot a mile or two "
+        "out doesn't meaningfully change the actual walk, so it's shown here for context but not counted further. "
+        "Cities marked \"No parking data\" have no OSM parking snapshot at all - not a real zero. This is "
         "scheduled-service and OSM coverage, not walking-path safety, ADA accessibility, or verified event-day "
         "parking supply."
         + (f" Parking not yet available for: {', '.join(missing_parking)}." if missing_parking else "")
     )
 
-    nearest_stops = frame[["city", "nearest_stop_mi", "feed_status", "nearest_stop_agency"]].copy()
-    nearest_stops["_distance"] = pd.to_numeric(nearest_stops["nearest_stop_mi"], errors="coerce")
-    nearest_stops = nearest_stops.sort_values("_distance", na_position="last")
-    any_estimated = bool((nearest_stops["feed_status"].fillna("unavailable") != "observed").any())
-    with st.container(key="nearest_stop_metrics"):
-        # 11 cities in one row leaves each column too narrow for the agency
-        # name in the delta pill to read - shrink the value text and let the
-        # delta pill wrap onto a second line instead of truncating, and split
-        # the cities across two rows of columns so each one gets more width.
-        st.markdown(
-            """
-            <style>
-            .st-key-nearest_stop_metrics [data-testid='stMetricValue'] { font-size: 1.6rem; }
-            .st-key-nearest_stop_metrics [data-testid='stMetricDelta'],
-            .st-key-nearest_stop_metrics [data-testid='stMetricDelta'] div {
-                white-space: normal !important;
-                overflow: visible !important;
-                text-overflow: unset !important;
-                font-size: 0.75rem;
-                line-height: 1.2;
-            }
-            </style>
-            """,
-            unsafe_allow_html=True,
+    st.markdown("##### Evidence: Transit frequency and published-service evidence around each venue")
+    st.plotly_chart(
+        portfolio_frequency_benchmark_chart(frame),
+        width="stretch",
+        config={"displayModeBar": False},
+        key="portfolio_frequency_benchmark",
+    )
+    st.caption(
+        "The two other real inputs to transit access, alongside stop density above: frequency score (blue) is a "
+        "log-scaled measure of real GTFS scheduled departures within the match-day event window near the venue - "
+        "a throughput signal raw stop counts miss. Evidence tier (violet) is a 100/60 tier for whether a real, "
+        "cited source documents a high-frequency dedicated rail/BRT connection (100) or a dedicated event "
+        "shuttle/bus service without strong frequency evidence (60); hover for the specific cited fact. See the "
+        "sourced evidence table below for the full citation per city."
+    )
+    with st.expander("Published-service evidence, city by city", icon=":material/fact_check:"):
+        evidence_table = frame[
+            [
+                "city",
+                "dedicated_service_tier",
+                "dedicated_service_basis",
+                "dedicated_service_publisher",
+                "dedicated_service_source_url",
+            ]
+        ].copy()
+        evidence_table["dedicated_service_tier"] = evidence_table["dedicated_service_tier"].map(
+            {100: "High-frequency rail/BRT", 60: "Dedicated shuttle/bus"}
         )
-        rows = [row for _, row in nearest_stops.iterrows()]
-        midpoint = -(-len(rows) // 2)  # ceil division, so an odd city count puts the extra one in the first row
-        for chunk in (rows[:midpoint], rows[midpoint:]):
-            for column, row in zip(st.columns(len(chunk)), chunk):
-                estimated = row["feed_status"] != "observed"
-                label = str(row["city"]) + (" *" if estimated else "")
-                value = f"{row['_distance']:.2f} mi" if pd.notna(row["_distance"]) else "N/A"
-                agency = row["nearest_stop_agency"]
-                delta = f"nearest {agency} stop" if pd.notna(agency) and agency else "nearest stop"
-                with column:
-                    st.metric(label=label, value=value, delta=delta, delta_color="off")
-    if any_estimated:
-        st.caption("\\* Estimated (GTFS not available) - distances from venue centroid to nearest transit stop")
-    else:
-        st.caption("Distances from venue centroid to nearest transit stop")
-
-    st.markdown("##### First/last-mile access score")
-    st.plotly_chart(
-        portfolio_access_score_chart(frame),
-        width="stretch",
-        config={"displayModeBar": False},
-        key="portfolio_access_score",
-    )
-    st.caption(
-        "Access score = 100 minus a 75/25 blend of real GTFS transit-stop density and real OSM parking-facility "
-        "density (transit weighted more heavily since it is more reliable evidence; falls back to transit density "
-        "alone where parking data isn't available yet); it does not factor in heat, so it stays independent of "
-        "the heat and urban heat safety criteria, and it doesn't depend on any weight profile - a stable reference "
-        "for the readiness-vs-access comparison below."
-    )
-
-    st.markdown("##### Weighted readiness score vs. first/last-mile access score")
-    st.plotly_chart(
-        portfolio_gap_quadrant_chart(frame),
-        width="stretch",
-        config={"displayModeBar": False},
-        key="portfolio_gap_quadrant",
-    )
-    st.caption(
-        "Access score = 100 minus a 75/25 blend of real GTFS transit-stop density and real OSM parking-facility "
-        "density (transit weighted more heavily since it is more reliable evidence; falls back to transit density "
-        "alone where parking data isn't available yet); it does not factor in heat, so it stays independent of "
-        "the heat and urban heat safety criteria. Bubble size is venue capacity; color is average summer "
-        "temperature, shown for context only. Threshold lines are illustrative reference points for this "
-        "branch's current score distribution, not evidenced cutoffs."
-    )
+        evidence_table.columns = ["City", "Tier", "Basis", "Publisher", "Source"]
+        st.dataframe(
+            evidence_table,
+            hide_index=True,
+            width="stretch",
+            height=455,
+            column_config={"Source": st.column_config.LinkColumn(display_text="Open source")},
+        )
 
     with st.expander(
         "Exact first/last-mile values", icon=":material/table_chart:"

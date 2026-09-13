@@ -36,8 +36,66 @@ def build_portfolio_frame(
     frame = _with_track1_metrics(frame, artifacts)
     frame = _with_gap_evidence(frame, metrics, artifacts.get("gtfs", {}))
     frame = _with_parking_evidence(frame, artifacts.get("parking_density", {}))
+    frame = _with_benchmark_evidence(frame, artifacts.get("strategy_benchmarks", {}))
     frame = _with_package_outcomes(frame, artifacts.get("intervention_outcomes", []))
+    frame = _with_resilience_score(frame)
     return _with_geography(frame)
+
+
+def _number(value: Any) -> float | None:
+    try:
+        parsed = float(value)
+    except (TypeError, ValueError):
+        return None
+    return parsed if pd.notna(parsed) else None
+
+
+def _with_resilience_score(frame: pd.DataFrame) -> pd.DataFrame:
+    """Blend the demand-surge stress test, real event-window frequency, and real
+    published dedicated-capacity evidence into one 0-10 transportation
+    resilience rating - how well each host's transit system absorbs a shock,
+    not a restatement of readiness or sustainability.
+
+    Weighted 50/30/20: stress-test coverage is the direct shock-absorption
+    result (dashboard/models/resilience.py's demand-surge-plus-capacity-loss
+    test, already attached above by _with_track1_metrics); frequency score is
+    real GTFS event-window departure density (a proxy for how quickly service
+    recovers if one trip is missed or delayed); published-capacity evidence is
+    the same real, cited dedicated-service tier scoring.py already derives.
+    Real GTFS route_count near each venue was considered and deliberately
+    left out - it does not track shock absorption (e.g. Boston's ~400 nearby
+    routes are almost entirely low-frequency suburban bus lines, so counting
+    them would reward raw route density that contradicts both of the other
+    two signals for that same host). Renormalizes over whichever components
+    are real for a city; unavailable only if none are.
+    """
+
+    result = frame.copy()
+    scores: list[float | None] = []
+    statuses: list[str] = []
+    for row in result.to_dict("records"):
+        components: list[tuple[float, float]] = []
+        stress = _number(row.get("stress_coverage_pct"))
+        if stress is not None:
+            components.append((0.5, stress))
+        frequency = _number(row.get("frequency_score"))
+        if frequency is not None:
+            components.append((0.3, frequency))
+        benchmark = _number(row.get("benchmark_capacity_score"))
+        if benchmark is not None:
+            components.append((0.2, benchmark))
+        if components:
+            weight_sum = sum(weight for weight, _ in components)
+            score = sum(weight * value for weight, value in components) / weight_sum
+            scores.append(round(score, 1))
+            statuses.append("derived")
+        else:
+            scores.append(None)
+            statuses.append("unavailable")
+    result["resilience_score"] = scores
+    result["resilience_rating"] = [round(score / 10.0, 1) if score is not None else None for score in scores]
+    result["resilience_status"] = statuses
+    return result
 
 
 def _with_geography(frame: pd.DataFrame) -> pd.DataFrame:
@@ -110,6 +168,17 @@ _GAP_EVIDENCE_METRICS_COLUMNS = (
     "capacity",
     "transit_score",
     "transit_status",
+    "frequency_score",
+    "frequency_status",
+    "benchmark_capacity_score",
+    "benchmark_capacity_status",
+    "fleet_electrification_score",
+    "fleet_electrification_status",
+    "pedestrian_infrastructure_score",
+    "pedestrian_infrastructure_status",
+    "sustainability_score",
+    "sustainability_status",
+    "transit_access_score",
     "parking_score",
     "gap_score",
     "gap_status",
@@ -120,6 +189,7 @@ _GAP_EVIDENCE_METRICS_COLUMNS = (
     "transit_stops_0_5mi",
     "nearest_stop_mi",
     "route_count",
+    "event_window_departures",
     "feed_status",
 )
 
@@ -174,6 +244,43 @@ def _with_parking_evidence(frame: pd.DataFrame, parking: Mapping[str, Any]) -> p
                 "parking_facilities_with_capacity_tag": entry.get("facilities_with_capacity_tag"),
                 "parking_total_facilities": entry.get("total_facilities"),
                 "parking_status": entry.get("status", "unavailable"),
+            }
+        )
+    return pd.concat([frame.reset_index(drop=True), pd.DataFrame(rows)], axis=1)
+
+
+def _with_benchmark_evidence(frame: pd.DataFrame, benchmarks: Mapping[str, Any]) -> pd.DataFrame:
+    """Attach each host city's real, sourced dedicated-event-transit and sustainability evidence.
+
+    Reads the analyst-coded "dedicated_service_evidence" and
+    "sustainability_evidence" fields from the strategy-benchmark snapshot
+    (dashboard/pipeline/public/strategy_benchmarks.py) - the same real, cited
+    facts domain/scoring.py's benchmark_capacity_score and
+    fleet_electrification_score read, but with the qualitative basis/source
+    text a plain 0-100 score can't carry. Cities without a benchmark entry
+    get null columns here.
+    """
+
+    rows = []
+    for city in frame["city"]:
+        entry = benchmarks.get(str(city), {}) if isinstance(benchmarks, Mapping) else {}
+        entry = entry if isinstance(entry, Mapping) else {}
+        evidence = entry.get("dedicated_service_evidence")
+        evidence = evidence if isinstance(evidence, Mapping) else {}
+        sustainability = entry.get("sustainability_evidence")
+        sustainability = sustainability if isinstance(sustainability, Mapping) else {}
+        rows.append(
+            {
+                "dedicated_service_tier": evidence.get("tier"),
+                "dedicated_service_basis": evidence.get("basis"),
+                "dedicated_service_publisher": evidence.get("publisher"),
+                "dedicated_service_source_title": evidence.get("source_title"),
+                "dedicated_service_source_url": evidence.get("source_url"),
+                "fleet_electrification_tier": sustainability.get("fleet_electrification_tier"),
+                "fleet_electrification_basis": sustainability.get("fleet_electrification_basis"),
+                "fleet_electrification_publisher": sustainability.get("publisher"),
+                "fleet_electrification_source_title": sustainability.get("source_title"),
+                "fleet_electrification_source_url": sustainability.get("source_url"),
             }
         )
     return pd.concat([frame.reset_index(drop=True), pd.DataFrame(rows)], axis=1)
@@ -444,20 +551,46 @@ def build_city_hourly_movement(artifacts: Mapping[str, Any]) -> pd.DataFrame:
             if pd.isna(offset):
                 continue
             key = (city, round(float(offset), 2))
-            bucket = totals.setdefault(key, {"arrivals": 0.0, "departures": 0.0, "n": 0})
-            bucket["arrivals"] += float(hour_row.get("arrivals_base") or 0)
-            bucket["departures"] += float(hour_row.get("departures_base") or 0)
+            bucket = totals.setdefault(
+                key,
+                {
+                    "arrivals_low": 0.0,
+                    "arrivals_base": 0.0,
+                    "arrivals_high": 0.0,
+                    "departures_low": 0.0,
+                    "departures_base": 0.0,
+                    "departures_high": 0.0,
+                    "n": 0,
+                },
+            )
+            for direction in ("arrivals", "departures"):
+                for case in ("low", "base", "high"):
+                    bucket[f"{direction}_{case}"] += float(hour_row.get(f"{direction}_{case}") or 0)
             bucket["n"] += 1
 
-    columns = ["city", "hours_from_kickoff", "avg_arrivals_base", "avg_departures_base", "match_count"]
+    columns = [
+        "city",
+        "hours_from_kickoff",
+        "avg_arrivals_low",
+        "avg_arrivals_base",
+        "avg_arrivals_high",
+        "avg_departures_low",
+        "avg_departures_base",
+        "avg_departures_high",
+        "match_count",
+    ]
     if not totals:
         return pd.DataFrame(columns=columns)
     rows = [
         {
             "city": city,
             "hours_from_kickoff": offset,
-            "avg_arrivals_base": bucket["arrivals"] / bucket["n"],
-            "avg_departures_base": bucket["departures"] / bucket["n"],
+            "avg_arrivals_low": bucket["arrivals_low"] / bucket["n"],
+            "avg_arrivals_base": bucket["arrivals_base"] / bucket["n"],
+            "avg_arrivals_high": bucket["arrivals_high"] / bucket["n"],
+            "avg_departures_low": bucket["departures_low"] / bucket["n"],
+            "avg_departures_base": bucket["departures_base"] / bucket["n"],
+            "avg_departures_high": bucket["departures_high"] / bucket["n"],
             "match_count": len(match_ids.get(city, ())),
         }
         for (city, offset), bucket in totals.items()

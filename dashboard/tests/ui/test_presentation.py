@@ -36,10 +36,10 @@ def _metrics() -> pd.DataFrame:
                 "transit_status": "unavailable",
                 "heat_score": 70.0,
                 "heat_status": "derived",
-                "uhi_score": 60.0,
-                "uhi_status": "derived",
                 "access_score": 50.0,
                 "access_status": "derived",
+                "traffic_score": 60.0,
+                "traffic_status": "derived",
                 "data_coverage": .75,
                 "demand_status": "derived",
             }

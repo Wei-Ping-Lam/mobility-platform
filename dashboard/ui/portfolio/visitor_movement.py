@@ -26,6 +26,11 @@ def render(frame: pd.DataFrame, hourly_movement: pd.DataFrame) -> None:
         persist_state="session",
     )
     if str(forecast_view) == "Peak timing":
+        peak_city = frame.sort_values("forecast_departure_peak_base", ascending=False, na_position="last").iloc[0]
+        st.info(
+            f"Peak timing takeaway: {peak_city['city']} has the largest modeled departure peak in the representative-match screen "
+            f"({float(peak_city['forecast_departure_peak_base']):,.0f} passengers/hour). Shaded bands on the city curve show the low-high attendance scenario."
+        )
         col_timing, col_capacity = st.columns(2)
         with col_timing:
             st.plotly_chart(
@@ -35,10 +40,10 @@ def render(frame: pd.DataFrame, hourly_movement: pd.DataFrame) -> None:
                 key="portfolio_visitor_forecast_peak_timing",
             )
             st.caption(
-                "Left: modeled arrival and departure passenger volumes by hour, anchored to each city's single "
-                "highest non-host-demand match. Source: FIFA's official local kickoff time, combined with the "
-                "low/base/high attendance scenario for that match. The timing curve reconciles to attendance but "
-                "is not calibrated to ticket scans or observed FIFA crowd movement."
+                "Arrival and departure peak-hour volumes for each city's highest non-host-demand match, "
+                "using the base attendance scenario (95% of venue capacity). Hover for the 85-100% occupancy "
+                "planning range and peak time relative to FIFA's official local kickoff. "
+                "These modeled peaks are not calibrated to ticket scans or observed FIFA crowd movement."
             )
         with col_capacity:
             # The chart needs the selected city before it renders, but the selector
@@ -57,13 +62,30 @@ def render(frame: pd.DataFrame, hourly_movement: pd.DataFrame) -> None:
                     key="portfolio_city_hourly_movement",
                 )
             st.caption(
-                f"Right: average modeled arrival and departure passengers per hour for {selected_city}, relative to "
+                f"Average modeled arrival and departure passengers per hour for {selected_city}, relative to "
                 f"kickoff, averaged across all {match_count} of its hosted matches. The hour-by-hour shape (how "
                 "sharply arrivals concentrate before kickoff, how departures spread afterward) is the same fixed "
                 "assumption applied to every city and match; only the attendance scale differs, so this shows "
-                "city-specific volume, not a city-specific timing pattern."
+                "city-specific volume, not a city-specific timing pattern. Lines use 95% occupancy; shaded "
+                "bands span 85-100% of venue capacity. These are attendance scenarios, not statistical confidence intervals."
             )
     else:
+        if str(forecast_view) == "Transportation Mode Mix":
+            private = pd.to_numeric(frame.get("mode_private_taxi_share_pct"), errors="coerce")
+            if private.notna().any():
+                row = frame.loc[private.idxmax()]
+                st.info(
+                    f"Mode-mix takeaway: {row['city']} has the highest modeled private vehicle/taxi share "
+                    f"({float(row['mode_private_taxi_share_pct']):.1f}%), making it the clearest candidate for shuttle, curb, and parking-pressure review."
+                )
+        if str(forecast_view) == "Attendee Origin":
+            non_host = pd.to_numeric(frame.get("forecast_non_host_share_pct"), errors="coerce")
+            if non_host.notna().any():
+                row = frame.loc[non_host.idxmax()]
+                st.info(
+                    f"Origin takeaway: {row['city']} has the highest modeled non-host-market share "
+                    f"({float(row['forecast_non_host_share_pct']):.1f}%), so regional and long-distance arrival planning matters most there."
+                )
         st.plotly_chart(
             portfolio_visitor_forecast_chart(frame, str(forecast_view)),
             width="stretch",
@@ -219,6 +241,12 @@ def render(frame: pd.DataFrame, hourly_movement: pd.DataFrame) -> None:
             )
 
     with st.expander("Exact movement values", icon=":material/table_chart:"):
+        st.caption(
+            "Tournament totals sum attendance across all hosted matches, not unique visitors. "
+            "For example, a 70,000-seat venue hosting 6 matches at 95% occupancy totals 399,000 "
+            "attendee-visits. Non-host-market attendee-visits are a subset of that total; "
+            "a person attending multiple matches is counted each time. Peak-hour values refer to the peak forecast match."
+        )
         st.dataframe(
             movement_table(frame),
             hide_index=True,

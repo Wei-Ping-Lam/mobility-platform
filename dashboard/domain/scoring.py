@@ -9,26 +9,42 @@ from typing import Any
 import numpy as np
 import pandas as pd
 
+from dashboard.domain.action_plans import TRAFFIC_MANAGEMENT_SCORES
 from dashboard.mobility_platform.contracts import EvidenceMetric, EvidenceStatus, ScenarioConfig, ScenarioResult
 from dashboard.mobility_platform.mappings import HOST_CITIES
 from dashboard.mobility_platform.sources import GTFS_SOURCE, rice_source
 
 # "gap" (first/last-mile access) replaces the old "transit" readiness dimension:
-# it blends real GTFS transit-stop density with real OSM parking-facility
-# density instead of transit density alone (see _parking_density_scores and the
-# first_last_mile_gap computation in build_city_metrics). metrics["transit_score"]
-# itself is left untouched by this - it still feeds the mode-split/private-vehicle
-# model in models/visitor_forecast.py and domain/decision_support.py, which need
-# pure transit density, not a transit+parking blend.
+# it blends a transit-access score - itself GTFS transit-stop density, real
+# GTFS event-window departure frequency, and real published/benchmark
+# dedicated-service evidence - with real OSM parking-facility density, instead
+# of transit-stop density alone (see _frequency_scores, _benchmark_capacity_scores,
+# _parking_density_scores, and the first_last_mile_gap computation in
+# build_city_metrics). metrics["transit_score"] itself is left untouched by
+# this - it still feeds the mode-split/private-vehicle model in
+# models/visitor_forecast.py and domain/decision_support.py, which need pure
+# transit density, not the enriched transit-access blend.
+#
+# "heat" used to be the readiness dimension name for air-temperature heat
+# safety alone, with urban-heat-island safety as its own separate "uhi"
+# dimension. They're now combined into one "heat" readiness dimension (see
+# _heat_combined_scores) - the individual air ("heat_air_score") and surface
+# ("uhi_score") values are still computed and shown separately elsewhere
+# (e.g. the per-city readiness-components chart), just no longer double-count
+# as two dimensions of the same composite. The freed dimension slot is now
+# "traffic" - a hand-curated, evidence-grounded assessment of each host's
+# real, documented match-day traffic-management performance (see
+# TRAFFIC_MANAGEMENT_SCORES in dashboard/domain/action_plans.py) - decision
+# support, like CITY_ACTION_PLANS, not a directly measured quantity.
 DEFAULT_WEIGHTS = {
-    "balanced": {"gap": 0.35, "heat": 0.20, "uhi": 0.15, "access": 0.30},
-    "transit_access": {"gap": 0.50, "heat": 0.10, "uhi": 0.10, "access": 0.30},
-    "heat_resilience": {"gap": 0.25, "heat": 0.35, "uhi": 0.25, "access": 0.15},
-    "sustainability": {"gap": 0.30, "heat": 0.20, "uhi": 0.25, "access": 0.25},
-    "rice_supplied_data": {"gap": 0.00, "heat": 0.35, "uhi": 0.25, "access": 0.40},
+    "balanced": {"gap": 0.30, "heat": 0.25, "access": 0.25, "traffic": 0.20},
+    "transit_access": {"gap": 0.45, "heat": 0.10, "access": 0.25, "traffic": 0.20},
+    "heat_resilience": {"gap": 0.20, "heat": 0.55, "access": 0.10, "traffic": 0.15},
+    "sustainability": {"gap": 0.25, "heat": 0.30, "access": 0.25, "traffic": 0.20},
+    "rice_supplied_data": {"gap": 0.00, "heat": 0.55, "access": 0.45, "traffic": 0.00},
 }
 
-DIMENSIONS = ("gap", "heat", "uhi", "access")
+DIMENSIONS = ("gap", "heat", "access", "traffic")
 OBSERVED_STATUSES = {EvidenceStatus.OBSERVED.value, EvidenceStatus.DERIVED.value}
 
 
@@ -98,15 +114,140 @@ def evidence_allowed(status: str, include_estimates: bool) -> bool:
     return status in OBSERVED_STATUSES or (include_estimates and status == EvidenceStatus.ESTIMATED.value)
 
 
+def _frequency_scores(gtfs: Mapping[str, Any]) -> dict[str, tuple[float | None, str]]:
+    """Score each city's real GTFS event-window departure frequency, city -> (score, status).
+
+    event_window_departures counts real scheduled departures within the match-
+    day event window near the venue - a throughput/capacity signal that raw
+    stop-density counts miss entirely. A single high-frequency dedicated rail
+    line (e.g. a stadium's own commuter-rail stop) can score low on stop
+    density but carry a lot of real event-window departures, or vice versa.
+    Log-scaled and normalized against the best-covered host so one outlier
+    city doesn't compress everyone else's real differences down near zero.
+    """
+
+    raw_values: dict[str, float] = {}
+    for city in HOST_CITIES:
+        entry = gtfs.get(city, {}) if isinstance(gtfs, Mapping) else {}
+        if not isinstance(entry, Mapping) or entry.get("feed_status") != "observed":
+            continue
+        departures = entry.get("event_window_departures")
+        if departures is None:
+            continue
+        raw_values[city] = max(0.0, float(departures))
+    maximum = max(raw_values.values(), default=0.0)
+    scores: dict[str, tuple[float | None, str]] = {}
+    for city in HOST_CITIES:
+        if city not in raw_values:
+            scores[city] = (None, EvidenceStatus.UNAVAILABLE.value)
+        elif maximum > 0:
+            scores[city] = (
+                round(float(np.log1p(raw_values[city]) / np.log1p(maximum) * 100), 1),
+                EvidenceStatus.DERIVED.value,
+            )
+        else:
+            scores[city] = (0.0, EvidenceStatus.DERIVED.value)
+    return scores
+
+
+def _benchmark_capacity_scores(benchmarks: Mapping[str, Any]) -> dict[str, tuple[float | None, str]]:
+    """Score each city's real, sourced dedicated-event-transit evidence, city -> (score, status).
+
+    Reads the analyst-coded, sourced "dedicated_service_evidence" tier from the
+    strategy-benchmark snapshot (dashboard/pipeline/public/strategy_benchmarks.py):
+    a fixed 100/60 tier reflecting whether a real, cited source documents a
+    high-frequency dedicated rail/BRT connection (100) or a dedicated event
+    shuttle/bus service without strong frequency evidence (60). This captures
+    real capacity commitments - e.g. a dedicated event-only rail spur - that
+    the base GTFS feed alone can miss when that service isn't part of the
+    city's regular published schedule.
+    """
+
+    scores: dict[str, tuple[float | None, str]] = {}
+    for city in HOST_CITIES:
+        entry = benchmarks.get(city, {}) if isinstance(benchmarks, Mapping) else {}
+        evidence = entry.get("dedicated_service_evidence") if isinstance(entry, Mapping) else None
+        tier = evidence.get("tier") if isinstance(evidence, Mapping) else None
+        if tier is None:
+            scores[city] = (None, EvidenceStatus.UNAVAILABLE.value)
+        else:
+            scores[city] = (clip_score(tier), EvidenceStatus.DERIVED.value)
+    return scores
+
+
+def _fleet_electrification_scores(benchmarks: Mapping[str, Any]) -> dict[str, tuple[float | None, str]]:
+    """Score each city's real, sourced transit-fleet electrification, city -> (score, status).
+
+    Reads the analyst-coded, sourced "sustainability_evidence.fleet_electrification_tier"
+    from the strategy-benchmark snapshot: a fixed 100/60/30 tier for whether the
+    real rail/bus fleet actually serving the venue is substantially electric
+    (100), a mix with real but still-early bus/BRT electrification (60), or
+    still predominantly diesel/CNG with only a token electric pilot (30).
+    """
+
+    scores: dict[str, tuple[float | None, str]] = {}
+    for city in HOST_CITIES:
+        entry = benchmarks.get(city, {}) if isinstance(benchmarks, Mapping) else {}
+        evidence = entry.get("sustainability_evidence") if isinstance(entry, Mapping) else None
+        tier = evidence.get("fleet_electrification_tier") if isinstance(evidence, Mapping) else None
+        if tier is None:
+            scores[city] = (None, EvidenceStatus.UNAVAILABLE.value)
+        else:
+            scores[city] = (clip_score(tier), EvidenceStatus.DERIVED.value)
+    return scores
+
+
+def _pedestrian_infrastructure_scores(walking_networks: Mapping[str, Any]) -> dict[str, tuple[float | None, str]]:
+    """Score each city's real OSM pedestrian-infrastructure evidence, city -> (score, status).
+
+    Blends two real signals from the walking-network snapshot (dashboard/pipeline/
+    public/walking.py) for the actual venue-side walking route: how direct it is
+    (100 / detour_ratio - a route as short as the straight-line distance scores
+    100, a longer detour scores proportionally lower) and how much of it has
+    OSM-tagged marked crossings (crossing_tag_coverage_pct, normalized against
+    the best-covered host). Sidewalk tagging is excluded - it is untagged for
+    every host in this snapshot, so it carries no real signal. Renormalizes
+    when only one of the two is available for a city (e.g. detour_ratio is
+    missing for cities the walking pipeline only partially covers).
+    """
+
+    crossing_raw: dict[str, float] = {}
+    for city in HOST_CITIES:
+        entry = walking_networks.get(city, {}) if isinstance(walking_networks, Mapping) else {}
+        if not isinstance(entry, Mapping):
+            continue
+        crossing = entry.get("crossing_tag_coverage_pct")
+        if crossing is not None:
+            crossing_raw[city] = max(0.0, float(crossing))
+    crossing_max = max(crossing_raw.values(), default=0.0)
+
+    scores: dict[str, tuple[float | None, str]] = {}
+    for city in HOST_CITIES:
+        entry = walking_networks.get(city, {}) if isinstance(walking_networks, Mapping) else {}
+        entry = entry if isinstance(entry, Mapping) else {}
+        components: list[float] = []
+        detour_ratio = entry.get("detour_ratio")
+        if detour_ratio is not None and float(detour_ratio) > 0:
+            components.append(clip_score(100.0 / float(detour_ratio)))
+        if city in crossing_raw and crossing_max > 0:
+            components.append(round(crossing_raw[city] / crossing_max * 100, 1))
+        if components:
+            scores[city] = (round(sum(components) / len(components), 1), EvidenceStatus.DERIVED.value)
+        else:
+            scores[city] = (None, EvidenceStatus.UNAVAILABLE.value)
+    return scores
+
+
 def _parking_density_scores(parking: Mapping[str, Any]) -> dict[str, tuple[float | None, str]]:
     """Score each city's real OSM parking-facility density, city -> (score, status).
 
-    Mirrors the GTFS transit-density methodology exactly: facilities closer to
-    the venue count more (weights 10/5/2 for the 0.5/1/2-mile rings, reusing
-    transit's own per-band weights), normalized so the best-covered host among
-    cities with a real snapshot scores 100. Cities missing from the snapshot -
-    the whole artifact requires the offline dashboard/pipeline/public/parking.py
-    OSM/Overpass fetch to have been run - score None, not zero.
+    Only counts facilities within 0.5 miles of the venue - a lot a mile or two
+    away doesn't meaningfully help (or hurt) the actual first/last-mile walk,
+    so it's excluded rather than counted at a reduced weight. Normalized so
+    the best-covered host among cities with a real snapshot scores 100. Cities
+    missing from the snapshot - the whole artifact requires the offline
+    dashboard/pipeline/public/parking.py OSM/Overpass fetch to have been run -
+    score None, not zero.
     """
 
     raw_values: dict[str, float] = {}
@@ -114,14 +255,10 @@ def _parking_density_scores(parking: Mapping[str, Any]) -> dict[str, tuple[float
         entry = parking.get(city, {}) if isinstance(parking, Mapping) else {}
         if not isinstance(entry, Mapping) or entry.get("status") != "derived":
             continue
-        counts = (
-            entry.get("facility_count_0_5mi"),
-            entry.get("facility_count_1mi"),
-            entry.get("facility_count_2mi"),
-        )
-        if any(count is None for count in counts):
+        count = entry.get("facility_count_0_5mi")
+        if count is None:
             continue
-        raw_values[city] = float(counts[0]) * 10 + float(counts[1]) * 5 + float(counts[2]) * 2
+        raw_values[city] = float(count)
     maximum = max(raw_values.values(), default=0.0)
     scores: dict[str, tuple[float | None, str]] = {}
     for city in HOST_CITIES:
@@ -195,8 +332,14 @@ def build_city_metrics(
     weights: dict[str, float] | None = None,
     include_estimates: bool = False,
     parking: Mapping[str, Any] | None = None,
+    benchmarks: Mapping[str, Any] | None = None,
+    walking_networks: Mapping[str, Any] | None = None,
 ) -> pd.DataFrame:
     parking_scores = _parking_density_scores(parking or {})
+    frequency_scores = _frequency_scores(gtfs or {})
+    benchmark_scores = _benchmark_capacity_scores(benchmarks or {})
+    fleet_electrification_scores = _fleet_electrification_scores(benchmarks or {})
+    pedestrian_infrastructure_scores = _pedestrian_infrastructure_scores(walking_networks or {})
     rows: list[dict[str, Any]] = []
     for city, meta in HOST_CITIES.items():
         weather_columns = {"city", "date", "avg_temp_c", "humidity"}
@@ -281,6 +424,14 @@ def build_city_metrics(
         )
         peak_visitors = int(float(meta["capacity"]) * 0.95) if meta.get("capacity") else None
         parking_value, parking_status = parking_scores.get(city, (None, EvidenceStatus.UNAVAILABLE.value))
+        frequency_value, frequency_status = frequency_scores.get(city, (None, EvidenceStatus.UNAVAILABLE.value))
+        benchmark_value, benchmark_status = benchmark_scores.get(city, (None, EvidenceStatus.UNAVAILABLE.value))
+        electrification_value, electrification_status = fleet_electrification_scores.get(
+            city, (None, EvidenceStatus.UNAVAILABLE.value)
+        )
+        pedestrian_value, pedestrian_status = pedestrian_infrastructure_scores.get(
+            city, (None, EvidenceStatus.UNAVAILABLE.value)
+        )
 
         row: dict[str, Any] = {
             "city": city,
@@ -294,8 +445,16 @@ def build_city_metrics(
             "transit_status": transit_status,
             "parking_score": parking_value,
             "parking_status": parking_status,
-            "heat_score": heat_safety_score(heat_index),
-            "heat_status": heat_status,
+            "frequency_score": frequency_value,
+            "frequency_status": frequency_status,
+            "benchmark_capacity_score": benchmark_value,
+            "benchmark_capacity_status": benchmark_status,
+            "fleet_electrification_score": electrification_value,
+            "fleet_electrification_status": electrification_status,
+            "pedestrian_infrastructure_score": pedestrian_value,
+            "pedestrian_infrastructure_status": pedestrian_status,
+            "heat_air_score": heat_safety_score(heat_index),
+            "heat_air_status": heat_status,
             "uhi_score": uhi_safety_score(float(uhi_value)) if uhi_value is not None and not pd.isna(uhi_value) else None,
             "uhi_status": uhi_status,
             "access_score": access_value,
@@ -314,29 +473,113 @@ def build_city_metrics(
             "transit_stops_0_5mi": gtfs_row.get("stops_0_5mi"),
             "nearest_stop_mi": gtfs_row.get("nearest_stop_mi"),
             "route_count": gtfs_row.get("route_count"),
+            "event_window_departures": gtfs_row.get("event_window_departures"),
             "feed_status": gtfs_row.get("feed_status", "unavailable"),
         }
-        # First/last-mile gap: how much of the venue-side journey real transit-stop
-        # density and real parking-facility density DON'T already cover. Transit
-        # is weighted more heavily (75/25) since GTFS-derived transit density is
-        # more reliable evidence than the OSM parking-facility count. Falls back
-        # to transit density alone when parking data isn't available yet for a
-        # city (dashboard/pipeline/public/parking.py hasn't been run, or that
-        # city's OSM/Overpass fetch failed) - it does not factor in heat, so it
-        # stays orthogonal to the heat/urban-heat readiness criteria.
+        # First/last-mile gap: how much of the venue-side journey real evidence
+        # DOESN'T already cover. "Transit access" is itself a blend of four real
+        # signals - GTFS stop density (30%), real GTFS event-window departure
+        # frequency (20%), real published/benchmark dedicated-service evidence
+        # (35%), and real pedestrian-infrastructure evidence (15%). Density and
+        # frequency are both measured in a radius around the venue, which
+        # structurally can't see a real, working service that reaches the venue
+        # by design from farther away - e.g. Dallas's real TRE-to-charter-bus
+        # bridge - so those two geographic signals are deliberately weighted
+        # below the cited evidence of whether a real dedicated service exists at
+        # all; pedestrian infrastructure is included because a genuinely
+        # walkable last mile is itself real first/last-mile access evidence,
+        # not just an environmental signal. Missing components renormalize
+        # rather than zero out (e.g. a city with no frequency data keeps
+        # density + benchmark + pedestrian at their relative weights).
+        # Transit access is then weighted 75/25 against parking-facility density,
+        # since it remains more reliable evidence than the OSM parking count;
+        # falls back to transit access alone when parking data isn't available
+        # yet for a city. None of this factors in heat, so it stays orthogonal
+        # to the heat/urban-heat readiness criteria.
         gap_inputs_eligible = transit_value is not None and evidence_allowed(str(transit_status), include_estimates)
         if gap_inputs_eligible:
+            transit_access_components: list[tuple[float, float]] = [(0.3, transit_value)]
+            if frequency_value is not None:
+                transit_access_components.append((0.2, frequency_value))
+            if benchmark_value is not None:
+                transit_access_components.append((0.35, benchmark_value))
+            if pedestrian_value is not None:
+                transit_access_components.append((0.15, pedestrian_value))
+            transit_access_weight = sum(weight for weight, _ in transit_access_components)
+            transit_access_value = (
+                sum(weight * value for weight, value in transit_access_components) / transit_access_weight
+            )
             combined_access = (
-                0.75 * transit_value + 0.25 * parking_value if parking_value is not None else transit_value
+                0.75 * transit_access_value + 0.25 * parking_value
+                if parking_value is not None
+                else transit_access_value
             )
             first_last_mile_gap = round(max(0.0, 100.0 - combined_access), 1)
         else:
+            transit_access_value = None
             first_last_mile_gap = None
+        row["transit_access_score"] = round(transit_access_value, 1) if transit_access_value is not None else None
         row["first_last_mile_gap"] = first_last_mile_gap
         row["gap_score"] = clip_score(100.0 - first_last_mile_gap) if first_last_mile_gap is not None else None
         row["gap_status"] = transit_status
+        # Sustainability: a separate, non-readiness signal for how car- and
+        # fossil-fuel-dependent a host's venue-side mobility choices are.
+        # Parking density dominates (50%, inverted - abundant car storage is
+        # the strongest single signal of car-dependent design); real
+        # transit-fleet electrification (30%) and real pedestrian-
+        # infrastructure evidence (20%) both raise it. Missing components
+        # renormalize rather than zero out; None only when all three are
+        # unavailable for a city.
+        sustainability_components: list[tuple[float, float]] = []
+        if parking_value is not None:
+            sustainability_components.append((0.5, 100.0 - parking_value))
+        if electrification_value is not None:
+            sustainability_components.append((0.3, electrification_value))
+        if pedestrian_value is not None:
+            sustainability_components.append((0.2, pedestrian_value))
+        if sustainability_components:
+            sustainability_weight = sum(weight for weight, _ in sustainability_components)
+            sustainability_score = (
+                sum(weight * value for weight, value in sustainability_components) / sustainability_weight
+            )
+            row["sustainability_score"] = round(sustainability_score, 1)
+            row["sustainability_status"] = EvidenceStatus.DERIVED.value
+        else:
+            row["sustainability_score"] = None
+            row["sustainability_status"] = EvidenceStatus.UNAVAILABLE.value
+        # Heat safety: one readiness dimension blending the real air-temperature
+        # heat-index score (50%) and the real urban-heat-island surface-
+        # temperature score (50%) - previously two separate readiness
+        # dimensions, combined here so a host isn't penalized or credited
+        # twice for what is fundamentally one environmental concern. Both raw
+        # components remain available under their own names (heat_air_score,
+        # uhi_score) for detailed display. Renormalizes when only one is
+        # available; unavailable only when both are.
+        heat_components: list[tuple[float, float]] = []
+        if row["heat_air_score"] is not None:
+            heat_components.append((0.5, row["heat_air_score"]))
+        if row["uhi_score"] is not None:
+            heat_components.append((0.5, row["uhi_score"]))
+        if heat_components:
+            heat_weight = sum(weight for weight, _ in heat_components)
+            row["heat_score"] = round(sum(weight * value for weight, value in heat_components) / heat_weight, 1)
+            row["heat_status"] = EvidenceStatus.DERIVED.value
+        else:
+            row["heat_score"] = None
+            row["heat_status"] = EvidenceStatus.UNAVAILABLE.value
+        # Traffic management: a hand-curated, evidence-grounded assessment of
+        # each host's real, documented match-day traffic-management
+        # performance (see TRAFFIC_MANAGEMENT_SCORES in
+        # dashboard/domain/action_plans.py) - decision support, like
+        # CITY_ACTION_PLANS, not a directly measured quantity.
+        traffic_entry = TRAFFIC_MANAGEMENT_SCORES.get(city)
+        if traffic_entry is not None:
+            row["traffic_score"] = float(traffic_entry["score"])
+            row["traffic_status"] = EvidenceStatus.DERIVED.value
+        else:
+            row["traffic_score"] = None
+            row["traffic_status"] = EvidenceStatus.UNAVAILABLE.value
         row["transit_status"] = transit_status
-        row["heat_status"] = heat_status
         row["uhi_status"] = uhi_status
         row["access_status"] = access_status
         row["score"], row["score_status"], row["data_coverage"] = composite_score(row, weights, include_estimates)
@@ -397,7 +640,7 @@ def build_city_metrics(
                 assumptions=("A scheduled-service and venue-distance proxy; not observed ridership or congestion.",),
             ),
             "heat": _metric_payload(
-                row["heat_score"],
+                row["heat_air_score"],
                 unit="safety score (0-100)",
                 status=heat_status,
                 source=heat_source,
@@ -409,6 +652,8 @@ def build_city_metrics(
                     f"Station is {float(weather_station_distance):.1f} miles from the venue."
                     if weather_station_distance is not None and pd.notna(weather_station_distance)
                     else "Station-to-venue distance is unavailable.",
+                    "This is the air-temperature component only; the readiness 'heat' dimension blends it "
+                    "50/50 with the urban-heat-island surface-temperature component below.",
                 ),
             ),
             "uhi": _metric_payload(
@@ -418,6 +663,16 @@ def build_city_metrics(
                 source=uhi_source,
                 sample_size=venue_point_count or None,
                 assumptions=uhi_assumptions,
+            ),
+            "traffic": _metric_payload(
+                row["traffic_score"],
+                unit="analyst score (0-100)",
+                status=row["traffic_status"],
+                source="Analyst synthesis of real, cited local news and official-agency reporting (see dashboard/domain/action_plans.py TRAFFIC_MANAGEMENT_SCORES and the Traffic management solution tab's congestion-hotspot evidence)",
+                assumptions=(
+                    "Hand-curated decision support, like CITY_ACTION_PLANS - grounded in real, cited "
+                    "evidence, but an analyst's judgment score, not a directly measured or observed quantity.",
+                ),
             ),
             "access": _metric_payload(
                 row["access_score"],
@@ -431,11 +686,15 @@ def build_city_metrics(
                 row["gap_score"],
                 unit="access score (0-100)",
                 status=transit_status,
-                source=f"{GTFS_SOURCE} + OpenStreetMap two-mile parking-facility extract",
+                source=f"{GTFS_SOURCE} + OpenStreetMap two-mile parking-facility extract + analyst-coded strategy benchmarks",
                 assumptions=(
-                    "75/25 blend of GTFS transit-stop density and OSM parking-facility density (transit "
-                    "weighted more heavily as more reliable evidence); falls back to transit density alone "
+                    "75/25 blend of a transit-access score and OSM parking-facility density (transit "
+                    "weighted more heavily as more reliable evidence); falls back to transit access alone "
                     "where parking data is not yet available.",
+                    "Transit access itself blends GTFS transit-stop density (30%), real GTFS event-window "
+                    "departure frequency (20%), real published/benchmark dedicated-service evidence (35%), "
+                    "and real pedestrian-infrastructure evidence (15%), renormalized when a component is "
+                    "missing for a city.",
                     "Does not factor in heat - heat safety and urban heat safety are scored separately.",
                 ),
             ),

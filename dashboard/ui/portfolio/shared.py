@@ -31,10 +31,18 @@ WEIGHT_PROFILE_KEY = "weight_profile"
 WEIGHT_FIELD_KEYS = {
     "gap": "weight_gap",
     "heat": "weight_heat",
-    "uhi": "weight_uhi",
     "access": "weight_access",
+    "traffic": "weight_traffic",
 }
 INCLUDE_ESTIMATES_KEY = "include_estimates"
+
+PROFILE_LABELS = {
+    "balanced": "Balanced mobility",
+    "transit_access": "Transit and access",
+    "heat_resilience": "Heat resilience",
+    "sustainability": "Sustainability",
+    "rice_supplied_data": "Rice supplied-data lens",
+}
 
 
 def resolve_weight_settings() -> tuple[dict[str, float], bool]:
@@ -58,40 +66,40 @@ def resolve_weight_settings() -> tuple[dict[str, float], bool]:
     return normalize_weights(weights), include_estimates
 
 
+def active_profile_label() -> str:
+    profile = st.session_state.get(WEIGHT_PROFILE_KEY, "balanced")
+    if profile not in DEFAULT_WEIGHTS:
+        profile = "balanced"
+    return PROFILE_LABELS.get(profile, "Balanced mobility")
+
+
 def render_weight_settings() -> None:
     """Render the interactive weight-profile controls (moved here from the sidebar)."""
 
-    profile_labels = {
-        "balanced": "Balanced mobility",
-        "transit_access": "Transit and access",
-        "heat_resilience": "Heat resilience",
-        "sustainability": "Sustainability",
-        "rice_supplied_data": "Rice supplied-data lens",
-    }
     profile_descriptions = {
         "balanced": (
-            "Weights all four criteria close to evenly, with first/last-mile access and venue support given "
-            "slightly more emphasis than the two heat criteria - a general-purpose default that doesn't favor "
-            "any one concern."
+            "Weights all four criteria close to evenly, with first/last-mile access and heat safety given "
+            "slightly more emphasis - a general-purpose default that doesn't favor any one concern."
         ),
         "transit_access": (
-            "Emphasizes first/last-mile access (50%, from transit-stop and parking-facility density) and venue "
-            "support (30%), de-emphasizing heat and urban heat safety (10% each) - use this when getting to and "
-            "from the venue matters most to the comparison."
+            "Emphasizes first/last-mile access (45%, from transit density, transit frequency, published-service "
+            "evidence, and pedestrian infrastructure) alongside venue support and traffic management (20% each) "
+            "- use this when getting to and from the venue matters most to the comparison."
         ),
         "heat_resilience": (
-            "Weights heat safety and urban heat safety together at 60% of the score, prioritizing hosts that "
-            "manage summer heat exposure well over first/last-mile access or venue-support advantages."
+            "Weights heat safety (air temperature blended with urban-heat-island surface temperature) at 55% of "
+            "the score, prioritizing hosts that manage summer heat exposure well over first/last-mile access, "
+            "venue-support, or traffic-management advantages."
         ),
         "sustainability": (
-            "Spreads weight fairly evenly across all four criteria, with a slight lean toward urban heat safety "
-            "and venue support alongside first/last-mile access - a broader environmental-and-access lens rather "
-            "than a single dominant concern."
+            "Spreads weight fairly evenly across all four criteria, with a slight lean toward heat safety - a "
+            "broader environmental-and-access lens rather than a single dominant concern."
         ),
         "rice_supplied_data": (
-            "Uses only the criteria sourced from the original Rice WC Hack datasets (heat, urban heat, and venue "
-            "support) and excludes first/last-mile access entirely, since that score comes from separately sourced "
-            "live GTFS and OpenStreetMap data, not the Rice collection."
+            "Uses only the criteria sourced from the original Rice WC Hack datasets (heat safety and venue "
+            "support) and excludes first/last-mile access and traffic management entirely, since neither comes "
+            "from the Rice collection (access is separately sourced live GTFS/OpenStreetMap data; traffic "
+            "management is a hand-curated analyst score)."
         ),
     }
     profile_options = list(DEFAULT_WEIGHTS)
@@ -106,11 +114,13 @@ def render_weight_settings() -> None:
     for field, key in WEIGHT_FIELD_KEYS.items():
         st.session_state.setdefault(key, float(DEFAULT_WEIGHTS["balanced"][field]))
 
-    with st.expander("Advanced comparison settings", expanded=False):
+    with st.expander(
+        f"Comparison settings · {active_profile_label()} profile active", expanded=False
+    ):
         profile = st.selectbox(
             "Weight profile",
             profile_options,
-            format_func=profile_labels.get,
+            format_func=PROFILE_LABELS.get,
             key=WEIGHT_PROFILE_KEY,
             on_change=_reset_to_profile,
         )
@@ -118,14 +128,9 @@ def render_weight_settings() -> None:
         st.caption("Readiness gives the high-level orientation; task-specific evidence below should drive decisions.")
         st.markdown("##### Tune score weights")
         st.slider("First/last-mile access", 0.0, 1.0, step=0.05, key=WEIGHT_FIELD_KEYS["gap"])
+        st.slider("Traffic management", 0.0, 1.0, step=0.05, key=WEIGHT_FIELD_KEYS["traffic"])
         st.slider("Heat safety", 0.0, 1.0, step=0.05, key=WEIGHT_FIELD_KEYS["heat"])
-        st.slider("UHI safety", 0.0, 1.0, step=0.05, key=WEIGHT_FIELD_KEYS["uhi"])
         st.slider("Venue support", 0.0, 1.0, step=0.05, key=WEIGHT_FIELD_KEYS["access"])
-        st.checkbox(
-            "Include estimated values",
-            key=INCLUDE_ESTIMATES_KEY,
-            help="Strict mode excludes estimated components from rankings. Enable this only for sensitivity exploration.",
-        )
 
 
 def number(value: Any, suffix: str = "", decimals: int = 0) -> str:

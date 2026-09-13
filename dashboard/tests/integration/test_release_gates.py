@@ -37,8 +37,8 @@ def test_weights_and_scores_stay_in_release_bounds():
     row = {
         "gap_score": 0, "gap_status": "observed",
         "heat_score": 100, "heat_status": "derived",
-        "uhi_score": 0, "uhi_status": "derived",
         "access_score": 100, "access_status": "derived",
+        "traffic_score": 0, "traffic_status": "derived",
     }
     score, _, coverage = composite_score(row)
     assert score is not None and 0 <= score <= 100

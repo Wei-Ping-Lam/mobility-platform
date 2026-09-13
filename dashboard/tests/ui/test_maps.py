@@ -4,20 +4,22 @@ import pytest
 from dashboard.ui.presentation import CityDecisionView, ScenarioView
 from dashboard.ui.views import _layer_map, _traffic_pressure_envelope, _traffic_pressure_table
 from dashboard.viz.portfolio import (
+    city_action_options_chart,
     city_hourly_movement_chart,
     portfolio_access_density_chart,
-    portfolio_access_score_chart,
     portfolio_climate_chart,
-    portfolio_custom_scenario_chart,
-    portfolio_gap_quadrant_chart,
+    portfolio_frequency_benchmark_chart,
     portfolio_movement_chart,
+    portfolio_sustainability_access_chart,
     portfolio_traffic_chart,
     portfolio_visitor_forecast_chart,
     readiness_components_chart,
     readiness_map_chart,
     readiness_ranking_chart,
+    transportation_resilience_components_chart,
+    transportation_resilience_ranking_chart,
 )
-from dashboard.viz.strategy_overlap import access_overlap_map, operating_overlap_map
+from dashboard.viz.strategy_overlap import access_overlap_map, operating_overlap_map, recommendation_focus_map
 
 
 def _portfolio_frame() -> pd.DataFrame:
@@ -94,6 +96,18 @@ def _portfolio_frame() -> pd.DataFrame:
                 "balanced_score": 70.0,
                 "gap_score": 68.0,
                 "first_last_mile_gap": 30.0,
+                "frequency_score": 40.0,
+                "benchmark_capacity_score": 100.0,
+                "event_window_departures": 3438,
+                "dedicated_service_basis": "MARTA runs five-minute match-day rail headways.",
+                "dedicated_service_publisher": "Metropolitan Atlanta Rapid Transit Authority",
+                "parking_score": 80.0,
+                "fleet_electrification_score": 60.0,
+                "pedestrian_infrastructure_score": 70.0,
+                "sustainability_score": 42.0,
+                "resilience_score": 46.5,
+                "resilience_rating": 4.7,
+                "fleet_electrification_basis": "MARTA's rail is electric; bus fleet still mostly diesel.",
                 "avg_temp_c": 26.0,
                 "transit_stops_0_5mi": 20,
                 "gtfs_stops_1mi": 100,
@@ -180,6 +194,18 @@ def _portfolio_frame() -> pd.DataFrame:
                 "balanced_score": 90.0,
                 "gap_score": 92.0,
                 "first_last_mile_gap": 10.0,
+                "frequency_score": 100.0,
+                "benchmark_capacity_score": 100.0,
+                "event_window_departures": 13805,
+                "dedicated_service_basis": "Link Light Rail's Stadium Station sits directly adjacent to Lumen Field.",
+                "dedicated_service_publisher": "The Urbanist",
+                "parking_score": 20.0,
+                "fleet_electrification_score": 100.0,
+                "pedestrian_infrastructure_score": 90.0,
+                "sustainability_score": 88.0,
+                "resilience_score": 77.2,
+                "resilience_rating": 7.7,
+                "fleet_electrification_basis": "Link Light Rail is fully electric; King County Metro runs a large trolleybus fleet.",
                 "avg_temp_c": 18.0,
                 "transit_stops_0_5mi": 50,
                 "gtfs_stops_1mi": 150,
@@ -214,18 +240,59 @@ def test_readiness_ranking_chart_hover_includes_hosted_matches_and_capacity() ->
     assert list(trace.customdata[:, 3]) == ["Quarterfinal", "Semifinal"]
 
 
-def test_portfolio_access_score_chart_ranks_by_gap_score_not_balanced_score() -> None:
-    figure = portfolio_access_score_chart(_portfolio_frame())
+def test_portfolio_frequency_benchmark_chart_shows_both_real_inputs() -> None:
+    figure = portfolio_frequency_benchmark_chart(_portfolio_frame())
+
+    assert [trace.name for trace in figure.data] == [
+        "Event-window frequency score",
+        "Published-service evidence tier",
+    ]
+    # Sorted by frequency score descending: Seattle (100.0) > Atlanta (40.0).
+    assert list(figure.data[0].x) == ["Seattle", "Atlanta"]
+    assert list(figure.data[0].y) == [100.0, 40.0]
+    assert list(figure.data[1].x) == ["Seattle", "Atlanta"]
+    assert list(figure.data[1].y) == [100.0, 100.0]
+
+    # Hover exposes the real underlying departure count and the cited evidence text.
+    frequency_trace = figure.data[0]
+    assert "Real event-window departures" in frequency_trace.hovertemplate
+    assert list(frequency_trace.customdata[:, 0]) == [13805.0, 3438.0]
+
+    benchmark_trace = figure.data[1]
+    assert "High-frequency rail/BRT" in list(benchmark_trace.customdata[:, 0])
+    assert "The Urbanist" in list(benchmark_trace.customdata[:, 2])
+    assert figure.layout.yaxis.title.text == "Score (0–100)"
+
+
+def test_transportation_resilience_ranking_chart_ranks_by_resilience_rating() -> None:
+    figure = transportation_resilience_ranking_chart(_portfolio_frame())
 
     trace = figure.data[0]
-    # Sorted ascending by gap_score: Atlanta (68.0) then Seattle (92.0) -
-    # distinct from balanced_score (70.0/90.0) and strict_score (62.0/78.0),
+    # Sorted ascending by resilience_rating: Atlanta (4.7) then Seattle (7.7) -
+    # distinct from gap_score (68.0/92.0) and sustainability_score (42.0/88.0),
     # neither of which this chart uses.
     assert list(trace.y) == ["Atlanta", "Seattle"]
-    assert list(trace.x) == [68.0, 92.0]
-    assert "First/last-mile access score" in trace.hovertemplate
-    assert list(trace.customdata[:, 0]) == [2.0, 1.0]
-    assert figure.layout.xaxis.title.text == "First/last-mile access score (0–100)"
+    assert list(trace.x) == [4.7, 7.7]
+    assert "Transportation resilience" in trace.hovertemplate
+    assert list(trace.customdata[:, 0]) == [29.1, 54.5]
+    assert list(trace.customdata[:, 1]) == [40.0, 100.0]
+    assert list(trace.customdata[:, 2]) == [100.0, 100.0]
+    assert figure.layout.xaxis.title.text == "Transportation resilience rating (0–10)"
+
+
+def test_transportation_resilience_components_chart_exposes_the_three_real_inputs() -> None:
+    figure = transportation_resilience_components_chart(
+        _portfolio_frame(), city_order=["Seattle", "Atlanta"]
+    )
+
+    trace = figure.data[0]
+    assert list(trace.y) == ["Seattle", "Atlanta"]
+    assert list(trace.x) == [
+        "Stress-test<br>coverage",
+        "Event-window<br>frequency",
+        "Published-capacity<br>evidence",
+    ]
+    assert trace.z.tolist() == [[54.5, 100.0, 100.0], [29.1, 40.0, 100.0]]
 
 
 def test_readiness_map_chart_plots_one_colored_dot_per_city() -> None:
@@ -308,22 +375,76 @@ def test_city_hourly_movement_chart_plots_arrivals_and_departures_for_one_city()
     )
     figure = city_hourly_movement_chart(hourly_movement, "Atlanta")
 
-    assert [trace.name for trace in figure.data] == ["Arrivals", "Departures"]
+    assert [trace.name for trace in figure.data] == [
+        None,
+        "Arrivals planning range",
+        None,
+        "Departures planning range",
+        "Arrivals",
+        "Departures",
+    ]
     # Arrivals never show at hour 2+, departures never show before hour 1 -
     # each line is restricted to its own real domain from the model.
-    assert list(figure.data[0].x) == [-1, 0, 1]
-    assert list(figure.data[0].y) == [8_000, 2_000, 700]
-    assert list(figure.data[1].x) == [1, 2]
-    assert list(figure.data[1].y) == [400, 9_000]
+    assert list(figure.data[4].x) == [-1, 0, 1]
+    assert list(figure.data[4].y) == [8_000, 2_000, 700]
+    assert list(figure.data[5].x) == [1, 2]
+    assert list(figure.data[5].y) == [400, 9_000]
+    assert figure.data[1].fill == "tonexty"
+    assert figure.data[3].fill == "tonexty"
+    assert "Planning range" in figure.data[4].hovertemplate
     assert figure.layout.xaxis.title.text == "Hours from kickoff"
 
 
-def test_portfolio_gap_quadrant_chart_encodes_capacity_size_and_temperature_color() -> None:
-    figure = portfolio_gap_quadrant_chart(_portfolio_frame())
+def test_city_action_options_chart_colors_by_evidence_qualification() -> None:
+    options = pd.DataFrame(
+        [
+            {
+                "intervention": "Shuttle service",
+                "gap_resolved_passengers": 337.5,
+                "cost_per_passenger": 16.0,
+                "lead_time_band": "0-6 months",
+                "evidence_qualified": True,
+            },
+            {
+                "intervention": "Added transit frequency",
+                "gap_resolved_passengers": 630.0,
+                "cost_per_passenger": 11.31,
+                "lead_time_band": "3-12 months",
+                "evidence_qualified": False,
+            },
+        ]
+    )
+    figure = city_action_options_chart(options)
+
+    trace = figure.data[0]
+    assert list(trace.text) == ["Shuttle service", "Added transit frequency"]
+    assert list(trace.x) == [16.0, 11.31]
+    assert list(trace.y) == [337.5, 630.0]
+    # Qualified options are teal, exploratory options are slate.
+    from dashboard.viz.style import COLORS
+
+    assert list(trace.marker.color) == [COLORS["teal"], COLORS["slate"]]
+    assert "Screening cost ratio" in trace.hovertemplate
+    assert "Qualified" in list(trace.customdata[:, 1])
+    assert "Exploratory" in list(trace.customdata[:, 1])
+    assert figure.layout.xaxis.title.text == "Screening cost ratio ($ / peak passenger addressed)"
+
+
+def test_city_action_options_chart_handles_no_priced_options() -> None:
+    options = pd.DataFrame(
+        [{"intervention": "Cooled walking corridors", "gap_resolved_passengers": None, "cost_per_passenger": None, "lead_time_band": "0-6 months", "evidence_qualified": True}]
+    )
+    figure = city_action_options_chart(options)
+
+    assert list(figure.data) == []
+
+
+def test_portfolio_sustainability_access_chart_encodes_capacity_size_and_temperature_color() -> None:
+    figure = portfolio_sustainability_access_chart(_portfolio_frame())
 
     assert len(figure.data) == 1
     trace = figure.data[0]
-    assert list(trace.x) == [70.0, 90.0]
+    assert list(trace.x) == [42.0, 88.0]
     assert list(trace.y) == [68.0, 92.0]
     assert list(trace.text) == ["Atlanta", "Seattle"]
     assert list(trace.marker.size) == [70_000, 72_000]
@@ -422,28 +543,6 @@ def test_portfolio_visitor_forecast_compares_origin_and_mode_mix_without_extra_p
         assert figure.layout.legend.traceorder == "normal"
 
 
-def test_portfolio_custom_scenario_chart_zeros_baseline_and_nets_vehicle_trips() -> None:
-    outcome = {
-        "gap_resolved_passengers": 500.0,
-        "venue_vehicle_trips_base": 10_000,
-        "net_co2e_kg_base": 800.0,
-    }
-    figure = portfolio_custom_scenario_chart(outcome, baseline_vehicle_trips=12_000)
-
-    assert [trace.name for trace in figure.data] == ["Baseline", "Custom scenario"]
-    baseline, scenario = figure.data
-    assert list(baseline.y) == [0, 0, 0]
-    # Vehicle trips avoided = baseline - scenario; the other two metrics are the
-    # scenario's own evaluated value (baseline is trivially zero, by definition).
-    assert list(scenario.y) == [500.0, 2_000.0, 800.0]
-    assert list(scenario.x) == [
-        "Peak passengers\naddressed / hr",
-        "Vehicle trips\navoided",
-        "Net CO2e\navoided (kg)",
-    ]
-    assert figure.layout.barmode == "group"
-
-
 def test_readiness_components_chart_exposes_all_four_defined_criteria() -> None:
     metrics = pd.DataFrame(
         [
@@ -453,10 +552,10 @@ def test_readiness_components_chart_exposes_all_four_defined_criteria() -> None:
                 "gap_status": "observed",
                 "heat_score": 74,
                 "heat_status": "derived",
-                "uhi_score": 30,
-                "uhi_status": "derived",
                 "access_score": 72,
                 "access_status": "derived",
+                "traffic_score": 30,
+                "traffic_status": "derived",
             },
             {
                 "city": "Seattle",
@@ -464,19 +563,19 @@ def test_readiness_components_chart_exposes_all_four_defined_criteria() -> None:
                 "gap_status": "observed",
                 "heat_score": 96,
                 "heat_status": "derived",
-                "uhi_score": 30,
-                "uhi_status": "derived",
                 "access_score": 100,
                 "access_status": "derived",
+                "traffic_score": 30,
+                "traffic_status": "derived",
             },
         ]
     )
 
     figure = readiness_components_chart(metrics, ["Atlanta", "Seattle"])
 
-    assert list(figure.data[0].x) == ["First/last-mile<br>access", "Heat<br>safety", "Urban heat<br>safety", "Venue<br>support"]
+    assert list(figure.data[0].x) == ["First/last-mile<br>access", "Traffic<br>management", "Heat<br>safety", "Venue<br>support"]
     assert list(figure.data[0].y) == ["Atlanta", "Seattle"]
-    assert list(figure.data[0].z[0]) == [71, 74, 30, 72]
+    assert list(figure.data[0].z[0]) == [71, 30, 74, 72]
 
 
 def test_portfolio_traffic_chart_uses_baseline_trip_cases_without_congestion_claims() -> None:
@@ -535,7 +634,7 @@ def test_traffic_layer_uses_a_visible_change_label_instead_of_overlapping_marker
     )
     traffic_table = _traffic_pressure_table(baseline, operational)
 
-    assert [trace.name for trace in figure.data] == ["Operational Package traffic pressure", "Venue"]
+    assert [trace.name for trace in figure.data] == ["Operational Package traffic pressure", "Mercedes-Benz Stadium"]
     assert list(figure.data[0].text) == ["-30% trips"]
     assert figure.data[0].mode == "markers+text"
     traffic_readiness = readiness[readiness["Layer"] == "Modeled traffic pressure"].iloc[0]
@@ -659,7 +758,7 @@ def test_access_overlap_map_keeps_service_screen_routes_stops_and_walk_distinct(
         "Event-valid GTFS routes",
         "Event-relevant stops",
         "Walking evidence",
-        "Venue",
+        "MetLife Stadium",
     ]
     assert len(figure.data[0].lat) == 73
     assert figure.layout.map.zoom == 11.2
@@ -684,6 +783,32 @@ def test_operating_overlap_map_separates_selected_and_other_candidate_hubs() -> 
         "Schematic transfer link",
         "Other screened candidates",
         "Selected engine anchor",
-        "Venue",
+        "AT&T Stadium",
     ]
     assert list(figure.data[1].text) == ["Other Station"]
+
+
+def test_recommendation_focus_map_draws_named_points_and_schematic_links() -> None:
+    figure = recommendation_focus_map(
+        {"name": "Gillette Stadium", "lat": 42.0909, "lon": -71.2643},
+        (
+            {"name": "Providence Station", "lat": 41.82909, "lon": -71.41325},
+        ),
+    )
+
+    assert len(figure.data) == 3
+    line, points, venue = figure.data
+    assert line.mode == "lines"
+    assert list(line.lat) == [41.82909, 42.0909]
+    assert list(line.lon) == [-71.41325, -71.2643]
+    assert points.name == "Named in this recommendation"
+    assert list(points.text) == ["Providence Station"]
+    assert venue.name == "Gillette Stadium"
+    assert list(venue.lat) == [42.0909]
+
+
+def test_recommendation_focus_map_shows_only_the_venue_when_no_focus_points() -> None:
+    figure = recommendation_focus_map({"name": "Arrowhead Stadium", "lat": 39.0489, "lon": -94.4839}, ())
+
+    assert len(figure.data) == 1
+    assert figure.data[0].name == "Arrowhead Stadium"

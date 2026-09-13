@@ -6,7 +6,6 @@ import pandas as pd
 import streamlit as st
 
 from dashboard.ui.portfolio.shared import render_weight_settings
-from dashboard.ui.portfolio.tables import resilience_table
 from dashboard.viz.portfolio import (
     readiness_components_chart,
     readiness_map_chart,
@@ -23,7 +22,46 @@ def render(frame: pd.DataFrame, metrics: pd.DataFrame) -> None:
     ]
 
     st.markdown("#### Host City Readiness Ranking")
-    render_weight_settings()
+    if not ranked.empty:
+        top = ranked.iloc[0]
+        bottom = ranked.iloc[-1]
+        issue_columns = {
+            "transit_score": "Sparse transit stops",
+            "frequency_score": "Infrequent transit service",
+            "pedestrian_infrastructure_score": "Limited pedestrian infrastructure",
+            "benchmark_capacity_score": "Limited dedicated-service evidence",
+        }
+        components = frame[[column for column in issue_columns if column in frame]].apply(
+            pd.to_numeric, errors="coerce"
+        )
+        components = components.dropna(thresh=2)
+        common_issue = "Not available"
+        issue_note = "Insufficient comparable access data"
+        if not components.empty:
+            # Count tied weakest components equally rather than choosing by column order.
+            counts = components.eq(components.min(axis=1), axis=0).sum()
+            weakest = counts.idxmax()
+            common_issue = issue_columns[weakest]
+            issue_note = f"Lowest access component in {int(counts[weakest])} of {len(components)} assessed hosts"
+        col_top, col_bottom, col_driver = st.columns(3)
+        col_top.metric(
+            "Highest readiness",
+            str(top["city"]),
+            f"{float(top['strict_score']):.1f}/100",
+            delta_color="off",
+        )
+        col_bottom.metric(
+            "Lowest readiness",
+            str(bottom["city"]),
+            f"{float(bottom['strict_score']):.1f}/100",
+            delta_color="off",
+        )
+        col_driver.metric(
+            "Common first/last-mile issue",
+            common_issue,
+            issue_note,
+            delta_color="off",
+        )
     col_rank, col_map = st.columns(2)
     with col_rank:
         st.plotly_chart(
@@ -33,7 +71,7 @@ def render(frame: pd.DataFrame, metrics: pd.DataFrame) -> None:
             key="portfolio_readiness_rank",
         )
         st.caption(
-            "Readiness combines first/last-mile access, heat safety, urban heat safety, and venue support under the weights set above. "
+            "Readiness combines first/last-mile access, heat safety, venue support, and traffic management under the comparison settings below. "
             "It is orientation, not a transport disruption model or an investment ranking."
         )
     with col_map:
@@ -44,9 +82,10 @@ def render(frame: pd.DataFrame, metrics: pd.DataFrame) -> None:
             key="portfolio_readiness_map",
         )
         st.caption(
-            "Each dot is a host city's venue location, colored by its readiness score under the weights set above. "
+            "Each dot is a host city's venue location, colored by its readiness score under the comparison settings below. "
             "Dot size corresponds to the venue's seating capacity."
         )
+    render_weight_settings()
     st.markdown("##### What drives readiness?")
     st.plotly_chart(
         readiness_components_chart(metrics, readiness_order),
@@ -55,29 +94,34 @@ def render(frame: pd.DataFrame, metrics: pd.DataFrame) -> None:
         key="portfolio_readiness_components",
     )
     st.caption(
-        "Heat safety and urban heat safety are deliberately separate signals: heat safety reflects the region's "
-        "ambient air-temperature risk on match days, while urban heat safety reflects how much hotter the "
-        "immediate venue area itself runs due to pavement and built environment (the local urban-heat-island "
-        "effect) - a city can score well on one and poorly on the other."
+        "**First/last-mile access** is 100 minus the first/last-mile gap score: a 75/25 blend of a transit-access "
+        "score and real OSM parking-facility density - transit access weighted more heavily since it is more "
+        "reliable evidence. Transit access itself blends real GTFS transit-stop density (30%), real GTFS "
+        "event-window departure frequency (20%), real published/benchmark dedicated-service evidence (35%), and "
+        "real pedestrian-infrastructure evidence (15%) - benchmark evidence is weighted above raw density/frequency "
+        "because a real, working service that reaches the venue from farther away (e.g. Dallas's TRE-to-charter-bus "
+        "bridge) is otherwise invisible to a radius-based density metric. It falls back to whichever of these "
+        "components are available for a city, and does not factor in heat."
     )
     st.caption(
-        "**First/last-mile access** is 100 minus the first/last-mile gap score: a 75/25 blend of real GTFS "
-        "transit-stop density (closer stops and more routes count more, scaled so the best-served host among "
-        "these 11 cities scores 100) and real OSM parking-facility density (same distance-band weighting, scaled "
-        "the same way among cities with a real parking snapshot) - transit weighted more heavily since it is more "
-        "reliable evidence. It falls back to transit density alone for cities without parking data yet, and does "
-        "not factor in heat."
+        "**Traffic management** is a hand-curated analyst score grounded in each host's real, cited "
+        "match-day traffic evidence (documented road closures, enforcement zones, and any real congestion or "
+        "gridlock incidents - see the City action plan's Traffic management solution tab). Unlike the other "
+        "three criteria, this is decision support - an analyst's synthesis of real reporting, not a directly "
+        "measured quantity - the same convention this app uses for its hand-authored city action plans."
     )
     st.caption(
-        "**Heat safety** starts at 100 and subtracts 2.2 points per degree Celsius the June-July 90th-percentile "
-        "[NOAA heat index](https://www.ncei.noaa.gov/products/land-based-station/integrated-surface-database) "
-        "(Rothfusz formula, from the nearest real weather station) sits above 20°C."
-    )
-    st.caption(
-        "**Urban heat safety** starts at 100 and subtracts 7 points per degree Celsius of real urban-heat-island "
-        "effect near the venue - surface temperature, not air temperature or physiological heat exposure. Most "
-        "cities use the Rice WC Hack urban-heat dataset's distance-weighted venue reading; Boston instead uses "
-        "real [USGS Landsat Collection 2 satellite surface-temperature imagery]"
+        "**Heat safety** blends two real signals 50/50: ambient air-temperature risk on match days, and how "
+        "much hotter the immediate venue area itself runs due to pavement and built environment (the local "
+        "urban-heat-island effect) - previously two separate readiness dimensions, combined into one so a host "
+        "isn't penalized or credited twice for what is fundamentally one environmental concern. Renormalizes to "
+        "whichever of the two is available. "
+        "Heat safety's air-temperature component starts at 100 and subtracts 2.2 points per degree Celsius the "
+        "June-July 90th-percentile [NOAA heat index](https://www.ncei.noaa.gov/products/land-based-station/integrated-surface-database) "
+        "(Rothfusz formula, from the nearest real weather station) sits above 20°C. Its urban-heat-island "
+        "component starts at 100 and subtracts 7 points per degree Celsius of real surface-temperature effect "
+        "near the venue. Most cities use the Rice WC Hack urban-heat dataset's distance-weighted venue reading; "
+        "Boston instead uses real [USGS Landsat Collection 2 satellite surface-temperature imagery]"
         "(https://www.usgs.gov/landsat-missions/landsat-collection-2-surface-temperature) - its two-mile "
         "venue-buffer temperature minus a wider 3-8 mile reference-area temperature, since Boston lacks eligible "
         "Rice UHI coverage."
@@ -94,10 +138,3 @@ def render(frame: pd.DataFrame, metrics: pd.DataFrame) -> None:
         "dataset. A higher score means a more amenity-dense surrounding area; it does not measure walkability, "
         "safety, or actual visitor foot traffic."
     )
-    with st.expander("Exact resilience values", icon=":material/table_chart:"):
-        st.dataframe(
-            resilience_table(frame),
-            hide_index=True,
-            width="stretch",
-            height=455,
-        )

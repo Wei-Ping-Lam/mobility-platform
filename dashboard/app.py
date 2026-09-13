@@ -99,6 +99,8 @@ else:
         artifacts["visits"], artifacts["weather"], artifacts["uhi"], artifacts["poi"], artifacts["gtfs"],
         weights=weights, include_estimates=include_estimates,
         parking=artifacts.get("parking_density", {}),
+        benchmarks=artifacts.get("strategy_benchmarks", {}),
+        walking_networks=artifacts.get("walking_networks", {}),
     )
     try:
         bundle = build_transportation_bundle(metrics, artifacts)

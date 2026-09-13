@@ -32,6 +32,36 @@ def resilience_table(frame: pd.DataFrame) -> pd.DataFrame:
     return display
 
 
+def transportation_resilience_table(frame: pd.DataFrame) -> pd.DataFrame:
+    display = frame.sort_values(["resilience_rating", "city"], ascending=[False, True]).copy()
+    display = display[
+        [
+            "city",
+            "resilience_rating",
+            "stress_coverage_pct",
+            "frequency_score",
+            "benchmark_capacity_score",
+            "event_window_departures",
+            "dedicated_service_basis",
+            "dedicated_service_publisher",
+        ]
+    ]
+    display.columns = [
+        "City",
+        "Resilience rating (/10)",
+        "Stress-test coverage",
+        "Frequency score",
+        "Published-capacity evidence",
+        "Real event-window departures",
+        "Published-capacity basis",
+        "Publisher",
+    ]
+    display["Stress-test coverage"] = display["Stress-test coverage"].map(
+        lambda value: f"{value:.1f}%" if pd.notna(value) else "Not available"
+    )
+    return display
+
+
 def movement_table(frame: pd.DataFrame) -> pd.DataFrame:
     display = frame.sort_values(["forecast_non_host_attendees_base", "city"], ascending=[False, True]).copy()
     display = display[
@@ -64,8 +94,8 @@ def movement_table(frame: pd.DataFrame) -> pd.DataFrame:
         "Hosted matches",
         "Peak forecast match",
         "Peak forecast stage",
-        "Base tournament attendance",
-        "Non-host-market attendees",
+        "Tournament attendee-visits (base)",
+        "Non-host-market attendee-visits (base)",
         "Host market share",
         "Nearby U.S. share",
         "Long-distance U.S. share",
@@ -117,8 +147,14 @@ def access_table(frame: pd.DataFrame) -> pd.DataFrame:
             "walking_status",
             "accessibility_status",
             "transit_score",
+            "frequency_score",
+            "benchmark_capacity_score",
+            "transit_access_score",
             "parking_score",
             "first_last_mile_gap",
+            "fleet_electrification_score",
+            "pedestrian_infrastructure_score",
+            "sustainability_score",
             "transit_stops_0_5mi",
             "gtfs_stops_1mi",
             "gtfs_stops_2mi",
@@ -144,8 +180,14 @@ def access_table(frame: pd.DataFrame) -> pd.DataFrame:
         "Walking evidence",
         "Accessibility audit",
         "Transit score",
+        "Frequency score",
+        "Benchmark capacity score",
+        "Transit access score",
         "Parking score",
         "First/last-mile gap score",
+        "Fleet electrification score",
+        "Pedestrian infrastructure score",
+        "Sustainability score",
         "Stops <=0.5mi",
         "Stops <=1mi",
         "Stops <=2mi",

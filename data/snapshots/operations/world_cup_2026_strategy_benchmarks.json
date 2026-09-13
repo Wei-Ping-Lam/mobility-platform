@@ -1,8 +1,37 @@
 {
-  "artifact_sha256": "720cd129cf2e9b277c7f425ae8db0f0d5748083aa99031a98b385eb0a80e4e6b",
+  "artifact_sha256": "4936daba07d9a1a257a0da283b2165227e63fb9e0862ea8510ed60ec41b0dd6f",
   "benchmarks": {
     "Atlanta": {
       "city": "Atlanta",
+      "congestion_management_evidence": {
+        "command_note": "Atlanta Police built linked command posts with staff embedded at the Georgia DOT operations center and the Georgia World Congress Center operational center, designed to adjust in real time if crowds or traffic surge near the stadium and Centennial Olympic Park.",
+        "command_publisher": "11alive.com",
+        "command_source_title": "State and city cooperation key to Atlanta's World Cup traffic plan",
+        "command_source_url": "https://www.11alive.com/article/sports/soccer/world-cup/atlanta-world-cup-traffic-plan-gdot-atlanta-police-marta/85-1ab32185-a86c-4279-bcd9-0f9fdc113a64",
+        "hotspots": [
+          {
+            "control": "Centennial Olympic Park Drive converted to one-way (southbound); lane closures on all three streets create additional pedestrian space near the stadium.",
+            "location": "Centennial Olympic Park Drive, Park Avenue, and Marietta Street",
+            "publisher": "11alive.com",
+            "source_title": "State and city cooperation key to Atlanta's World Cup traffic plan",
+            "source_url": "https://www.11alive.com/article/sports/soccer/world-cup/atlanta-world-cup-traffic-plan-gdot-atlanta-police-marta/85-1ab32185-a86c-4279-bcd9-0f9fdc113a64"
+          },
+          {
+            "control": "Georgia DOT's Southeast Atlanta 511 Traffic Management Center monitors thousands of cameras here and adjusts signal timing in real time on match days.",
+            "location": "I-75/85, Northside Drive, Centennial Olympic Park Drive, and Marietta Street",
+            "publisher": "11alive.com",
+            "source_title": "State and city cooperation key to Atlanta's World Cup traffic plan",
+            "source_url": "https://www.11alive.com/article/sports/soccer/world-cup/atlanta-world-cup-traffic-plan-gdot-atlanta-police-marta/85-1ab32185-a86c-4279-bcd9-0f9fdc113a64"
+          }
+        ]
+      },
+      "dedicated_service_evidence": {
+        "basis": "MARTA runs match-day rail headways as low as five minutes, with standby buses and dedicated post-match egress trains.",
+        "publisher": "Metropolitan Atlanta Rapid Transit Authority",
+        "source_title": "Let MARTA drive you to FIFA World Cup 2026 matches and events",
+        "source_url": "https://itsmarta.com/let-marta-drive-you-to-fifa.aspx",
+        "tier": 100
+      },
       "evidence_level": "full operating",
       "official_service_signals": [
         "Five-minute match-day rail headways",
@@ -12,10 +41,50 @@
       "publisher": "Metropolitan Atlanta Rapid Transit Authority",
       "source_title": "Let MARTA drive you to FIFA World Cup 2026 matches and events",
       "source_url": "https://itsmarta.com/let-marta-drive-you-to-fifa.aspx",
-      "strategy_family": "Direct high-capacity transit reinforcement"
+      "strategy_family": "Direct high-capacity transit reinforcement",
+      "sustainability_evidence": {
+        "fleet_electrification_basis": "MARTA's rail system is fully electric, but its bus fleet is only beginning electrification - about a dozen battery-electric buses funded by federal Low/No Emission grants, out of a much larger diesel fleet.",
+        "fleet_electrification_tier": 60,
+        "pedestrian_infrastructure_basis": "Mercedes-Benz Stadium sits in the same walkable downtown corridor as Centennial Olympic Park, the Georgia Aquarium, and other major attractions, with real shade available in the park; the stadium's own retractable roof also removes summer heat from the matchday equation entirely.",
+        "pedestrian_infrastructure_publisher": "SkyView Atlanta",
+        "pedestrian_infrastructure_source_title": "Top Attractions for Visitors at the World Cup in Atlanta",
+        "pedestrian_infrastructure_source_url": "https://www.skyviewatlanta.com/atlanta-attractions-world-cup-visitors-2026/",
+        "publisher": "Metropolitan Atlanta Rapid Transit Authority",
+        "source_title": "About MARTA - Sustainability",
+        "source_url": "https://itsmarta.com/marta-sustainability-efforts-boost.aspx"
+      }
     },
     "Boston": {
       "city": "Boston",
+      "congestion_management_evidence": {
+        "command_note": "Foxboro Police Chief Michael Grace, describing traffic from an earlier March 2026 friendly at this same venue: \"I'll say it. It sucked. The traffic was bad.\" Massachusetts Highway Administrator Jonathan Gulliver compared expected congestion to a Taylor Swift concert, playoff series, World Series, and Super Bowl combined.",
+        "command_publisher": "CBS Boston",
+        "command_source_title": "World Cup traffic warning for Massachusetts drivers: 'Stay away from the stadium'",
+        "command_source_url": "https://www.cbsnews.com/boston/news/world-cup-traffic-warning-gillette-foxboro/",
+        "hotspots": [
+          {
+            "control": "Temporary closures specifically designed to stop navigation apps from routing event traffic through residential streets.",
+            "location": "Foxborough and Norwood neighborhood streets near Gillette Stadium",
+            "publisher": "Town of Foxborough",
+            "source_title": "FIFA World Cup 2026",
+            "source_url": "https://www.foxboroughma.gov/residents/fifa_world_cup_2026"
+          },
+          {
+            "control": "Road closures and traffic-condition changes run from 6 hours before kickoff to 6 hours after the final whistle.",
+            "location": "Roads immediately surrounding Gillette Stadium",
+            "publisher": "Town of Foxborough",
+            "source_title": "FIFA World Cup 2026",
+            "source_url": "https://www.foxboroughma.gov/residents/fifa_world_cup_2026"
+          }
+        ]
+      },
+      "dedicated_service_evidence": {
+        "basis": "A dedicated MBTA commuter-rail stop sits adjacent to Gillette Stadium, but 2026 World Cup round trips were priced at $80 - four times the regular fare - and the MBTA confirmed it would not run direct service from Rhode Island, unlike past Patriots-game trains. The plan also includes over 20 express-bus pickup points and about 14 commuter-rail trains per match, with direct hotel and airport connections.",
+        "publisher": "GBH News",
+        "source_title": "World Cup fans embrace trains to 'Boston Stadium', despite the steep price tag",
+        "source_url": "https://www.wgbh.org/news/local/2026-06-19/world-cup-fans-embrace-trains-to-boston-stadium-despite-the-steep-price-tag",
+        "tier": 60
+      },
       "evidence_level": "full operating",
       "official_service_signals": [
         "More than 20 express-bus pickup points",
@@ -25,10 +94,57 @@
       "publisher": "Boston 26 Host Committee",
       "source_title": "Boston Stadium Express bus service",
       "source_url": "https://bostonfwc26.com/newsroom/the-boston-host-committee-for-fifa-world-cup-2026-announces-boston-stadium-express-bus-service-to-support-matchday-transportation/",
-      "strategy_family": "Distributed express bus and rail"
+      "strategy_family": "Distributed express bus and rail",
+      "sustainability_evidence": {
+        "fleet_electrification_basis": "The commuter-rail line serving Gillette Stadium runs diesel locomotives; the MBTA's first battery-electric commuter trains aren't expected in service until 2028, and only on the Providence and Fairmount Lines, not Foxborough.",
+        "fleet_electrification_tier": 30,
+        "pedestrian_infrastructure_basis": "Gillette Stadium has real, intentionally designed pedestrian routes - colored lines painted on sidewalks guide fans from parking and the Foxboro MBTA stop - and Patriot Place next door is a walkable, mixed-use district with shops and restaurants.",
+        "pedestrian_infrastructure_publisher": "WOKQ",
+        "pedestrian_infrastructure_source_title": "Colored Pedestrian Walking Paths Gillette Stadium, Foxboro, MA",
+        "pedestrian_infrastructure_source_url": "https://wokq.com/pedestrain-walking-paths-gillette-stadium/",
+        "publisher": "The Boston Globe",
+        "source_title": "MBTA to purchase battery-electric locomotives for Commuter Rail as it stares down 'fleet cliff'",
+        "source_url": "https://www.bostonglobe.com/2026/02/26/metro/commuter-rail-mbta-providence/"
+      }
     },
     "Dallas": {
       "city": "Dallas",
+      "congestion_management_evidence": {
+        "command_note": "",
+        "command_publisher": "",
+        "command_source_title": "",
+        "command_source_url": "",
+        "hotspots": [
+          {
+            "control": "Closed on match days.",
+            "location": "AT&T Way from Cowboys Way to Randol Mill Road",
+            "publisher": "North Texas FIFA World Cup Organizing Committee",
+            "source_title": "Dallas 2026 Transportation & Mobility Plan",
+            "source_url": "https://www.dallasfwc26.com/dallas-2026/transportation-mobility/"
+          },
+          {
+            "control": "Closed on match days.",
+            "location": "Cowboys Way from North Collins Street to AT&T Way",
+            "publisher": "North Texas FIFA World Cup Organizing Committee",
+            "source_title": "Dallas 2026 Transportation & Mobility Plan",
+            "source_url": "https://www.dallasfwc26.com/dallas-2026/transportation-mobility/"
+          },
+          {
+            "control": "Closed on match days; rideshare/taxi, private shuttle, charter bus, and pedestrian channels are kept physically separated.",
+            "location": "Nolan Ryan Expressway (portion near Six Flags/hotel south entrance) and Statler Boulevard (portion near CentrePort Station)",
+            "publisher": "North Texas FIFA World Cup Organizing Committee",
+            "source_title": "Dallas 2026 Transportation & Mobility Plan",
+            "source_url": "https://www.dallasfwc26.com/dallas-2026/transportation-mobility/"
+          }
+        ]
+      },
+      "dedicated_service_evidence": {
+        "basis": "Dallas has a real published operating plan: TRE regional rail to CentrePort with a dedicated charter-bus bridge to the stadium, plus a dynamic overflow-bus dispatch trigger when TRE reaches capacity. Rideshare, shuttle, pedestrian, and private-vehicle channels are kept separated to manage the crowd.",
+        "publisher": "North Texas FIFA World Cup Organizing Committee",
+        "source_title": "FIFA World Cup 26 Dallas Transportation & Mobility Plan",
+        "source_url": "https://www.dallasfwc26.com/dallas-2026/transportation-mobility/",
+        "tier": 100
+      },
       "evidence_level": "full operating",
       "official_service_signals": [
         "Regional rail to CentrePort",
@@ -38,10 +154,43 @@
       "publisher": "North Texas FIFA World Cup Organizing Committee",
       "source_title": "Dallas Transportation and Mobility Plan",
       "source_url": "https://www.dallasfwc26.com/dallas-2026/transportation-mobility/",
-      "strategy_family": "Regional rail to charter-bus bridge"
+      "strategy_family": "Regional rail to charter-bus bridge",
+      "sustainability_evidence": {
+        "fleet_electrification_basis": "DART's light rail is electric, but the Trinity Railway Express regional-rail line bridging fans to AT&T Stadium runs diesel-powered locomotives, and DART's own bus fleet remains predominantly CNG-powered with only a handful of electric buses.",
+        "fleet_electrification_tier": 30,
+        "pedestrian_infrastructure_basis": "For 2026, Arlington built a new sidewalk along AT&T Way for the rideshare-lot walk and closed a driving lane near the bus hub to widen pedestrian space, but the stadium still sits in a highway-ringed entertainment district built around parking, not everyday sidewalks.",
+        "pedestrian_infrastructure_publisher": "North Texas FIFA World Cup Organizing Committee",
+        "pedestrian_infrastructure_source_title": "Transportation & Mobility – FIFA World Cup 26 Dallas",
+        "pedestrian_infrastructure_source_url": "https://www.dallasfwc26.com/dallas-2026/transportation-mobility/",
+        "publisher": "HawkinsRails",
+        "source_title": "HawkinsRails - Dallas Area Rapid Transit",
+        "source_url": "https://hawkinsrails.net/transit/dallas/dart.htm"
+      }
     },
     "Houston": {
       "city": "Houston",
+      "congestion_management_evidence": {
+        "command_note": "The Houston-Galveston Area Council warned World Cup traffic could double some commute times in what is already the 5th-most-congested U.S. city at peak hours: \"If it already takes you, let's say, an hour to go from NRG to the Galleria, it could potentially take you two hours.\"",
+        "command_publisher": "Click2Houston",
+        "command_source_title": "FIFA World Cup could double some Houston commutes, transportation leaders warn",
+        "command_source_url": "https://www.click2houston.com/news/local/2026/05/27/fifa-world-cup-could-double-some-houston-commutes-transportation-leaders-warn/",
+        "hotspots": [
+          {
+            "control": "Closed or restricted from 6 a.m.-5 p.m. on match days; fan marches close additional streets separately.",
+            "location": "Fannin St., Greenbriar Dr., Cambridge St., Holly Hall St., Lantern Point Dr., and northbound Kirby Dr. around NRG Park",
+            "publisher": "Houston Chronicle",
+            "source_title": "Houston road closures: World Cup fan marches planned near NRG Stadium",
+            "source_url": "https://www.houstonchronicle.com/news/houston-texas/transportation/article/nrg-stadium-road-closures-22315899.php"
+          }
+        ]
+      },
+      "dedicated_service_evidence": {
+        "basis": "METRORail's Red Line is being upgraded to two-car trains running every 5 minutes during peak tournament hours, plus a new Green Corridor connecting downtown, the fan festival, and the stadium. A new Green Corridor also links the stadium, fan festival, and downtown, and Fannin South serves as a park-and-ride option.",
+        "publisher": "FOX 26 Houston",
+        "source_title": "FIFA World Cup 2026: Houston transit guide for NRG stadium and Fan Festivals",
+        "source_url": "https://www.fox26houston.com/news/houston-fifa-world-cup-2026-travel-transportation-metro-guide",
+        "tier": 100
+      },
       "evidence_level": "strong partial",
       "official_service_signals": [
         "METRORail connects downtown and Houston Stadium",
@@ -51,10 +200,43 @@
       "publisher": "FIFA World Cup 26 Houston Host Committee",
       "source_title": "Plan your Houston visit",
       "source_url": "https://www.fwc26houston.com/visit",
-      "strategy_family": "Direct transit plus distributed egress"
+      "strategy_family": "Direct transit plus distributed egress",
+      "sustainability_evidence": {
+        "fleet_electrification_basis": "METRORail light rail is electric, and METRO operates over 400 diesel-electric hybrid buses plus a small, growing all-electric fleet on two routes, with a zero-emission-by-2030 goal.",
+        "fleet_electrification_tier": 60,
+        "pedestrian_infrastructure_basis": "Houston built a real 14-mile \"Green Corridor\" with shade structures, an expanded tree canopy, and water stations linking the EaDo Fan Festival to NRG Stadium - though local reporting notes the actual walk is about 5.5 miles and has been criticized in practice as a rough trek despite the amenities.",
+        "pedestrian_infrastructure_publisher": "Houston Chronicle",
+        "pedestrian_infrastructure_source_title": "5 things to know about Houston's Green Corridor connecting World Cup hotspots",
+        "pedestrian_infrastructure_source_url": "https://www.houstonchronicle.com/world-cup/article/green-corridor-houston-22162346.php",
+        "publisher": "Mass Transit",
+        "source_title": "Houston Metro rolls out first zero-emission electric buses on two bus routes",
+        "source_url": "https://www.masstransitmag.com/bus/vehicles/hybrid-hydrogen-electric-vehicles/press-release/55137558/metropolitan-transit-authority-of-harris-county-metro-houston-metro-rolls-out-first-zero-emission-electric-buses-on-two-bus-routes"
+      }
     },
     "Kansas City": {
       "city": "Kansas City",
+      "congestion_management_evidence": {
+        "command_note": "KC2026 recommended FIFA open more gates, add a dedicated bus lane, and unlock gates earlier ahead of the June 20 Ecuador-Curacao match, after acknowledging \"operational constraints created congestion that affected all modes of transportation arriving at the venue.\"",
+        "command_publisher": "KCTV5",
+        "command_source_title": "KC2026: 'Operational constraints' caused heavy traffic delays for World Cup match at Arrowhead",
+        "command_source_url": "https://www.kctv5.com/2026/06/17/kc2026-cites-operational-constraints-cause-heavy-traffic-delays-world-cup-match-arrowhead/",
+        "hotspots": [
+          {
+            "control": "Only 2 of 7 entrances (Entrances 2 and 3, in Lots C and G) were opened for the June 16, 2026 Argentina-Algeria match, versus 8 entrances typically used for Chiefs games - the documented cause of severe gate-throughput gridlock.",
+            "location": "Truman Sports Complex stadium entrances (Arrowhead Stadium)",
+            "publisher": "KCUR",
+            "source_title": "Traffic issues plagued Kansas City's World Cup stadium. Officials want FIFA to fix the problems",
+            "source_url": "https://www.kcur.org/housing-development-section/2026-06-19/traffic-issues-kansas-city-world-cup-stadium-fifa"
+          }
+        ]
+      },
+      "dedicated_service_evidence": {
+        "basis": "Kansas City runs a paid ($15 round trip) shuttle to Arrowhead Stadium since no rail option exists; the first 2026 match showed real strain, with fans exiting vehicles and walking over a mile after gridlock. Named Airport Direct and Region Direct shuttle services extend the network to the airport and regional destinations.",
+        "publisher": "KCUR",
+        "source_title": "Traffic issues plagued Kansas City's World Cup stadium. Officials want FIFA to fix the problems",
+        "source_url": "https://www.kcur.org/housing-development-section/2026-06-19/traffic-issues-kansas-city-world-cup-stadium-fifa",
+        "tier": 60
+      },
       "evidence_level": "full operating",
       "official_service_signals": [
         "Stadium Direct from four park-and-ride locations",
@@ -64,10 +246,50 @@
       "publisher": "KC2026 Host Committee",
       "source_title": "ConnectKC26 Regional Transportation Plan",
       "source_url": "https://kansascityfwc26.com/kc2026-exceeds-fifa-requirements-with-connectkc26-regional-transportation-plan/",
-      "strategy_family": "Multi-hub stadium shuttle"
+      "strategy_family": "Multi-hub stadium shuttle",
+      "sustainability_evidence": {
+        "fleet_electrification_basis": "No rail serves Arrowhead Stadium; RideKC's fleet is about two-thirds CNG with only a handful of battery-electric buses in service as an initial pilot.",
+        "fleet_electrification_tier": 30,
+        "pedestrian_infrastructure_basis": "Arrowhead's pedestrian culture is built around its tailgate lots, not everyday sidewalks - marked paths exist through the lots, but even the closest parking is a 5-8 minute walk and general parking runs 10-20 minutes through the tailgating crowds.",
+        "pedestrian_infrastructure_publisher": "Prked",
+        "pedestrian_infrastructure_source_title": "Ultimate Guide to GEHA Field at Arrowhead Stadium Parking & Tailgating",
+        "pedestrian_infrastructure_source_url": "https://prked.com/post/arrowhead-stadium-parking-guide",
+        "publisher": "Kansas City Area Transportation Authority (KCATA)",
+        "source_title": "KCATA Unveils Zero-Emission Buses Sponsored By Evergy",
+        "source_url": "https://www.kcata.org/news/electric-buses"
+      }
     },
     "Los Angeles": {
       "city": "Los Angeles",
+      "congestion_management_evidence": {
+        "command_note": "",
+        "command_publisher": "",
+        "command_source_title": "",
+        "command_source_url": "",
+        "hotspots": [
+          {
+            "control": "Caltrans District 7 publicly urged motorists to seek alternate routes during a roughly 10 a.m.-4 p.m. match-day window; the corridor gridlocked up to 4 hours before kickoff.",
+            "location": "I-405 corridor near Inglewood (SoFi Stadium)",
+            "publisher": "KTLA",
+            "source_title": "World Cup match expected to jam freeways near SoFi Stadium Thursday",
+            "source_url": "https://ktla.com/news/local-news/world-cup-los-angeles-traffic-sofi-stadium/"
+          },
+          {
+            "control": "Police blocked some residents from driving into their own neighborhoods on match days; Inglewood's mayor and LA Metro said this was never authorized policy and that Metro had only requested sheriff support for bus movement, not full street closures.",
+            "location": "Inglewood residential streets near SoFi Stadium",
+            "publisher": "LAist",
+            "source_title": "Inglewood and LA Metro respond to complaints of World Cup blocking locals from their neighborhoods",
+            "source_url": "https://laist.com/news/transportation/inglewood-and-la-metro-respond-to-complaints-of-world-cup-blocking-locals-from-their-neighborhoods"
+          }
+        ]
+      },
+      "dedicated_service_evidence": {
+        "basis": "The rail connection promised to SoFi Stadium (the Inglewood Transit Connector people-mover) was cancelled in October 2024; the 2026 plan instead relies on dedicated bus lanes connecting to the Metro K Line and C Line, not a direct rail link. Metro service is being enhanced for match days, with secured parking as a supplemental option.",
+        "publisher": "Medill News Service",
+        "source_title": "Railway might not be solution to SoFi's accessibility issues",
+        "source_url": "https://news.medill.northwestern.edu/chicago/railway-might-not-be-solution-to-sofis-accessibility-issues/",
+        "tier": 60
+      },
       "evidence_level": "strategy level",
       "official_service_signals": [
         "Enhanced Metro service",
@@ -77,10 +299,50 @@
       "publisher": "Los Angeles World Cup 2026 Host Committee",
       "source_title": "Los Angeles region-wide World Cup plans",
       "source_url": "https://www.sofistadium.com/news/detail/los-angeles-marks-30-days-to-fifa-world-cup-2026-by-announcing-region-wide-plans-to-welcome-the-world",
-      "strategy_family": "Park-and-ride and shuttle hybrid"
+      "strategy_family": "Park-and-ride and shuttle hybrid",
+      "sustainability_evidence": {
+        "fleet_electrification_basis": "LA Metro's rail lines are electric, but the roughly 2,300-bus fleet remains overwhelmingly CNG; the agency's zero-emission-by-2030 plan is real but still early, with only single routes like the G Line fully converted so far.",
+        "fleet_electrification_tier": 60,
+        "pedestrian_infrastructure_basis": "SoFi Stadium's Hollywood Park development includes 25 acres of walkable paseos, plazas, and trails, and the stadium's canopy and perforated metal skin shade the adjacent plaza - a genuinely walkable district, though still new and surrounded by the venue's much larger parking footprint.",
+        "pedestrian_infrastructure_publisher": "American Institute of Architects (AIA)",
+        "pedestrian_infrastructure_source_title": "SoFi Stadium and Hollywood Park",
+        "pedestrian_infrastructure_source_url": "https://www.aia.org/design-excellence/award-winners/sofi-stadium-and-hollywood-park",
+        "publisher": "LA Metro",
+        "source_title": "L.A. Metro Now Running all Zero-Emission Electric Buses on the G (Orange) Line",
+        "source_url": "https://www.metro.net/about/l-a-metro-now-running-all-zero-emission-electric-buses-on-the-g-orange-line-in-the-san-fernando-valley/"
+      }
     },
     "Miami": {
       "city": "Miami",
+      "congestion_management_evidence": {
+        "command_note": "",
+        "command_publisher": "",
+        "command_source_title": "",
+        "command_source_url": "",
+        "hotspots": [
+          {
+            "control": "Closed starting at 5 a.m. on match days; for most 6 p.m. kickoffs the closure runs roughly 5 a.m.-2 p.m., reopens, then closes again 90 minutes after kickoff for two hours.",
+            "location": "NW 199th Street between NW 27th Ave and NW 14th Court (Hard Rock Stadium)",
+            "publisher": "Miami New Times",
+            "source_title": "These are the roads to avoid during Miami's World Cup matches",
+            "source_url": "https://www.miaminewtimes.com/news/these-are-the-roads-to-avoid-during-miamis-world-cup-matches-40556094/"
+          },
+          {
+            "control": "Closed to vehicles without a valid FIFA parking pass; Miami Gardens issues local-access passes so residents and businesses can bypass most other closures.",
+            "location": "Florida Turnpike Exit 2X ramp (both directions)",
+            "publisher": "Miami New Times",
+            "source_title": "These are the roads to avoid during Miami's World Cup matches",
+            "source_url": "https://www.miaminewtimes.com/news/these-are-the-roads-to-avoid-during-miamis-world-cup-matches-40556094/"
+          }
+        ]
+      },
+      "dedicated_service_evidence": {
+        "basis": "Miami-Dade never built Metrorail to Miami Gardens; Hard Rock Stadium remains a drive-in venue, so the plan relies on the free Miami Game Day Express shuttle from four hubs rather than any dedicated rail line. Shuttles run direct without transfers, with continuous post-match return service.",
+        "publisher": "Miami New Times",
+        "source_title": "These are the roads to avoid during Miami's World Cup matches",
+        "source_url": "https://www.miaminewtimes.com/news/these-are-the-roads-to-avoid-during-miamis-world-cup-matches-40556094/",
+        "tier": 60
+      },
       "evidence_level": "full operating",
       "official_service_signals": [
         "Four named Game Day Express hubs",
@@ -90,10 +352,50 @@
       "publisher": "Miami-Dade County",
       "source_title": "Mobility: 2026 World Cup",
       "source_url": "https://www.miamidade.gov/initiative/worldcup/mobility.page",
-      "strategy_family": "Multi-hub stadium shuttle"
+      "strategy_family": "Multi-hub stadium shuttle",
+      "sustainability_evidence": {
+        "fleet_electrification_basis": "Miami-Dade doesn't serve Hard Rock Stadium by rail, but the county operates one of the nation's largest electric bus fleets (about 10% of Metrobus) and just opened the longest all-electric BRT corridor in the U.S.",
+        "fleet_electrification_tier": 60,
+        "pedestrian_infrastructure_basis": "Hard Rock Stadium is explicitly not walkable - it sits in suburban Miami Gardens ringed by highways with no real pedestrian access from the rest of the city; even the closest rideshare lot is a 25-minute walk, and officials direct fans to shuttles and rail instead.",
+        "pedestrian_infrastructure_publisher": "Yahoo Sports",
+        "pedestrian_infrastructure_source_title": "Is Miami's Hard Rock Stadium walkable?",
+        "pedestrian_infrastructure_source_url": "https://sports.yahoo.com/videos/miamis-hard-rock-stadium-walkable-181328965.html",
+        "publisher": "Sustainable Bus",
+        "source_title": "Miami-Dade launches Metro Express, the nation's longest all-electric BRT",
+        "source_url": "https://www.sustainable-bus.com/news/miami-dade-county-brt-metro-express-launch/"
+      }
     },
     "New York/NJ": {
       "city": "New York/NJ",
+      "congestion_management_evidence": {
+        "command_note": "",
+        "command_publisher": "",
+        "command_source_title": "",
+        "command_source_url": "",
+        "hotspots": [
+          {
+            "control": "New Jersey State Police enforce an outright ban on pedestrians walking these roadways on match days.",
+            "location": "Route 3, Route 17, Route 120/Paterson Plank Road, and I-95 around MetLife Stadium",
+            "publisher": "NorthJersey.com",
+            "source_title": "Thinking of walking to MetLife for the 2026 World Cup? Think again",
+            "source_url": "https://www.aol.com/news/thinking-walking-metlife-2026-world-083103762.html"
+          },
+          {
+            "control": "A real documented friction point: stadium workers halted rideshare pickups here at 10:15 p.m. after the Brazil-Morocco match, stranding fans in gridlock for 3+ hours despite NJ Transit moving 21,578 fans by rail that night.",
+            "location": "Meadowlands racetrack rideshare staging area",
+            "publisher": "NJ.com",
+            "source_title": "Travel disaster strands N.J. World Cup fans for hours",
+            "source_url": "https://travel.yahoo.com/advice/travel-tips/articles/travel-disaster-strands-n-j-045303934.html"
+          }
+        ]
+      },
+      "dedicated_service_evidence": {
+        "basis": "A dedicated Meadowlands Rail Line shuttles fans between Secaucus Junction and the stadium; NJ Transit committed to carrying 40,000 attendees via its services on each match day. Additional direct shuttles serve named New York and New Jersey origins, and stadium parking is ticketed and restricted to manage access.",
+        "publisher": "New York New Jersey Host Committee and NJ TRANSIT",
+        "source_title": "FIFA World Cup 2026 New York New Jersey Host Committee and NJ Transit Announce Regional Stadium Mobility Plan",
+        "source_url": "https://nynjfwc26.com/press-releases/fifa-world-cup-2026-new-york-new-jersey-host-committee-and-nj-transit-announce-regional-stadium-mobility-plan/",
+        "tier": 100
+      },
       "evidence_level": "full operating",
       "official_service_signals": [
         "Rail is the primary high-capacity approach",
@@ -103,10 +405,50 @@
       "publisher": "New York New Jersey Host Committee and NJ TRANSIT",
       "source_title": "Regional Stadium Mobility Plan",
       "source_url": "https://nynjfwc26.com/press-releases/fifa-world-cup-2026-new-york-new-jersey-host-committee-and-nj-transit-announce-regional-stadium-mobility-plan/",
-      "strategy_family": "Capacity-managed rail plus shuttle"
+      "strategy_family": "Capacity-managed rail plus shuttle",
+      "sustainability_evidence": {
+        "fleet_electrification_basis": "The Meadowlands Rail Line serving MetLife Stadium runs on the electrified Northeast Corridor via Secaucus Junction, but NJ Transit's bus fleet (2,300+ vehicles) remains almost entirely diesel, with only a handful of electric buses in service so far.",
+        "fleet_electrification_tier": 60,
+        "pedestrian_infrastructure_basis": "MetLife Stadium has essentially no real pedestrian infrastructure - the Meadowlands Sports Complex is ringed by highways with no sidewalks, walking to the stadium is banned and enforced by state police, and the only sanctioned route is a 1.3-mile path from the rideshare lot after arriving by other means.",
+        "pedestrian_infrastructure_publisher": "NBC New York",
+        "pedestrian_infrastructure_source_title": "World Cup fans can't walk to MetLife Stadium, officials remind",
+        "pedestrian_infrastructure_source_url": "https://www.nbcnewyork.com/world-cup/no-walking-metlife-stadium-world-cup-match-saturday/6512144/",
+        "publisher": "New Jersey Public Transportation Corporation (NJ TRANSIT)",
+        "source_title": "NJ Transit Introduces Agency's First Battery Electric Bus Set to Enter Service",
+        "source_url": "https://www.njtransit.com/press-releases/nj-transit-introduces-agencys-first-battery-electric-bus-set-enter-service"
+      }
     },
     "Philadelphia": {
       "city": "Philadelphia",
+      "congestion_management_evidence": {
+        "command_note": "",
+        "command_publisher": "",
+        "command_source_title": "",
+        "command_source_url": "",
+        "hotspots": [
+          {
+            "control": "A new post-game traffic pattern reroutes drivers this way, tested after the Nov. 28, 2025 Eagles-Bears game specifically to fix existing chronic gridlock at this venue.",
+            "location": "Pattison Avenue toward the Walt Whitman Bridge/I-76 East via Darien Street",
+            "publisher": "The Philadelphia Inquirer",
+            "source_title": "Philly is testing a new traffic pattern to help Eagles fans escape post-game gridlock",
+            "source_url": "https://www.inquirer.com/news/philadelphia/eagles-traffic-philadelphia-walt-whitman-bridge-20251128.html"
+          },
+          {
+            "control": "Fans parked in these lots are blocked from reaching this intersection and pushed instead onto Broad Street, Darien Street, or Front Street.",
+            "location": "Packer Avenue eastbound at 10th Street (Lots Q, R, V, W, X)",
+            "publisher": "The Philadelphia Inquirer",
+            "source_title": "Philly is testing a new traffic pattern to help Eagles fans escape post-game gridlock",
+            "source_url": "https://www.inquirer.com/news/philadelphia/eagles-traffic-philadelphia-walt-whitman-bridge-20251128.html"
+          }
+        ]
+      },
+      "dedicated_service_evidence": {
+        "basis": "SEPTA's Broad Street Line runs every eight minutes or less most of the day and drops fans directly at the stadium-complex station, widely called one of the best subway-to-stadium connections in the country. Late-night rail service continues after matches, though rideshare is confined to designated FDR Park areas.",
+        "publisher": "Southeastern Pennsylvania Transportation Authority (SEPTA)",
+        "source_title": "SEPTA is the Swift Way To Get To Lincoln Financial Field",
+        "source_url": "https://www.septa.org/news/septa-is-the-swift-way-to-get-to-lincoln-financial-field/",
+        "tier": 100
+      },
       "evidence_level": "strong partial",
       "official_service_signals": [
         "Broad Street Line serves the stadium directly",
@@ -116,10 +458,50 @@
       "publisher": "City of Philadelphia",
       "source_title": "City unveils transportation details for World Cup matches",
       "source_url": "https://www.phila.gov/2026-06-10-city-unveils-transportation-and-other-details-for-world-cup-matches/",
-      "strategy_family": "Direct high-capacity transit reinforcement"
+      "strategy_family": "Direct high-capacity transit reinforcement",
+      "sustainability_evidence": {
+        "fleet_electrification_basis": "SEPTA's Regional Rail and subway lines are electric, and SEPTA retired its last diesel-only bus, making its full 1,379-vehicle bus and trackless-trolley fleet electric or hybrid-electric.",
+        "fleet_electrification_tier": 100,
+        "pedestrian_infrastructure_basis": "Lincoln Financial Field sits inside the South Philadelphia Sports Complex, a purpose-built stadium district; the city's World Cup plan also adds a citywide wayfinding program with 100+ temporary signs and keeps the Schuylkill River Trail open near the Fan Festival.",
+        "pedestrian_infrastructure_publisher": "City of Philadelphia & Philadelphia Soccer 2026",
+        "pedestrian_infrastructure_source_title": "City of Philadelphia & Philadelphia Soccer 2026 Share Planning & Operations Updates Ahead of FIFA World Cup 2026",
+        "pedestrian_infrastructure_source_url": "https://phillyfwc26.com/press/city-of-philadelphia-philadelphia-soccer-2026-share-planning-operations-updates-ahead-of-fifa-world-cup-2026-and-fifa-fan-festival",
+        "publisher": "Southeastern Pennsylvania Transportation Authority (SEPTA)",
+        "source_title": "SEPTA Retires Last Diesel Bus in Fleet",
+        "source_url": "https://wwww.septa.org/news/septa-retires-last-diesel-bus-in-fleet-2/"
+      }
     },
     "San Francisco": {
       "city": "San Francisco",
+      "congestion_management_evidence": {
+        "command_note": "",
+        "command_publisher": "",
+        "command_source_title": "",
+        "command_source_url": "",
+        "hotspots": [
+          {
+            "control": "Closed Jan. 28-Feb. 13, 2026 for Super Bowl LX, the direct precedent for World Cup closures; on game day the closure expanded to include Old Ironsides Drive and Lick Mill Boulevard.",
+            "location": "Tasman Drive between Calle Del Sol and Great America Parkway (Levi's Stadium, Santa Clara)",
+            "publisher": "CBS News San Francisco",
+            "source_title": "Road closures in Santa Clara, San Francisco and San Jose as Super Bowl LX nears",
+            "source_url": "https://www.cbsnews.com/sanfrancisco/news/super-bowl-lx-santa-clara-san-francisco-san-jose-road-closures/"
+          },
+          {
+            "control": "Identified by the Bay Area Host Committee as the thoroughfares facing the heaviest match-day traffic impact.",
+            "location": "Great America Parkway, Tasman Drive, and Lafayette Street",
+            "publisher": "CBS News San Francisco",
+            "source_title": "Road closures in Santa Clara, San Francisco and San Jose as Super Bowl LX nears",
+            "source_url": "https://www.cbsnews.com/sanfrancisco/news/super-bowl-lx-santa-clara-san-francisco-san-jose-road-closures/"
+          }
+        ]
+      },
+      "dedicated_service_evidence": {
+        "basis": "VTA light rail serves Levi's Stadium directly via the Great America station; VTA increases service from a typical 57 light-rail cars to at least 80 for stadium event days. BART connects to VTA at Milpitas and Caltrain connects to VTA at Mountain View, extending the regional reach of the light-rail trunk.",
+        "publisher": "CBS News San Francisco",
+        "source_title": "Transit Planning Remains A Top Priority As Levi's Stadium In Santa Clara Prepares To Open",
+        "source_url": "https://www.cbsnews.com/amp/sanfrancisco/news/nfl-49ers-transit-planning-remains-a-top-priority-as-levis-stadium-in-santa-clara-prepares-to-open/",
+        "tier": 100
+      },
       "evidence_level": "strong partial",
       "official_service_signals": [
         "BART connects to VTA at Milpitas",
@@ -129,10 +511,50 @@
       "publisher": "FIFA World Cup 26 San Francisco Bay Area Host Committee",
       "source_title": "Transit and getting to the stadium",
       "source_url": "https://www.sfbayareafwc26.com/transit",
-      "strategy_family": "Multimodal rail-transfer network"
+      "strategy_family": "Multimodal rail-transfer network",
+      "sustainability_evidence": {
+        "fleet_electrification_basis": "VTA's light rail is electric, but its bus fleet remains mostly diesel and hybrid, with only a handful of battery-electric buses in service so far; the agency's zero-emission deadline is 2040, the furthest out of any host's fleet plan found.",
+        "fleet_electrification_tier": 60,
+        "pedestrian_infrastructure_basis": "Levi's Stadium is a real 0.2-mile walk from the Great America VTA station, next to the San Tomas Aquino Creek Trail - though about a mile of that trail closes during events, requiring a two-mile on-street detour via Agnew Road and Mission College Boulevard.",
+        "pedestrian_infrastructure_publisher": "Levi's Stadium",
+        "pedestrian_infrastructure_source_title": "Public Transportation - Levi's Stadium",
+        "pedestrian_infrastructure_source_url": "https://levisstadium.com/getting-here/public-transportation/",
+        "publisher": "Santa Clara Valley Transportation Authority (VTA)",
+        "source_title": "VTA Rolls Toward Cleaner, Greener Future Fleet",
+        "source_url": "https://www.vta.org/blog/vta-rolls-toward-cleaner-greener-future-fleet"
+      }
     },
     "Seattle": {
       "city": "Seattle",
+      "congestion_management_evidence": {
+        "command_note": "",
+        "command_publisher": "",
+        "command_source_title": "",
+        "command_source_url": "",
+        "hotspots": [
+          {
+            "control": "Becomes a pedestrian-only zone with vehicle access restricted roughly 9 a.m.-4 p.m. on match days.",
+            "location": "Pioneer Square (Lumen Field)",
+            "publisher": "Axios",
+            "source_title": "Seattle braces for World Cup traffic and packed trains",
+            "source_url": "https://www.axios.com/local/seattle/2026/05/13/seattle-world-cup-2026-traffic-light-rail-ferry-lumen-field-road-closures"
+          },
+          {
+            "control": "Heavy road congestion expected 8 a.m.-4 p.m. on match days; organizers expect roughly 80% of attendees to arrive via transit, walking, biking, or ride-hail rather than driving.",
+            "location": "Downtown Seattle",
+            "publisher": "Axios",
+            "source_title": "Seattle braces for World Cup traffic and packed trains",
+            "source_url": "https://www.axios.com/local/seattle/2026/05/13/seattle-world-cup-2026-traffic-light-rail-ferry-lumen-field-road-closures"
+          }
+        ]
+      },
+      "dedicated_service_evidence": {
+        "basis": "Link Light Rail's Stadium Station sits directly adjacent to Lumen Field with no walking required, widely cited as the best transit access of any NFL stadium in the U.S. Ferries also expand the regional access network beyond light rail and buses.",
+        "publisher": "The Urbanist",
+        "source_title": "Seattle Is Winning at Hosting the World Cup",
+        "source_url": "https://www.theurbanist.org/seattle-is-winning-at-hosting-the-world-cup/",
+        "tier": 100
+      },
       "evidence_level": "strong partial",
       "official_service_signals": [
         "Downtown stadium supports walking and cycling",
@@ -142,7 +564,18 @@
       "publisher": "Seattle FIFA World Cup 26 Host Committee",
       "source_title": "Seattle transportation",
       "source_url": "https://www.seattlefwc26.org/destination/transportation",
-      "strategy_family": "Downtown multimodal dispersal"
+      "strategy_family": "Downtown multimodal dispersal",
+      "sustainability_evidence": {
+        "fleet_electrification_basis": "Sound Transit's Link Light Rail is fully electric, and King County Metro operates the second-largest electric trolleybus network in the U.S. (174 trolleybuses) plus a growing battery-electric bus fleet, with a council goal of 100% zero-emission by 2035.",
+        "fleet_electrification_tier": 100,
+        "pedestrian_infrastructure_basis": "Downtown Seattle's stadium site is built for walking and cycling, with Lumen Field sitting directly in the compact downtown core rather than a suburban parking complex.",
+        "pedestrian_infrastructure_publisher": "Seattle FIFA World Cup 26 Host Committee",
+        "pedestrian_infrastructure_source_title": "Seattle transportation",
+        "pedestrian_infrastructure_source_url": "https://www.seattlefwc26.org/destination/transportation",
+        "publisher": "King County Metro",
+        "source_title": "King County Metro Zero Emissions Fleet",
+        "source_url": "https://kingcounty.gov/en/dept/metro/programs-and-projects/zero-emissions"
+      }
     }
   },
   "contract_version": "0.3.0",

@@ -2,8 +2,8 @@
 
 from __future__ import annotations
 
-from collections.abc import Mapping
-from typing import Any
+from html import escape
+from textwrap import shorten, wrap
 
 import numpy as np
 import pandas as pd
@@ -13,8 +13,8 @@ from dashboard.viz.style import COLORS, READINESS_SCALE, style_figure, style_map
 
 READINESS_COMPONENTS = {
     "First/last-mile access": "gap_score",
+    "Traffic management": "traffic_score",
     "Heat safety": "heat_score",
-    "Urban heat safety": "uhi_score",
     "Venue support": "access_score",
 }
 
@@ -23,35 +23,37 @@ def _numeric(frame: pd.DataFrame, column: str) -> pd.Series:
     return pd.to_numeric(frame.get(column), errors="coerce")
 
 
-def portfolio_gap_quadrant_chart(frame: pd.DataFrame) -> go.Figure:
-    """Plot weighted readiness score (balanced profile) against the first/last-mile
-    access score, all hosts at once.
+def portfolio_sustainability_access_chart(frame: pd.DataFrame) -> go.Figure:
+    """Plot sustainability score against the first/last-mile access score, all hosts at once.
 
-    The access score blends real transit-stop density and real parking-facility
-    density (75/25, transit weighted more heavily as more reliable evidence;
-    falls back to transit alone where parking data isn't available yet); it
-    does not factor in heat. The x-axis always uses the fixed "balanced" weight
-    profile regardless of whatever weights are active elsewhere in the app, so
-    this comparison stays stable. Bubble size is venue capacity; color is
-    average summer temperature - shown for context only, since it no longer
-    feeds the access score itself. The dotted threshold line is an illustrative
-    reference point chosen for this branch's current score distribution, not
-    an evidenced cutoff.
+    Sustainability (100 - parking density, 50%; real fleet electrification,
+    30%; real pedestrian-infrastructure evidence, 20%) is a deliberately
+    separate signal from access - a city can score well on one and poorly on
+    the other (e.g. Atlanta's downtown venue has both strong transit and
+    abundant nearby parking, so it scores near the top on access but near the
+    bottom on sustainability). The access score blends a transit-access score
+    (real GTFS transit-stop density, real GTFS event-window departure
+    frequency, and real published/benchmark dedicated-service evidence) with
+    real parking-facility density (75/25, transit access weighted more
+    heavily as more reliable evidence; falls back to whichever components are
+    available for a city); it does not factor in heat. Bubble size is venue
+    capacity; color is average summer temperature - shown for context only,
+    since it feeds neither score.
     """
 
     chart = frame.copy()
-    chart["_readiness"] = _numeric(chart, "balanced_score")
+    chart["_sustainability"] = _numeric(chart, "sustainability_score")
     chart["_access"] = _numeric(chart, "gap_score")
     chart["_temp"] = _numeric(chart, "avg_temp_c")
     chart["_capacity"] = _numeric(chart, "capacity")
-    chart = chart.dropna(subset=["_readiness", "_access"])
+    chart = chart.dropna(subset=["_sustainability", "_access"])
 
     max_capacity = float(chart["_capacity"].fillna(0).max())
     sizeref = (2.0 * max_capacity / (46.0**2)) if max_capacity > 0 else 1.0
 
     figure = go.Figure(
         go.Scatter(
-            x=chart["_readiness"],
+            x=chart["_sustainability"],
             y=chart["_access"],
             mode="markers+text",
             text=chart["city"],
@@ -69,27 +71,14 @@ def portfolio_gap_quadrant_chart(frame: pd.DataFrame) -> go.Figure:
             ),
             customdata=np.column_stack([chart["_capacity"].fillna(0), chart["_temp"]]),
             hovertemplate=(
-                "<b>%{text}</b><br>Readiness score (balanced profile): %{x:.0f}/100"
+                "<b>%{text}</b><br>Sustainability score: %{x:.0f}/100"
                 "<br>First/last-mile access score: %{y:.0f}/100"
                 "<br>Venue capacity: %{customdata[0]:,.0f}"
                 "<br>Avg summer temp: %{customdata[1]:.1f}°C<extra></extra>"
             ),
         )
     )
-    figure.add_hline(
-        y=15, line_dash="dot", line_color=COLORS["muted"],
-        annotation_text="Low access threshold", annotation_position="bottom left",
-        annotation_font=dict(size=10, color=COLORS["muted"]),
-    )
-    figure.add_annotation(
-        xref="paper", yref="paper", x=0.02, y=0.02, xanchor="left", yanchor="bottom",
-        text="Low readiness + low access", showarrow=False, font=dict(size=10, color=COLORS["coral"]),
-    )
-    figure.add_annotation(
-        xref="paper", yref="paper", x=0.98, y=0.98, xanchor="right", yanchor="top",
-        text="High readiness + high access", showarrow=False, font=dict(size=10, color=COLORS["teal"]),
-    )
-    figure.update_xaxes(title="Weighted readiness score (0-100, balanced profile)", range=[-5, 108])
+    figure.update_xaxes(title="Sustainability score (0-100)", range=[-5, 108])
     figure.update_yaxes(title="First/last-mile access score")
     return style_figure(figure, 520, legend=False, margin=dict(l=18, r=18, t=42, b=38))
 
@@ -392,6 +381,12 @@ def city_hourly_movement_chart(hourly_movement: pd.DataFrame, city: str) -> go.F
     """
 
     chart = hourly_movement[hourly_movement["city"] == city].sort_values("hours_from_kickoff")
+    for direction in ("arrivals", "departures"):
+        base_column = f"avg_{direction}_base"
+        for case in ("low", "high"):
+            column = f"avg_{direction}_{case}"
+            if column not in chart.columns:
+                chart[column] = chart[base_column]
 
     # Arrival buckets only exist at hours -4..1 (a small tail of the arrival
     # profile lands one hour after kickoff, i.e. latecomers) and departure
@@ -399,10 +394,44 @@ def city_hourly_movement_chart(hourly_movement: pd.DataFrame, city: str) -> go.F
     # length, with a small early-leaver share one hour before that). Restrict
     # each line to its own real domain rather than flat-lining across the
     # other direction's whole range.
-    arrivals = chart.loc[chart["hours_from_kickoff"] <= 1, ["hours_from_kickoff", "avg_arrivals_base"]]
-    departures = chart.loc[chart["hours_from_kickoff"] >= 1, ["hours_from_kickoff", "avg_departures_base"]]
+    arrivals = chart.loc[
+        chart["hours_from_kickoff"] <= 1,
+        ["hours_from_kickoff", "avg_arrivals_low", "avg_arrivals_base", "avg_arrivals_high"],
+    ]
+    departures = chart.loc[
+        chart["hours_from_kickoff"] >= 1,
+        ["hours_from_kickoff", "avg_departures_low", "avg_departures_base", "avg_departures_high"],
+    ]
 
     figure = go.Figure()
+    for movement, direction, color, fill_color, label in (
+        (arrivals, "arrivals", COLORS["teal_light"], "rgba(11, 113, 105, .26)", "Arrivals planning range"),
+        (departures, "departures", COLORS["coral"], "rgba(185, 83, 58, .24)", "Departures planning range"),
+    ):
+        low_column = f"avg_{direction}_low"
+        high_column = f"avg_{direction}_high"
+        figure.add_trace(
+            go.Scatter(
+                x=movement["hours_from_kickoff"],
+                y=movement[high_column],
+                mode="lines",
+                line=dict(color=color, width=1, dash="dot"),
+                hoverinfo="skip",
+                showlegend=False,
+            )
+        )
+        figure.add_trace(
+            go.Scatter(
+                x=movement["hours_from_kickoff"],
+                y=movement[low_column],
+                mode="lines",
+                fill="tonexty",
+                fillcolor=fill_color,
+                line=dict(color=color, width=1, dash="dot"),
+                name=label,
+                hoverinfo="skip",
+            )
+        )
     figure.add_trace(
         go.Scatter(
             x=arrivals["hours_from_kickoff"],
@@ -411,7 +440,11 @@ def city_hourly_movement_chart(hourly_movement: pd.DataFrame, city: str) -> go.F
             name="Arrivals",
             line=dict(color=COLORS["teal"], width=3),
             marker=dict(size=7),
-            hovertemplate="<b>%{x:+.0f}h from kickoff</b><br>Avg arrivals: %{y:,.0f}/hour<extra></extra>",
+            customdata=np.column_stack([arrivals["avg_arrivals_low"], arrivals["avg_arrivals_high"]]),
+            hovertemplate=(
+                "<b>%{x:+.0f}h from kickoff</b><br>Avg arrivals: %{y:,.0f}/hour"
+                "<br>Planning range: %{customdata[0]:,.0f}-%{customdata[1]:,.0f}/hour<extra></extra>"
+            ),
         )
     )
     figure.add_trace(
@@ -422,13 +455,114 @@ def city_hourly_movement_chart(hourly_movement: pd.DataFrame, city: str) -> go.F
             name="Departures",
             line=dict(color=COLORS["coral"], width=3),
             marker=dict(size=7),
-            hovertemplate="<b>%{x:+.0f}h from kickoff</b><br>Avg departures: %{y:,.0f}/hour<extra></extra>",
+            customdata=np.column_stack([departures["avg_departures_low"], departures["avg_departures_high"]]),
+            hovertemplate=(
+                "<b>%{x:+.0f}h from kickoff</b><br>Avg departures: %{y:,.0f}/hour"
+                "<br>Planning range: %{customdata[0]:,.0f}-%{customdata[1]:,.0f}/hour<extra></extra>"
+            ),
         )
     )
     figure.add_vline(x=0, line_dash="dot", line_color=COLORS["muted"])
     figure.update_xaxes(title="Hours from kickoff", dtick=1, zeroline=False)
     figure.update_yaxes(title="Average modeled passengers / hour")
     return style_figure(figure, 530, margin=dict(l=18, r=18, t=42, b=38))
+
+
+def transit_solution_comparison_chart(
+    options: pd.DataFrame, recommended: dict | None = None,
+) -> go.Figure:
+    """Four distinct solution types, with compact numbered markers and a key."""
+    figure = go.Figure()
+    colors = ("blue", "amber", "teal", "violet", "coral")
+    records = options.to_dict("records")
+    if recommended is not None:
+        records.append(recommended)
+    for index, row in enumerate(records):
+        is_recommended = recommended is not None and index == len(records) - 1
+        context = row.get("city_context", "")
+        has_context = context in {"Existing approach", "Related approach", "Published plan"}
+        number = "R" if is_recommended else str(index + 1)
+        label = "Recommended first action" if is_recommended else f"{number}. {row['label']}"
+        if has_context:
+            label += f"<br>{context}"
+        name = "<br>".join(escape(line) for line in wrap(row["solution"], width=32))
+        figure.add_trace(go.Scatter(
+            x=[row["passengers"]], y=[row["net_co2e_kg"]],
+            mode="markers+text", name=label,
+            text=[number], textposition="middle center",
+            textfont=dict(color="white", size=14),
+            marker=dict(size=42 if is_recommended else 30, color=COLORS[colors[index]],
+                        symbol="star" if is_recommended else "diamond" if has_context else "circle",
+                        line=dict(width=2, color=COLORS["ink"] if has_context else COLORS["surface"])),
+            customdata=[[name, row["shifted_passengers"], row["net_vehicle_miles"],
+                         "Recommended first action" if is_recommended else context or "Planning scenario",
+                         row.get("co2e_screen", "Not assessed")]],
+            hovertemplate=(
+                "<b>%{customdata[0]}</b><br>Passengers addressed: %{x:,.0f} / match"
+                "<br>Net CO2e avoided: %{y:,.0f} kg / match"
+                "<br>Shifted from cars: %{customdata[1]:,.0f}"
+                "<br>Net vehicle-miles saved: %{customdata[2]:,.0f}"
+                "<br>%{customdata[3]}<br>Operating CO2e screen: %{customdata[4]}<extra></extra>"
+            ),
+            hoverlabel=dict(align="left", font_size=12),
+        ))
+    figure.update_xaxes(title="Passengers addressed per match", rangemode="tozero", tickformat=",")
+    figure.update_yaxes(title="Net CO2e avoided (kg / match)", rangemode="tozero", tickformat=",",
+                        zeroline=True, zerolinecolor=COLORS["muted"], zerolinewidth=1)
+    figure = style_figure(figure, 550, margin=dict(l=18, r=18, t=25, b=190))
+    if records:
+        plotted = pd.DataFrame(records)
+        xmax = max(float(plotted["passengers"].max()), 1.0)
+        ymin = min(float(plotted["net_co2e_kg"].min()), 0.0)
+        ymax = max(float(plotted["net_co2e_kg"].max()), 0.0)
+        padding = max((ymax - ymin) * 0.15, 1.0)
+        figure.update_xaxes(range=[-xmax * 0.08, xmax * 1.12])
+        figure.update_yaxes(range=[ymin - padding, ymax + padding])
+    figure.update_yaxes(zeroline=True)
+    figure.update_layout(legend=dict(orientation="h", x=0, y=-0.22, yanchor="top",
+                                    entrywidth=0.5, entrywidthmode="fraction",
+                                    font=dict(size=11), itemclick=False, itemdoubleclick=False))
+    return figure
+
+
+def city_action_options_chart(options: pd.DataFrame) -> go.Figure:
+    """Compare one match's screened intervention options on cost vs peak-demand impact.
+
+    One point per named intervention (Shuttle service, Added transit frequency,
+    Cooled walking corridors, Arrival spreading and curb management) - the same
+    real, scenario-labeled numbers shown in the table next to it, plotted so
+    cost and impact can be read against each other at a glance. Qualified
+    options (teal) have a real local route/evidence assignment; exploratory
+    options (slate) are missing one (e.g. a route or terminal) and aren't
+    ready to fund yet.
+    """
+
+    chart = options.dropna(subset=["cost_per_passenger", "gap_resolved_passengers"]).copy()
+    if chart.empty:
+        return style_figure(go.Figure(), 380, legend=False, margin=dict(l=18, r=18, t=42, b=38))
+    colors = [COLORS["teal"] if qualified else COLORS["slate"] for qualified in chart["evidence_qualified"]]
+    evidence_label = chart["evidence_qualified"].map({True: "Qualified", False: "Exploratory"})
+    figure = go.Figure(
+        go.Scatter(
+            x=chart["cost_per_passenger"],
+            y=chart["gap_resolved_passengers"],
+            mode="markers+text",
+            text=chart["intervention"],
+            textposition="top center",
+            textfont=dict(size=10, color=COLORS["ink"]),
+            marker=dict(size=16, color=colors, line=dict(width=1, color=COLORS["surface"])),
+            customdata=np.column_stack([chart["lead_time_band"], evidence_label]),
+            hovertemplate=(
+                "<b>%{text}</b><br>Screening cost ratio: $%{x:.2f} / passenger"
+                "<br>Peak demand addressed: %{y:,.0f} passengers"
+                "<br>Lead time: %{customdata[0]}"
+                "<br>Evidence: %{customdata[1]}<extra></extra>"
+            ),
+        )
+    )
+    figure.update_xaxes(title="Screening cost ratio ($ / peak passenger addressed)")
+    figure.update_yaxes(title="Peak demand addressed (passengers)")
+    return style_figure(figure, 380, legend=False, margin=dict(l=18, r=18, t=42, b=38))
 
 
 def portfolio_visitor_forecast_chart(
@@ -511,61 +645,6 @@ def portfolio_visitor_forecast_chart(
     # stacked bars actually show left-to-right.
     figure.update_layout(legend=dict(traceorder="normal"))
     return figure
-
-
-def portfolio_custom_scenario_chart(
-    outcome: Mapping[str, Any], baseline_vehicle_trips: float | None
-) -> go.Figure:
-    """Baseline vs. a live-evaluated custom intervention scenario, for one city.
-
-    Baseline bars are genuinely zero here, since no intervention resolves zero
-    gap, avoids zero vehicle trips, and avoids zero CO2e by definition - seeing
-    "0 -> evaluated value" for a scenario the user just built with sliders is
-    the point of this view. Cost is reported separately (different unit), not
-    plotted here.
-    """
-
-    categories = [
-        "Peak passengers\naddressed / hr",
-        "Vehicle trips\navoided",
-        "Net CO2e\navoided (kg)",
-    ]
-    gap_resolved = float(outcome.get("gap_resolved_passengers") or 0)
-    custom_trips = outcome.get("venue_vehicle_trips_base")
-    trips_avoided = (
-        max(float(baseline_vehicle_trips) - float(custom_trips), 0.0)
-        if baseline_vehicle_trips is not None and custom_trips is not None
-        else 0.0
-    )
-    co2e_avoided = float(outcome.get("net_co2e_kg_base") or 0)
-    values = [gap_resolved, trips_avoided, co2e_avoided]
-
-    figure = go.Figure()
-    figure.add_trace(
-        go.Bar(
-            x=categories,
-            y=[0, 0, 0],
-            name="Baseline",
-            marker_color=COLORS["slate"],
-            text=["0", "0", "0"],
-            textposition="outside",
-            hovertemplate="<b>Baseline</b><br>%{x}: 0 (no intervention)<extra></extra>",
-        )
-    )
-    figure.add_trace(
-        go.Bar(
-            x=categories,
-            y=values,
-            name="Custom scenario",
-            marker_color=COLORS["blue"],
-            text=[f"{v:,.0f}" for v in values],
-            textposition="outside",
-            hovertemplate="<b>Custom scenario</b><br>%{x}: %{y:,.0f}<extra></extra>",
-        )
-    )
-    figure.update_layout(barmode="group", uniformtext_minsize=9, uniformtext_mode="hide")
-    figure.update_yaxes(title="Modeled benefit (mixed units - see axis groups)", rangemode="tozero")
-    return style_figure(figure, 420, margin=dict(l=18, r=18, t=42, b=38))
 
 
 def portfolio_traffic_chart(frame: pd.DataFrame) -> go.Figure:
@@ -698,46 +777,69 @@ def readiness_ranking_chart(frame: pd.DataFrame) -> go.Figure:
     return style_figure(figure, 480, legend=False, margin=dict(l=18, r=42, t=22, b=38))
 
 
-def portfolio_access_score_chart(frame: pd.DataFrame) -> go.Figure:
-    """Rank cities by first/last-mile access score.
+def portfolio_frequency_benchmark_chart(frame: pd.DataFrame) -> go.Figure:
+    """Compare the two newer transit-access inputs - real event-window frequency and
+    real published/benchmark dedicated-service evidence - all hosts at once.
 
-    Access score is 100 minus the first/last-mile gap score - a 75/25 blend of
-    real GTFS transit-stop density and real OSM parking-facility density. It
-    does not depend on any weight profile, unlike the readiness score used
-    elsewhere in this tab.
+    Both feed transit_access_score (30% each) alongside stop density (40%);
+    neither is visible in the stop/parking density chart above, so this is
+    the only place a host's frequency and benchmark-evidence standing show up
+    on their own. Sorted by frequency score, since it's the more granular of
+    the two (benchmark evidence is only a 100/60 tier).
     """
 
     chart = frame.copy()
-    chart["_score"] = _numeric(chart, "gap_score")
-    chart = chart.dropna(subset=["_score"]).sort_values(["_score", "city"])
-    chart["_rank"] = chart["_score"].rank(ascending=False, method="min")
-    figure = go.Figure(
+    chart["_frequency"] = _numeric(chart, "frequency_score")
+    chart["_benchmark"] = _numeric(chart, "benchmark_capacity_score")
+    chart = chart.dropna(subset=["_frequency", "_benchmark"], how="all").sort_values(
+        ["_frequency", "city"], ascending=[False, True], na_position="last"
+    )
+    departures = _numeric(chart, "event_window_departures")
+    tier_label = chart["_benchmark"].map(
+        lambda value: "High-frequency rail/BRT" if value == 100 else "Dedicated shuttle/bus" if value == 60 else "Not available"
+    )
+    basis = chart.get("dedicated_service_basis", pd.Series(dtype=object)).fillna("Not available")
+    publisher = chart.get("dedicated_service_publisher", pd.Series(dtype=object)).fillna("Not available")
+    # Keep previews compact; full evidence and citations remain in the table below.
+    basis = basis.map(lambda value: "<br>".join(
+        escape(line) for line in wrap(shorten(str(value), width=180, placeholder="..."), width=32)
+    ))
+    publisher = publisher.map(lambda value: "<br>".join(
+        escape(line) for line in wrap(shorten(str(value), width=80, placeholder="..."), width=32)
+    ))
+
+    figure = go.Figure()
+    figure.add_trace(
         go.Bar(
-            y=chart["city"],
-            x=chart["_score"],
-            orientation="h",
-            marker=dict(color=chart["_score"], colorscale=READINESS_SCALE, cmin=0, cmax=100),
-            text=chart["_score"],
-            texttemplate="%{text:.1f}",
-            textposition="outside",
-            customdata=np.column_stack(
-                [
-                    chart["_rank"],
-                    _numeric(chart, "forecast_match_count"),
-                    _numeric(chart, "capacity"),
-                ]
-            ),
+            x=chart["city"],
+            y=chart["_frequency"],
+            name="Event-window frequency score",
+            marker_color=COLORS["blue"],
+            customdata=np.column_stack([departures]),
             hovertemplate=(
-                "<b>%{y}</b><br>First/last-mile access score: %{x:.1f}/100"
-                "<br>Rank: %{customdata[0]:.0f}"
-                "<br>Hosted matches: %{customdata[1]:.0f}"
-                "<br>Venue capacity: %{customdata[2]:,.0f}<extra></extra>"
+                "<b>%{x}</b><br>Frequency score: %{y:.1f}/100"
+                "<br>Real event-window departures: %{customdata[0]:,.0f}<extra></extra>"
             ),
-            showlegend=False,
         )
     )
-    figure.update_xaxes(title="First/last-mile access score (0–100)", range=[0, 105])
-    return style_figure(figure, 480, legend=False, margin=dict(l=18, r=42, t=22, b=38))
+    figure.add_trace(
+        go.Bar(
+            x=chart["city"],
+            y=chart["_benchmark"],
+            name="Published-service evidence tier",
+            marker_color=COLORS["violet"],
+            customdata=np.column_stack([tier_label, basis, publisher]),
+            hovertemplate=(
+                "<b>%{x}</b><br>%{customdata[0]}<br>Score: %{y:.0f}/100"
+                "<br>%{customdata[1]}<br>Source:<br>%{customdata[2]}"
+                "<br>Full details in evidence table.<extra></extra>"
+            ),
+            hoverlabel=dict(align="left", font_size=12),
+        )
+    )
+    figure.update_layout(barmode="group", uniformtext_minsize=8, uniformtext_mode="hide")
+    figure.update_yaxes(title="Score (0–100)", range=[0, 105])
+    return style_figure(figure, 480, margin=dict(l=18, r=18, t=42, b=38))
 
 
 def readiness_components_chart(metrics: pd.DataFrame, city_order: list[str]) -> go.Figure:
@@ -753,7 +855,7 @@ def readiness_components_chart(metrics: pd.DataFrame, city_order: list[str]) -> 
     figure = go.Figure(
         go.Heatmap(
             z=values,
-            x=["First/last-mile<br>access", "Heat<br>safety", "Urban heat<br>safety", "Venue<br>support"],
+            x=[label.replace(" ", "<br>", 1) for label in READINESS_COMPONENTS],
             y=chart.index.tolist(),
             zmin=0,
             zmax=100,
@@ -776,6 +878,142 @@ def readiness_components_chart(metrics: pd.DataFrame, city_order: list[str]) -> 
                 "<b>%{y}</b><br>%{x}: %{z:.1f}/100"
                 "<br>Evidence status: %{customdata}<extra></extra>"
             ),
+        )
+    )
+    figure.update_xaxes(title=None, side="bottom", tickangle=0)
+    figure.update_yaxes(title=None, showticklabels=True)
+    return style_figure(figure, 500, legend=False, margin=dict(l=18, r=18, t=58, b=38))
+
+
+def transportation_resilience_ranking_chart(frame: pd.DataFrame) -> go.Figure:
+    """Rank cities by the 0-10 transportation resilience rating.
+
+    Blends real demand-surge stress-test coverage (50%), real GTFS
+    event-window departure frequency (30%), and real published dedicated-
+    capacity evidence (20%) - see dashboard/ui/portfolio/context.py's
+    _with_resilience_score for the exact formula and why raw nearby route
+    density was deliberately excluded. Renormalizes over whichever
+    components are real for a city; unavailable only if none are.
+    """
+
+    chart = frame.copy()
+    chart["_rating"] = _numeric(chart, "resilience_rating")
+    chart = chart.dropna(subset=["_rating"]).sort_values(["_rating", "city"])
+    stress = _numeric(chart, "stress_coverage_pct")
+    frequency = _numeric(chart, "frequency_score")
+    benchmark = _numeric(chart, "benchmark_capacity_score")
+    figure = go.Figure(
+        go.Bar(
+            y=chart["city"],
+            x=chart["_rating"],
+            orientation="h",
+            marker=dict(color=chart["_rating"], colorscale=READINESS_SCALE, cmin=0, cmax=10),
+            text=chart["_rating"],
+            texttemplate="%{text:.1f}",
+            textposition="outside",
+            customdata=np.column_stack([stress, frequency, benchmark]),
+            hovertemplate=(
+                "<b>%{y}</b><br>Transportation resilience: %{x:.1f}/10"
+                "<br>Stress-test coverage (after a 10% demand surge + 20% capacity loss): %{customdata[0]:.1f}%"
+                "<br>Event-window frequency score: %{customdata[1]:.1f}/100"
+                "<br>Published dedicated-capacity evidence: %{customdata[2]:.0f}/100<extra></extra>"
+            ),
+            showlegend=False,
+        )
+    )
+    figure.update_xaxes(title="Transportation resilience rating (0–10)", range=[0, 10.6])
+    return style_figure(figure, 480, legend=False, margin=dict(l=18, r=42, t=22, b=38))
+
+
+def transportation_resilience_components_chart(frame: pd.DataFrame, city_order: list[str]) -> go.Figure:
+    """Expose the three real signals blended into the transportation resilience rating."""
+
+    columns = {
+        "stress_coverage_pct": "Stress-test<br>coverage",
+        "frequency_score": "Event-window<br>frequency",
+        "benchmark_capacity_score": "Published-capacity<br>evidence",
+    }
+    chart = frame.copy().set_index("city").reindex(city_order)
+    values = np.column_stack([_numeric(chart, column) for column in columns])
+    figure = go.Figure(
+        go.Heatmap(
+            z=values,
+            x=list(columns.values()),
+            y=chart.index.tolist(),
+            zmin=0,
+            zmax=100,
+            colorscale=READINESS_SCALE,
+            text=np.where(pd.isna(values), "—", np.round(values).astype(object)),
+            texttemplate="%{text}",
+            colorbar=dict(
+                title=dict(text="Score", side="top"),
+                orientation="h",
+                x=.5,
+                xanchor="center",
+                y=1.08,
+                yanchor="bottom",
+                thickness=9,
+                len=.58,
+                outlinewidth=0,
+            ),
+            hovertemplate="<b>%{y}</b><br>%{x}: %{z:.1f}/100<extra></extra>",
+        )
+    )
+    figure.update_xaxes(title=None, side="bottom", tickangle=0)
+    figure.update_yaxes(title=None, showticklabels=True)
+    return style_figure(figure, 460, legend=False, margin=dict(l=18, r=18, t=58, b=38))
+
+
+def access_sustainability_components_chart(frame: pd.DataFrame, city_order: list[str]) -> go.Figure:
+    """Expose every real input behind the first/last-mile access and sustainability
+
+    scores, side by side - the same "What drives readiness?" heatmap style used
+    in the Overview tab, applied to this tab's two composites instead.
+    """
+
+    chart = frame.copy().set_index("city").reindex(city_order)
+    parking = _numeric(chart, "parking_score")
+    columns: dict[str, tuple[pd.Series, str]] = {
+        "Transit-stop<br>density": (_numeric(chart, "transit_score"), "transit_status"),
+        "Event-window<br>frequency": (_numeric(chart, "frequency_score"), "frequency_status"),
+        "Dedicated-service<br>evidence": (_numeric(chart, "benchmark_capacity_score"), "benchmark_capacity_status"),
+        "Pedestrian<br>infrastructure": (
+            _numeric(chart, "pedestrian_infrastructure_score"),
+            "pedestrian_infrastructure_status",
+        ),
+        "Parking-facility<br>density (0.5mi)": (parking, "parking_status"),
+        "Fleet<br>electrification": (_numeric(chart, "fleet_electrification_score"), "fleet_electrification_status"),
+    }
+    values = np.column_stack([series.to_numpy() for series, _ in columns.values()])
+    evidence = np.column_stack(
+        [
+            chart.get(status_column, pd.Series("unavailable", index=chart.index)).fillna("unavailable")
+            for _, status_column in columns.values()
+        ]
+    )
+    figure = go.Figure(
+        go.Heatmap(
+            z=values,
+            x=list(columns.keys()),
+            y=chart.index.tolist(),
+            zmin=0,
+            zmax=100,
+            colorscale=READINESS_SCALE,
+            text=np.where(pd.isna(values), "—", np.round(values).astype(object)),
+            texttemplate="%{text}",
+            customdata=evidence,
+            colorbar=dict(
+                title=dict(text="Score", side="top"),
+                orientation="h",
+                x=.5,
+                xanchor="center",
+                y=1.08,
+                yanchor="bottom",
+                thickness=9,
+                len=.58,
+                outlinewidth=0,
+            ),
+            hovertemplate="<b>%{y}</b><br>%{x}: %{z:.1f}/100<br>Evidence: %{customdata}<extra></extra>",
         )
     )
     figure.update_xaxes(title=None, side="bottom", tickangle=0)

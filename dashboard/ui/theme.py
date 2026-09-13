@@ -196,6 +196,22 @@ def apply_theme() -> None:
             margin: 0;
         }
         .hero-meta { display: flex; flex-wrap: wrap; gap: .45rem; margin-top: 1.15rem; position: relative; z-index: 1; }
+        .hero-layout { display: grid; grid-template-columns: minmax(0, 1fr) minmax(15rem, .7fr); align-items: center; gap: 2rem; }
+        .hero-layout > div { min-width: 0; }
+        .hero-metric { position: relative; z-index: 1; border-left: 1px solid #cfe0d9; padding-left: 2rem; }
+        .hero-metric-label { font-size: .95rem; font-weight: 650; color: var(--ink-soft); }
+        .hero-metric-value { font-size: 3rem; font-weight: 760; line-height: 1.15; color: var(--teal); margin-top: .4rem; }
+        .hero-metric-unit { font-size: .95rem; color: var(--ink-soft); margin-top: .15rem; }
+        .hero-metric-note { font-size: .78rem; line-height: 1.5; color: var(--ink-soft); margin-top: .65rem; }
+        .hero-metric > div { letter-spacing: 0; overflow-wrap: anywhere; }
+        .callout.prominent .callout-title { font-size: 1.1rem; line-height: 1.4; }
+        .callout.prominent .callout-body { font-size: 1.1rem; line-height: 1.65; }
+        .callout.prominent > div { min-width: 0; overflow-wrap: anywhere; }
+        @media (max-width: 900px) {
+            .hero-layout { grid-template-columns: minmax(0, 1fr); gap: 1.25rem; }
+            .hero-metric { border-left: 0; border-top: 1px solid #cfe0d9; padding-left: 0; padding-top: 1.25rem; }
+            .hero-metric-value { font-size: 2.5rem; }
+        }
         .meta-chip {
             border: 1px solid #cfe0d9;
             border-radius: 999px;
@@ -401,14 +417,28 @@ def metric_card(
     )
 
 
-def page_header(kicker: str, title: str, description: str, meta: Iterable[str] = ()) -> None:
+def page_header(
+    kicker: str, title: str, description: str, meta: Iterable[str] = (),
+    *, metric: tuple[str, str, str, str] | None = None,
+) -> None:
     chips = "".join(f"<span class='meta-chip'>{escape(str(item))}</span>" for item in meta)
     meta_html = f"<div class='hero-meta'>{chips}</div>" if chips else ""
-    st.markdown(
-        f"<section class='hero-shell'>"
+    content = (
         f"<div class='hero-kicker'>{escape(kicker)}</div>"
         f"<div class='hero-title'>{escape(title)}</div>"
-        f"<p class='hero-copy'>{escape(description)}</p>{meta_html}</section>",
+        f"<p class='hero-copy'>{escape(description)}</p>{meta_html}"
+    )
+    if metric is not None:
+        label, value, unit, note = metric
+        content = (
+            f"<div class='hero-layout'><div>{content}</div><div class='hero-metric'>"
+            f"<div class='hero-metric-label'>{escape(label)}</div>"
+            f"<div class='hero-metric-value'>{escape(value)}</div>"
+            f"<div class='hero-metric-unit'>{escape(unit)}</div>"
+            f"<div class='hero-metric-note'>{escape(note)}</div></div></div>"
+        )
+    st.markdown(
+        f"<section class='hero-shell'>{content}</section>",
         unsafe_allow_html=True,
     )
 
@@ -422,10 +452,11 @@ def section_header(title: str, description: str | None = None, kicker: str | Non
     )
 
 
-def callout(kind: str, title: str, body: str) -> None:
+def callout(kind: str, title: str, body: str, *, prominent: bool = False) -> None:
     callout_kind = kind if kind in {"info", "warning", "success", "error"} else "info"
+    emphasis = " prominent" if prominent else ""
     st.markdown(
-        f"<div class='callout {callout_kind}'><div class='callout-bar'></div><div>"
+        f"<div class='callout {callout_kind}{emphasis}'><div class='callout-bar'></div><div>"
         f"<div class='callout-title'>{escape(title)}</div>"
         f"<div class='callout-body'>{escape(body)}</div></div></div>",
         unsafe_allow_html=True,

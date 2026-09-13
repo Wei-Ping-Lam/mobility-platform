@@ -161,14 +161,15 @@ def access_overlap_map(
             )
         )
 
+    venue_name = str(venue.get("name") or "Venue")
     figure.add_trace(
         go.Scattermap(
             lat=[venue_lat],
             lon=[venue_lon],
             mode="markers",
             marker=dict(size=18, color=COLORS["ink"]),
-            name="Venue",
-            text=[str(venue.get("name") or "Venue")],
+            name=venue_name,
+            text=[venue_name],
             hovertemplate="%{text}<extra></extra>",
         )
     )
@@ -264,14 +265,15 @@ def operating_overlap_map(
             )
         )
 
+    venue_name = str(venue.get("name") or "Venue")
     figure.add_trace(
         go.Scattermap(
             lat=[venue_lat],
             lon=[venue_lon],
             mode="markers",
             marker=dict(size=18, color=COLORS["ink"]),
-            name="Venue",
-            text=[str(venue.get("name") or "Venue")],
+            name=venue_name,
+            text=[venue_name],
             hovertemplate="%{text}<extra></extra>",
         )
     )
@@ -287,6 +289,84 @@ def operating_overlap_map(
     return style_map(
         figure,
         390,
+        zoom=zoom,
+        lat=sum(all_latitudes) / len(all_latitudes),
+        lon=sum(all_longitudes) / len(all_longitudes),
+    )
+
+
+def recommendation_focus_map(venue: Mapping[str, Any], focus_points: Sequence[Mapping[str, Any]]) -> go.Figure:
+    """Plot the venue plus the real, named place(s) a host's hand-authored recommended
+    action is actually about (e.g. Providence Station for Boston's Providence-to-
+    Foxborough shuttle) - not the engine's own, separately-modeled hub pick.
+
+    focus_points is empty for hosts whose recommendation isn't about a specific,
+    confidently-identifiable real place (e.g. a gate-operations or fare-policy
+    fix); the map then shows only the venue, with the caller's caption explaining
+    why no second point is drawn instead of guessing one.
+    """
+
+    venue_lat = _number(venue.get("lat"))
+    venue_lon = _number(venue.get("lon"))
+    figure = go.Figure()
+    if venue_lat is None or venue_lon is None:
+        return style_map(figure, 360, zoom=3, lat=38.5, lon=-96)
+
+    valid_points = [
+        (point, lat, lon)
+        for point in focus_points
+        for lat in (_number(point.get("lat")),)
+        for lon in (_number(point.get("lon")),)
+        if lat is not None and lon is not None
+    ]
+    for _, lat, lon in valid_points:
+        figure.add_trace(
+            go.Scattermap(
+                lat=[lat, venue_lat],
+                lon=[lon, venue_lon],
+                mode="lines",
+                line=dict(color=COLORS["slate"], width=2),
+                showlegend=False,
+                hoverinfo="skip",
+            )
+        )
+    if valid_points:
+        figure.add_trace(
+            go.Scattermap(
+                lat=[lat for _, lat, _ in valid_points],
+                lon=[lon for _, _, lon in valid_points],
+                mode="markers",
+                marker=dict(size=15, color=COLORS["amber"]),
+                name="Named in this recommendation",
+                text=[str(point.get("name") or "Named location") for point, _, _ in valid_points],
+                hovertemplate="%{text}<extra></extra>",
+            )
+        )
+
+    venue_name = str(venue.get("name") or "Venue")
+    figure.add_trace(
+        go.Scattermap(
+            lat=[venue_lat],
+            lon=[venue_lon],
+            mode="markers",
+            marker=dict(size=18, color=COLORS["ink"]),
+            name=venue_name,
+            text=[venue_name],
+            hovertemplate="%{text}<extra></extra>",
+        )
+    )
+
+    all_latitudes = [venue_lat, *[lat for _, lat, _ in valid_points]]
+    all_longitudes = [venue_lon, *[lon for _, _, lon in valid_points]]
+    spread = max(
+        max(all_latitudes) - min(all_latitudes),
+        (max(all_longitudes) - min(all_longitudes)) * math.cos(math.radians(venue_lat)),
+        0.01,
+    )
+    zoom = 11.2 if spread < 0.04 else 9.8 if spread < 0.16 else 8.6 if spread < 0.55 else 7.3
+    return style_map(
+        figure,
+        360,
         zoom=zoom,
         lat=sum(all_latitudes) / len(all_latitudes),
         lon=sum(all_longitudes) / len(all_longitudes),
