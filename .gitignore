@@ -18,6 +18,7 @@ Rice WC Hack/
 .streamlit-preview-*.log
 data/raw/
 data/osmnx-cache/
+/cache/
 data/snapshots/osm/raw/
 *.graphml
 

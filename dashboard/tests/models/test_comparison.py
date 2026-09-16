@@ -58,6 +58,8 @@ def _metrics() -> pd.DataFrame:
 def test_comparison_keeps_strict_ranking_separate_from_all_city_screening():
     frame = build_city_comparison(_metrics(), [], [], weights=DEFAULT_WEIGHTS["balanced"])
     assert len(frame) == 3
+    # 80 * .30 access + 65 * .30 traffic + 60 * .25 heat + 70 * .15 venue.
+    assert frame.loc[frame["city"] == "Complete", "screening_score"].iloc[0] == 69.0
     assert frame.loc[frame["city"] == "Complete", "strict_rank"].iloc[0] == 1
     assert frame.loc[frame["city"] == "Partial", "strict_rank"].isna().all()
     assert frame["screening_score"].notna().all()

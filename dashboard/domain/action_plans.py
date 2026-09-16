@@ -30,9 +30,6 @@ from typing import Any
 # City's gate-operations fix, Miami's unspecified "four hubs") - the UI shows
 # the venue alone for those rather than pointing at a guessed location.
 RECOMMENDATION_FOCUS_POINTS: dict[str, tuple[dict[str, Any], ...]] = {
-    "Boston": (
-        {"name": "Providence Station", "lat": 41.82909, "lon": -71.41325},
-    ),
     "Dallas": (
         {"name": "Victory Station", "lat": 32.789607, "lon": -96.812513},
         {"name": "Fort Worth Central Station", "lat": 32.751796, "lon": -97.325397},
@@ -59,29 +56,29 @@ CITY_ACTION_PLANS: dict[str, dict[str, str]] = {
         "recommended_action": (
             "Manage the existing parking supply toward transit rather than add capacity: "
             "price or restrict event-day parking near the two MARTA stations to nudge mode "
-            "share toward rail, and split ingress/egress explicitly across SEC District and "
-            "Vine City by design."
+            "share toward rail."
         ),
         "rationale": (
             "Frequent MARTA service already supports the venue, but abundant nearby parking still encourages driving."
         ),
     },
     "Boston": {
-        "expected_impact": "Lower travel cost",
+        "expected_impact": "Lower fares and service emissions",
         "impact_metric": "Cost per rider",
         "impact_metric_definition": "Round-trip out-of-pocket cost ($)",
-        "impact_inputs": "Fare cap or shuttle fare, subsidy, route cost, and expected ridership.",
+        "impact_inputs": "Fare-credit uptake, existing bus bookings, route mileage, fleet emissions, and charging costs.",
         "specific_problem": (
-            "The dedicated Foxborough commuter-rail stop exists, but 2026 round trips were "
-            "priced at $80 - four times the regular fare - with no direct Rhode Island "
-            "service, so real fans chartered their own school buses instead."
+            "Getting to Foxborough without a car is expensive and requires advance planning, "
+            "while road congestion makes reliable regional access difficult."
         ),
         "recommended_action": (
-            "Subsidize or cap the event-train fare, or run a reserved electric Providence-to-Foxborough "
-            "shuttle. Dispatch only when bookings meet the minimum car-trip replacement needed to reduce emissions."
+            "Offer fare support on existing stadium trains and express buses, and replace conventional "
+            "express buses with electric vehicles where range and charging allow. Add routes only where "
+            "booking and travel data demonstrate an unmet need."
         ),
         "rationale": (
-            "High event-train fares and the lack of direct Rhode Island service limit affordable regional access."
+            "The published plan already included direct Rhode Island express buses, but $80 train and $95 bus "
+            "round trips made car-free travel costly. Improve those services before duplicating them."
         ),
     },
     "Dallas": {
@@ -214,22 +211,35 @@ CITY_ACTION_PLANS: dict[str, dict[str, str]] = {
         ),
     },
     "San Francisco": {
-        "expected_impact": "Shorter detour",
-        "impact_metric": "Walking detour",
-        "impact_metric_definition": "Extra walking distance during trail closure (mi)",
-        "impact_inputs": "Designed bypass alignment, route distance, and pedestrian demand.",
+        "expected_impact": "Clearer walking and cycling access",
+        "impact_metric": "Detour users assisted",
+        "impact_metric_definition": "People benefiting from approved-detour improvements",
+        "impact_inputs": "Route audits, affected-user counts, wayfinding costs, and observed travel-mode changes.",
         "specific_problem": (
-            "VTA light rail and BART/Caltrain transfers are real and direct, but the San "
-            "Tomas Aquino Trail closes on event days, forcing a documented two-mile "
-            "on-street detour via Agnew Road and Mission College Boulevard."
+            "Event-day trail closures disrupt direct walking and cycling access for some visitors "
+            "and local residents. Stadium transit remains available; the affected routes and extra "
+            "travel distance depend on each person's journey."
         ),
         "recommended_action": (
-            "Build a permanent, marked pedestrian bypass around that specific closed "
-            "segment, rather than broader VTA capacity spend - VTA is already independently "
-            "expanding light-rail service for events."
+            "Improve wayfinding and crossing guidance on the approved pedestrian and bicycle detours "
+            "around the San Tomas Aquino Creek Trail closure. Audit accessibility and user demand "
+            "before proposing new infrastructure, while respecting the event security perimeter."
         ),
         "rationale": (
-            "Event-day closure of the San Tomas Aquino Trail forces a documented two-mile on-street detour."
+            "Separate walking and cycling detours already exist. This is a localized access improvement, "
+            "not evidence of a systemwide transit gap or a need for a permanent bypass."
+        ),
+        "additional_recommended_action": (
+            "Improve post-match transfers at Mountain View and Milpitas: use measured queues and "
+            "missed connections to coordinate departures, passenger guidance, and existing contingency buses."
+        ),
+        "additional_rationale": (
+            "VTA already planned extra service and transit ambassadors. Build on that operation; "
+            "add capacity only where observed demand shows a gap."
+        ),
+        "additional_source_url": "https://www.vta.gov/blog/how-will-vta-handle-crowds-world-cup",
+        "impact_scope_note": (
+            "Detour improvements only. Transfer-improvement benefits and costs are not yet estimated."
         ),
     },
     "Seattle": {
@@ -460,13 +470,12 @@ CITY_TRAFFIC_MANAGEMENT_PLANS: dict[str, dict[str, str]] = {
     },
     "San Francisco": {
         "recommended_action": (
-            "Reuse the proven Super Bowl LX closure footprint (Tasman Drive, Old Ironsides, "
-            "Lick Mill) as-is, and add clear wayfinding signage for the San Tomas Aquino "
-            "Trail detour via Agnew Road."
+            "Follow the approved match-day traffic plan and coordinate crossing guidance with the "
+            "separate pedestrian and bicycle detours around the San Tomas Aquino Creek Trail closure."
         ),
         "rationale": (
-            "The closure plan is already real and proven at scale; the one open, documented "
-            "friction point is trail-detour wayfinding, not the road plan itself."
+            "The published plan provides separate routes for pedestrians and cyclists. "
+            "Clear guidance can support access without routing users through the security perimeter."
         ),
     },
     "Seattle": {

@@ -5,8 +5,27 @@ import pandas as pd
 import requests
 
 from dashboard.pipeline.gtfs.config import GtfsFeedSource
-from dashboard.pipeline.gtfs.fetch import count_near_venue, extract_feed, fetch_city, score_results, unavailable_fixture
+from dashboard.pipeline.gtfs.fetch import (
+    _select_route_shapes,
+    count_near_venue,
+    extract_feed,
+    fetch_city,
+    score_results,
+    unavailable_fixture,
+)
 from dashboard.pipeline.public.loaders import load_gtfs_snapshot
+
+
+def test_map_shape_limit_keeps_routes_before_extra_trip_variants():
+    rows = [
+        {"agency": "NJT", "route_id": "5", "shape_id": str(i)} for i in range(120)
+    ] + [{"agency": "NJT", "route_id": "9", "shape_id": "1416"}]
+    selected, omitted = _select_route_shapes(rows + [rows[0]])
+    assert len(selected) == 100
+    assert omitted == 21
+    assert {row["route_id"] for row in selected[:2]} == {"5", "9"}
+    assert _select_route_shapes(list(reversed(rows))) == (selected, omitted)
+    assert _select_route_shapes([]) == ([], 0)
 
 
 def _feed(files):

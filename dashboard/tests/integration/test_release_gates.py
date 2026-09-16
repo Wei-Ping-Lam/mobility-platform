@@ -110,7 +110,11 @@ def test_application_shell_does_not_scan_raw_data():
     source = app.read_text(encoding="utf-8")
     assert "read_csv" not in source
     assert "Rice WC Hack" not in source
-    assert "load_artifacts" in source
+    assert "session_artifacts(project_paths())" in source
+    loader = (app.parent / "ui" / "session_data.py").read_text(encoding="utf-8")
+    assert "load_artifacts(paths)" in loader
+    assert "read_csv" not in loader
+    assert "Rice WC Hack" not in loader
 
 
 def test_supplied_metric_sources_name_the_rice_collection():

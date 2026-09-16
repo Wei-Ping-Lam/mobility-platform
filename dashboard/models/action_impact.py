@@ -8,10 +8,14 @@ Vehicle factors are supplied by the existing pinned intervention registry.
 from __future__ import annotations
 
 from dataclasses import dataclass
-from math import ceil, floor, isfinite
+from math import ceil, isfinite
 
+from dashboard.models.electric_bus import electric_bus_kg_per_mile, operating_co2e_range
 from dashboard.models.interventions import InterventionFactorRegistry
-from dashboard.models.service_design import ELECTRIC_SERVICE_COST_MULTIPLIER, ELECTRIC_SERVICE_EMISSIONS_RATIO
+from dashboard.models.service_design import ELECTRIC_SERVICE_COST_MULTIPLIER, event_window_cycles
+
+DEPOT_MILEAGE_ALLOWANCE = 0.10
+SETUP_HOURS_PER_BUS = 1.0
 
 
 @dataclass(frozen=True)
@@ -28,6 +32,7 @@ class ActionScope:
     car_round_trip_miles: float | None = None
     replaces_existing_service: bool = False
     incentive_per_shifted_rider: float = 0.0
+    incentive_per_service_rider: float = 0.0
 
 
 ACTION_SCOPES = {
@@ -37,11 +42,15 @@ ACTION_SCOPES = {
         beneficiary_share=0.06, private_shift_share=1.0, operating_allowance=6000,
     ),
     "Boston": ActionScope(
-        "Providence electric shuttle alternative: up to 12 buses, a 3-hour cycle and an assumed "
-        "90-mile return corridor for both bus and displaced car travel. Target 60% car-trip replacement; "
-        "validate this with reservations before dispatch. The fare-cap alternative is not modeled.",
-        buses=12, cycle_hours=3.0, round_trip_miles=90, private_shift_share=0.60,
-        operating_allowance=2000, car_round_trip_miles=90,
+        "Improve a booked subset of existing express-bus service: replace up to 12 conventional buses "
+        "with electric vehicles on equivalent trips and offer a $20 round-trip fare credit per rider. "
+        "Assume a 3-hour cycle and 90-mile return route as planning proxies, not a measured route. "
+        "Verify existing conventional trips, bookings, vehicle range and charging before procurement. "
+        "Credit only fleet-replacement CO2e savings; no additional riders, car-trip reductions or "
+        "new routes are assumed. Rail fare support is not included in this quantified bus package. "
+        "Costs cover gross replacement service, administration and fare credits, not incremental cost.",
+        buses=12, cycle_hours=3.0, round_trip_miles=90,
+        operating_allowance=2000, replaces_existing_service=True, incentive_per_service_rider=20,
     ),
     "Dallas": ActionScope(
         "Pre-position up to 8 electric overflow buses instead of conventional overflow dispatch, with a "
@@ -94,10 +103,14 @@ ACTION_SCOPES = {
         private_shift_share=0.02, incentive_per_shifted_rider=10,
     ),
     "San Francisco": ActionScope(
-        "Marked pedestrian bypass; assume 3% of attendees benefit and 10% of those replace a "
-        "local vehicle leg. Construction is a placeholder budget pending route design.",
+        "Temporary wayfinding and crossing guidance on approved detours, not a new permanent bypass. "
+        "Retain an illustrative uptake case of 3% of attendees assisted and 10% of that group replacing "
+        "a local vehicle leg; neither affected-user counts nor mode shift have been measured. "
+        "CO2e savings are conditional on that assumed mode shift, not established by the closure notice. "
+        "Assume a $1,000 per-match operating allowance; no construction cost or shorter route is modeled. "
+        "Audit routes and obtain staffing quotes before funding; resident benefits are not quantified.",
         beneficiary_share=0.03, private_shift_share=0.10, local_leg_only=True,
-        operating_allowance=1000, capital_allowance=500000,
+        operating_allowance=1000,
     ),
     "Seattle": ActionScope(
         "Offer a targeted $10 rail-travel credit and station guidance to attendees who would otherwise "
@@ -141,11 +154,12 @@ def estimate_action_impact(
     for case, scope_scale, cost_scale in (("low", 0.6, 0.6), ("base", 1.0, 1.0), ("high", 1.4, 1.6)):
         buses = round(scope.buses * scope_scale)
         capacity = factors.shuttle_passengers_per_bus.value(case) * factors.service_load_factor.value(case)
-        planned_cycles = floor(buses * arrival_hours / scope.cycle_hours)
+        cycles_per_bus = event_window_cycles(arrival_hours, scope.cycle_hours)
+        planned_cycles = buses * cycles_per_bus
         operations_passengers = min(attendance, attendance * scope.beneficiary_share * scope_scale)
         if scope.buses:
             service_passengers = min(attendance, planned_cycles * capacity)
-            # Whole round trips, scaled to reserved demand rather than an empty timetable.
+            # Whole deliveries per bus; attendance is a cap, not evidence of bookings.
             cycles = min(planned_cycles, ceil(service_passengers / capacity)) if capacity > 0 else 0
         else:
             service_passengers = 0
@@ -153,7 +167,11 @@ def estimate_action_impact(
         # Use the larger beneficiary group, assuming overlap rather than counting both.
         passengers = max(operations_passengers, service_passengers)
         service_hours = cycles * scope.cycle_hours * 2
-        service_miles = cycles * scope.round_trip_miles * 2
+        active_buses = ceil(cycles / cycles_per_bus) if cycles_per_bus else 0
+        longest_bus_duty = 2 * ceil(cycles / active_buses) * scope.cycle_hours if active_buses else 0
+        paid_hours = active_buses * (max(arrival_hours * 2, longest_bus_duty) + SETUP_HOURS_PER_BUS)
+        route_miles = cycles * scope.round_trip_miles * 2
+        service_miles = route_miles * (1 + DEPOT_MILEAGE_ALLOWANCE)
         shift_eligible = service_passengers if scope.buses else passengers
         shifted = min(shift_eligible * scope.private_shift_share, attendance * private_vehicle_share)
         if scope.private_shift_share == 1:
@@ -165,7 +183,8 @@ def estimate_action_impact(
         baseline_service_miles = service_miles if scope.replaces_existing_service else 0
         net_miles = avoided_car_miles - (service_miles - baseline_service_miles)
         conventional_factor = factors.service_vehicle_co2e_kg_per_mile.value(case)
-        added_service_co2 = service_miles * conventional_factor * ELECTRIC_SERVICE_EMISSIONS_RATIO
+        electric_factor = electric_bus_kg_per_mile(city) if service_miles else 0
+        added_service_co2 = service_miles * electric_factor
         baseline_service_co2 = baseline_service_miles * conventional_factor
         net_co2 = (
             avoided_car_miles * factors.private_vehicle_co2e_kg_per_mile.value(case)
@@ -173,10 +192,18 @@ def estimate_action_impact(
         )
         car_savings_per_shifted = distance / vehicle_occupancy * factors.private_vehicle_co2e_kg_per_mile.value(case)
         required_shifted = max(added_service_co2 - baseline_service_co2, 0) / car_savings_per_shifted if car_savings_per_shifted else 0
+        co2_low, co2_high = operating_co2e_range(
+            city, avoided_car_miles, service_miles, baseline_service_miles,
+            factors.private_vehicle_co2e_kg_per_mile, factors.service_vehicle_co2e_kg_per_mile,
+        )
+        incentive_cost = (
+            shifted * scope.incentive_per_shifted_rider
+            + service_passengers * scope.incentive_per_service_rider
+        )
         operating = (
-            service_hours * factors.shuttle_cost_per_bus_hour.value(case) * ELECTRIC_SERVICE_COST_MULTIPLIER
+            paid_hours * factors.shuttle_cost_per_bus_hour.value(case) * ELECTRIC_SERVICE_COST_MULTIPLIER
             + scope.operating_allowance * cost_scale
-            + shifted * scope.incentive_per_shifted_rider * cost_scale
+            + incentive_cost
         )
         capital = scope.capital_allowance * cost_scale
         rows.append({
@@ -187,17 +214,25 @@ def estimate_action_impact(
             "operations_passengers": operations_passengers,
             "net_vehicle_miles": net_miles,
             "net_co2e_kg": net_co2,
+            "net_co2e_kg_low": co2_low,
+            "net_co2e_kg_high": co2_high,
             "operating_cost": operating,
             "capital_cost": capital,
             "first_event_cost": operating + capital,
             "buses": buses,
             "service_hours": service_hours,
+            "paid_service_hours": paid_hours,
+            "active_buses": active_buses,
+            "arrival_cycles": cycles,
+            "cycles_per_bus": cycles_per_bus,
+            "route_miles": route_miles,
+            "electric_kg_per_mile": electric_factor,
             "service_miles": service_miles,
             "baseline_service_miles": baseline_service_miles,
             "avoided_car_co2e_kg": avoided_car_miles * factors.private_vehicle_co2e_kg_per_mile.value(case),
             "baseline_service_co2e_kg": baseline_service_co2,
             "proposed_service_co2e_kg": added_service_co2,
-            "incentive_cost": shifted * scope.incentive_per_shifted_rider * cost_scale,
+            "incentive_cost": incentive_cost,
             "car_round_trip_miles": distance,
             "minimum_car_shift_share": required_shifted / passengers if passengers else 0,
             "co2e_screen": "Pass" if net_co2 > 0 else "No reduction" if net_co2 == 0 else "Needs redesign",

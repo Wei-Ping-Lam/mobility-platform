@@ -3,10 +3,10 @@
 from __future__ import annotations
 
 from collections.abc import Mapping
+from html import escape
 from typing import Any
 
 import pandas as pd
-import plotly.express as px
 import plotly.graph_objects as go
 import streamlit as st
 
@@ -17,22 +17,39 @@ from dashboard.domain.action_plans import (
     TRAFFIC_MANAGEMENT_SCORES,
 )
 from dashboard.domain.comparison import build_city_comparison
-from dashboard.domain.portfolio import build_portfolio_timeline, portfolio_summary
 from dashboard.domain.solution_context import solution_context
 from dashboard.mobility_platform.mappings import HOST_CITIES
 from dashboard.models.action_impact import ACTION_SCOPES, estimate_action_impact
+from dashboard.models.capital_alternatives import (
+    ALTERNATIVES,
+    BRT_COST_SOURCE,
+    BUS_COST_SOURCE,
+    SPARE_FLEET_SOURCE,
+    estimate_capital_alternative,
+)
+from dashboard.models.electric_bus import (
+    CITY_GRID_REGION,
+    EGRID_SOURCE,
+    ENERGY_SOURCE,
+    ENERGY_STRESS_SOURCE,
+)
 from dashboard.models.interventions import (
     CityInterventionInputs,
     InterventionFactorRegistry,
     factor_registry_from_snapshot,
     recommendation_candidates,
 )
-from dashboard.models.service_design import ELECTRIC_SERVICE_COST_MULTIPLIER, ELECTRIC_SERVICE_EMISSIONS_RATIO
+from dashboard.models.service_design import ELECTRIC_SERVICE_COST_MULTIPLIER
 from dashboard.models.solution_comparison import compare_transit_solutions
 from dashboard.ui.presentation import PlatformPresentation, build_presentation
 from dashboard.ui.theme import callout, metric_card, page_header, section_header
-from dashboard.viz.portfolio import transit_solution_comparison_chart
-from dashboard.viz.strategy_overlap import access_overlap_map, recommendation_focus_map
+from dashboard.viz.portfolio import READINESS_COMPONENTS, transit_solution_comparison_chart
+from dashboard.viz.strategy_overlap import (
+    access_overlap_map,
+    add_road_controls,
+    recommendation_focus_map,
+    road_controls_map,
+)
 from dashboard.viz.style import COLORS, STATUS_COLORS, style_figure
 
 
@@ -137,27 +154,6 @@ def _render_added_frequency_cost_basis(
         )
 
 
-def _scenario_scope(package: Mapping[str, Any]) -> str:
-    """Translate a model composite into plain-language quantities."""
-
-    fields = (
-        ("shuttle_buses_per_hour", "shuttle buses/hour"),
-        ("added_transit_departures_per_hour", "added transit departures/hour"),
-        ("park_ride_spaces", "park-and-ride spaces"),
-        ("park_ride_feeder_departures_per_hour", "feeder departures/hour"),
-        ("bike_hub_spaces", "bike and micromobility spaces"),
-        ("cooled_walkway_km", "km cooled walking corridor"),
-        ("arrival_spreading_pct", "peak arrivals shifted"),
-    )
-    parts = []
-    for field, label in fields:
-        value = package.get(field)
-        if value is not None and float(value) > 0:
-            prefix = f"{float(value):g}%" if field == "arrival_spreading_pct" else f"{float(value):g}"
-            parts.append(f"{prefix} {label}")
-    return "; ".join(parts) if parts else "No intervention (baseline)"
-
-
 def _metric_row(items: list[tuple[str, str, str, str, str]]) -> None:
     for start in range(0, len(items), 4):
         group = items[start : start + 4]
@@ -176,72 +172,35 @@ def _priority_city(comparison: pd.DataFrame, selected_city: str | None) -> str:
     return str(comparison.sort_values("peak_demand_pph", ascending=False, na_position="last").iloc[0]["city"])
 
 
-def _portfolio_chart(timeline: pd.DataFrame) -> go.Figure:
-    figure = go.Figure()
-    figure.add_trace(
-        go.Scatter(
-            x=timeline["event_date"],
-            y=timeline["gap_resolved_passengers"],
-            mode="lines+markers",
-            name="Cumulative peak passengers addressed",
-            line=dict(color=COLORS["teal"], width=3),
-        )
-    )
-    figure.add_trace(
-        go.Scatter(
-            x=timeline["event_date"],
-            y=timeline["net_co2e_kg"],
-            mode="lines+markers",
-            name="Cumulative net CO2e avoided (kg)",
-            line=dict(color=COLORS["blue"], width=2.5),
-            yaxis="y2",
-        )
-    )
-    figure.update_layout(
-        yaxis=dict(title="Passengers addressed"),
-        yaxis2=dict(title="Net CO2e avoided (kg)", overlaying="y", side="right", showgrid=False),
-    )
-    return style_figure(figure, 390)
-
-
-def _readiness_components(metric: Mapping[str, Any]) -> tuple[go.Figure, pd.DataFrame]:
-    rows = pd.DataFrame(
-        [
-            {
-                "Component": label,
-                "Score": metric.get(f"{key}_score"),
-                "Evidence": metric.get(f"{key}_status", "unavailable"),
-            }
-            for key, label in (
-                ("transit", "Transit service"),
-                ("access", "Venue support"),
-                ("heat", "Heat safety"),
-                ("traffic", "Traffic management"),
-            )
-        ]
-    )
+def _readiness_components(metric: Mapping[str, Any]) -> go.Figure:
+    rows = pd.DataFrame([
+        {
+            "Component": label,
+            "Score": metric.get(column),
+            "Evidence": metric.get(column.replace("_score", "_status"), "unavailable"),
+        }
+        for label, column in READINESS_COMPONENTS.items()
+    ])
     rows["Score"] = pd.to_numeric(rows["Score"], errors="coerce")
-    chart = rows.dropna(subset=["Score"]).sort_values("Score")
-    figure = go.Figure(
-        go.Bar(
-            x=chart["Score"],
-            y=chart["Component"],
-            orientation="h",
-            marker_color=[STATUS_COLORS.get(str(status), COLORS["slate"]) for status in chart["Evidence"]],
-            text=chart["Score"],
-            texttemplate="%{text:.1f}",
-            textposition="outside",
-            customdata=chart[["Evidence"]],
-            hovertemplate="<b>%{y}</b><br>Score: %{x:.1f}<br>Evidence: %{customdata[0]}<extra></extra>",
-        )
-    )
-    figure.update_xaxes(range=[0, 100], title="Component score (0–100)")
-    return style_figure(figure, 300, legend=False), rows
+    figure = go.Figure(go.Bar(
+        x=rows["Score"],
+        y=rows["Component"],
+        orientation="h",
+        marker_color=[STATUS_COLORS.get(str(status), COLORS["slate"]) for status in rows["Evidence"]],
+        text=rows["Score"],
+        texttemplate="%{text:.1f}",
+        textposition="outside",
+        cliponaxis=False,
+        customdata=rows[["Evidence"]],
+        hovertemplate="<b>%{y}</b><br>Score: %{x:.1f}/100<br>Evidence: %{customdata[0]}<extra></extra>",
+    ))
+    figure.update_xaxes(range=[0, 100], title="Component score (0-100)")
+    figure.update_yaxes(autorange="reversed")
+    return style_figure(figure, 300, legend=False, margin=dict(l=18, r=42, t=34, b=26))
 
 
 def _current_strategies_summary(
     city: str, venue: Mapping[str, Any], artifacts: dict[str, Any],
-    *, no_nearby_departures: bool = False,
 ) -> None:
     """Show what real transit service already exists for a host, sourced to the transit agency.
 
@@ -287,7 +246,8 @@ def _current_strategies_summary(
                     if dedicated.get("source_title") and dedicated.get("source_url")
                     else "Source not available"
                 )
-                st.markdown(f"**Dedicated service** — {dedicated.get('basis')}")
+                dedicated_basis = str(dedicated.get("basis")).replace("$", r"\$")
+                st.markdown(f"**Dedicated service** — {dedicated_basis}")
                 st.caption(f"{dedicated.get('publisher', 'Publisher not available')} · {dedicated_source}")
 
             sustainability = benchmark.get("sustainability_evidence")
@@ -331,6 +291,31 @@ def _current_strategies_summary(
         ]
         agencies = artifacts.get("gtfs", {}).get(city, {}).get("agencies", [])
         agency_label = " & ".join(agencies) if agencies else "Transit"
+        if city == "New York/NJ":
+            shapes = layers.get("gtfs_routes", [])
+            meadowlands = [row for row in shapes if row.get("route_name") == "MRL"]
+            layers["highlight_routes"] = [
+                {**row, "name": "Meadowlands Rail Line: Secaucus Junction - Meadowlands"}
+                for row in meadowlands[:1]
+            ]
+            layers["gtfs_routes"] = [
+                {**row, "name": "Main/Bergen County Line (MNBN)"}
+                if row.get("route_name") == "MNBN" else row
+                for row in shapes if row.get("route_name") != "MRL"
+            ]
+            city_gtfs = artifacts.get("gtfs", {}).get(city, {})
+            secaucus = next(
+                (row for row in city_gtfs.get("regional_hubs", []) if row.get("stop_id") == "38174"), None,
+            )
+            stadium_stop = next(
+                (row for row in layers.get("gtfs", []) if row.get("stop_id") == "40570"), None,
+            )
+            layers["highlight_stops"] = [
+                {**row, "name": name} for row, name in (
+                    (secaucus, "Secaucus Junction"),
+                    (stadium_stop, "Meadowlands (Sports Complex)"),
+                ) if row
+            ]
         st.plotly_chart(
             access_overlap_map(
                 venue,
@@ -343,11 +328,12 @@ def _current_strategies_summary(
             key=f"current_strategies_map_{city}",
         )
         st.caption(f"Real {agency_label} routes and stops, and modeled 15/30-minute walking isochrones.")
-        if no_nearby_departures:
-            callout(
-                "warning",
-                "No nearby event-window departures",
-                "The pinned schedule contains no departures within the half-mile venue catchment.",
+        _road_control_sources(artifacts.get("road_closures", {}).get(city, []))
+        if city == "New York/NJ":
+            st.caption(
+                "[Meadowlands Rail Line: Secaucus Junction to Meadowlands (Sports Complex)]"
+                "(https://www.njtransit.com/first-run/take-nj-transit-meadowlands). "
+                "Route geometry is from the pinned GTFS feed; service depends on the event schedule."
             )
 
 
@@ -387,7 +373,6 @@ def _render_city_overview_tab(
         city,
         {"name": match.venue, "lat": HOST_CITIES.get(city, {}).get("lat"), "lon": HOST_CITIES.get(city, {}).get("lon")},
         artifacts,
-        no_nearby_departures=no_nearby_departures,
     )
     if city_plan.get("specific_problem"):
         callout("warning", f"{city}'s specific problem", city_plan["specific_problem"], prominent=True)
@@ -411,7 +396,7 @@ def _render_city_overview_tab(
         )
 
     section_header("Readiness Scores")
-    readiness_figure, _ = _readiness_components(decision_metric)
+    readiness_figure = _readiness_components(decision_metric)
     st.plotly_chart(readiness_figure, width="stretch", config={"displayModeBar": False})
 
 
@@ -437,6 +422,8 @@ def _match_impact_context(
 
 def _render_recommended_action_impact(city: str, artifacts: Mapping[str, Any], match_id: str) -> None:
     st.markdown("##### Projected impact")
+    if scope_note := CITY_ACTION_PLANS.get(city, {}).get("impact_scope_note"):
+        st.caption(scope_note)
     try:
         attendance, city_input, factors = _match_impact_context(city, artifacts, match_id)
         inputs = {
@@ -452,24 +439,21 @@ def _render_recommended_action_impact(city: str, artifacts: Mapping[str, Any], m
         st.caption("Estimate unavailable: this match needs attendance, travel inputs, and a valid factor registry.")
         return
     base = cases[1]
-    st.caption("Illustrative planning estimate for this action, per match; not a validated forecast or local quote.")
     _metric_row([
         (_number(base["passengers"]), "Passengers addressed / match", "scenario",
          "Beneficiaries, not necessarily new riders", "teal"),
         (_number(base["net_co2e_kg"], " kg"), "Net CO2e avoided / match", "scenario",
-         "Compared with the stated service baseline", "blue"),
+         f"Factor sensitivity: {_number(base['net_co2e_kg_low'])} to {_number(base['net_co2e_kg_high'])} kg", "blue"),
         (_number(base["net_vehicle_miles"], " mi"), "Net vehicle-miles saved / match", "scenario",
-         "Includes empty return trips", "slate"),
+         "Includes empty returns and depot allowance", "slate"),
         (_money(base["first_event_cost"]), "Estimated first-event cost", "scenario",
          f"{_money(base['capital_cost'])} upfront + {_money(base['operating_cost'])} per match", "amber"),
     ])
-    st.caption(
-        f"Operational CO2e screen: {base['co2e_screen']}. "
-        "Recommended actions require positive savings under the stated operating conditions. Zero does not meet that target."
-    )
+    if base["net_co2e_kg"] <= 0:
+        st.warning("This base case does not reduce operating CO2e. Validate or redesign service before deployment.")
     with st.expander("Estimate assumptions and scenario range"):
         scope = ACTION_SCOPES[city]
-        st.write(scope.description)
+        st.write(scope.description.replace("$", r"\$"))
         st.caption(
             "Action scope, uptake, route cycles, staffing allowances, and construction budgets are explicit analyst "
             "assumptions. Low/base/high are alternative scope cases, not statistical confidence bounds. "
@@ -481,25 +465,46 @@ def _render_recommended_action_impact(city: str, artifacts: Mapping[str, Any], m
             f"Avoided round-trip distance: {base['car_round_trip_miles']:.1f} mi. "
             f"Bus service: {inputs['arrival_hours']:g} hours each for arrivals and departures."
         )
-        st.write(
+        st.write((
             f"Base non-bus operating allowance: {_money(scope.operating_allowance)} per match; "
             f"upfront allowance: {_money(scope.capital_allowance)}. "
             "Scope scales to 60% / 100% / 140%; these allowances scale to 60% / 100% / 160%. "
-            "Bus counts and dispatched trips are whole numbers, limited by reserved demand. "
+            "Count deliveries reaching the destination within each window, per staged bus. "
+            "The last empty return may finish later; its full mileage and time are still charged. "
+            "Ridership uses an assumed load, capped by attendance; these are not verified bookings. "
             "Capacity, loading, cost, and conventional emissions factors use the corresponding registry case."
-        )
+        ).replace("$", r"\$"))
         st.caption(
             f"Factor registry: {factors.registry_version}. Base bus capacity: "
             f"{factors.shuttle_passengers_per_bus.base:g} passengers at {factors.service_load_factor.base:.0%} load; "
             f"electric bus cost allowance: ${factors.shuttle_cost_per_bus_hour.base * ELECTRIC_SERVICE_COST_MULTIPLIER:g}/hour. "
             f"Car emissions: {factors.private_vehicle_co2e_kg_per_mile.base:g} kg CO2e/mi; "
-            f"electric bus emissions: {factors.service_vehicle_co2e_kg_per_mile.base * ELECTRIC_SERVICE_EMISSIONS_RATIO:g} kg CO2e/mi."
+            f"electric bus emissions: {base['electric_kg_per_mile']:.3f} kg CO2e/mi when bus service is modeled."
         )
         st.caption(
-            "Electric operation assumes 40% of conventional operating CO2e and a 20% bus-hour premium "
-            "for electric leasing and temporary charging. These are procurement conditions to validate, "
-            "not verified local electricity or lease rates. Dallas, Kansas City, and Los Angeles replace "
+            "Bus costs include a 20% allowance for electric leasing and temporary charging. "
+            "A 10% mileage allowance covers depot travel; paid time covers both full service windows and any later return "
+            "plus one setup hour per active bus. Mid-match standby, if required by the operator, is extra. "
+            "These remain planning allowances, not local quotes. Boston, Dallas, Kansas City, and Los Angeles replace "
             "equivalent conventional bus trips; other shuttle actions add service. Cost is the gross service budget."
+        )
+        if scope.buses:
+            st.caption(
+                f"Electricity: EPA eGRID2023 {CITY_GRID_REGION[city]} regional proxy, with 2.1 kWh/mi "
+                "vehicle use, 90% charging efficiency and an assumed 5% grid delivery loss. "
+                "This is annual-average operating accounting, not marginal dispatch or a verified depot tariff. "
+                "Conventional service remains a generic vehicle proxy; verify the actual fuel and vehicle type."
+            )
+            st.markdown(
+                f"[EPA regional electricity factors]({EGRID_SOURCE}) · "
+                f"[CARB energy-use assumptions]({ENERGY_SOURCE}) · "
+                f"[NREL higher energy-use case]({ENERGY_STRESS_SOURCE})"
+            )
+        st.caption(
+            "The CO2e factor-sensitivity range holds base ridership and dispatch fixed, varies car and "
+            "conventional-bus factors across the registry range, and uses 1.8-2.84 kWh/mi for electric buses. "
+            "It is not a confidence interval and does not establish that the assumed mode shift will occur. "
+            "Shifts onto existing rail assume spare capacity and no extra train service; marginal passenger energy is excluded."
         )
         st.caption(
             f"CO2e accounting per match: {_number(base['avoided_car_co2e_kg'], ' kg')} from car trips replaced "
@@ -507,19 +512,32 @@ def _render_recommended_action_impact(city: str, artifacts: Mapping[str, Any], m
             f"- {_number(base['proposed_service_co2e_kg'], ' kg')} from proposed electric service."
         )
         if scope.incentive_per_shifted_rider:
-            st.caption(
+            st.caption((
                 f"Travel-credit assumption: {_money(scope.incentive_per_shifted_rider)} per additional rider "
                 f"switching from a car; {_money(base['incentive_cost'])} included in base operating cost. "
                 "Actual redemption by existing transit riders would add cost without the modeled emissions benefit."
+            ).replace("$", r"\$"))
+        if scope.incentive_per_service_rider:
+            st.caption((
+                f"Fare-credit assumption: {_money(scope.incentive_per_service_rider)} per round-trip bus rider; "
+                f"{_money(base['incentive_cost'])} included in base operating cost. "
+                "Credits apply to existing riders and do not imply car-trip or emissions savings. "
+                "The credit per rider stays fixed across scope cases."
+            ).replace("$", r"\$"))
+        if scope.buses and scope.replaces_existing_service:
+            st.write(
+                "Fleet-replacement savings require equivalent conventional trips to be displaced, "
+                "not extra electric service. Verify baseline vehicle emissions, booked demand, "
+                "route distance, vehicle range and charging emissions."
             )
-        if scope.buses:
+        elif scope.buses:
             st.write(
                 f"Minimum car-trip replacement for operating CO2e break-even: {base['minimum_car_shift_share']:.1%} "
                 f"of riders; design target: {scope.private_shift_share:.0%}. "
                 "Verify actual bookings, route distance, load and charging emissions before dispatch."
             )
         st.markdown(
-            "Passengers addressed = attendance x assumed beneficiary share, or bus seats x load x arrival cycles, "
+            "Passengers addressed = attendance x assumed beneficiary share, or bus seats x load x on-time deliveries, "
             "capped at attendance. Where operating improvements and bus service overlap, use the larger "
             "beneficiary group rather than adding them. Avoided car-miles = passengers switching from cars / vehicle occupancy x "
             "round-trip distance. Net miles and CO2e compare the proposed service with its stated baseline, including empty return legs. "
@@ -535,7 +553,8 @@ def _render_recommended_action_impact(city: str, artifacts: Mapping[str, Any], m
         }
         st.dataframe(pd.DataFrame(cases)[list(columns)].rename(columns=columns).round(0),
                      hide_index=True, width="stretch")
-        st.caption("Construction emissions, idling savings, fare revenue, and parking revenue are excluded. "
+        st.caption("Vehicle manufacturing, construction emissions, fuel supply chains, idling savings, fare revenue, "
+                   "and parking revenue are excluded. "
                    "Local ridership, operating plans, and bids are needed before funding.")
 
 
@@ -562,7 +581,7 @@ def _render_transit_solution_comparison(
         recommended = {
             **base,
             "solution": f"Recommended: {city_plan.get('expected_impact', 'First action')}",
-            "label": "Recommended first action",
+            "label": "Recommended: detour improvements" if city_plan.get("additional_recommended_action") else "Recommended first action",
         }
     st.plotly_chart(
         transit_solution_comparison_chart(solutions, recommended), width="stretch",
@@ -623,12 +642,81 @@ def _render_transit_solution_comparison(
         }).round(0), hide_index=True, width="stretch")
 
 
+def _render_capital_alternative(city: str, artifacts: Mapping[str, Any], match_id: str) -> None:
+    if city not in ALTERNATIVES:
+        return
+    try:
+        attendance, inputs, _ = _match_impact_context(city, artifacts, match_id)
+        estimate = estimate_capital_alternative(city, attendance, inputs.arrival_window_hours)
+    except (KeyError, TypeError, ValueError):
+        st.caption("Capital alternative estimate unavailable: match attendance and travel inputs are required.")
+        return
+    if estimate is None:
+        return
+    concept = estimate["concept"]
+    section_header("High-investment, High-impact alternative")
+    st.markdown(f"### {concept.title}")
+    st.write(concept.rationale)
+    _metric_row([
+        (f"{_money(estimate['capital_low'])} - {_money(estimate['capital_high'])}",
+         "Estimated capital cost", "scenario", "Fleet, charging, contingency and corridor scope", "amber"),
+        (f"{_number(estimate['passengers_low'])} - {_number(estimate['passengers_high'])}",
+         "Potential passengers addressed / match", "scenario", "Reserve fleet and event delays included", "teal"),
+    ])
+    st.caption("Long-term concept for future events and everyday service; not a funded project or demand forecast.")
+    with st.expander("Capital and passenger assumptions"):
+        st.write(
+            f"Purchase {concept.buses} electric buses: {estimate['active_buses']} in service and "
+            f"{estimate['reserve_buses']} held in reserve. Use a 20% spare-to-active fleet planning ratio. "
+            f"Assume {concept.cycle_hours:g}-hour round-trip cycles and {inputs.arrival_window_hours:g} hours "
+            f"each for arrivals and departures. The low case adds 25% to cycle time "
+            f"({estimate['slow_cycles_per_bus']} deliveries per bus); the high case uses "
+            f"{estimate['cycles_per_bus']} deliveries. Start buses at boarding points; the first delivery takes "
+            "half a cycle, with symmetric outbound/return time. The final empty return can finish after the window. "
+            "Use 45 seats at 65%-85% loading, capped at attendance; do not double-count return passengers. "
+            "Passenger figures describe potential service coverage, not incremental riders or avoided car trips."
+        )
+        st.write(
+            "Bus purchase allowance: USD 1.3-1.7 million each, plus 20%-40% of fleet cost for charging "
+            "and depot work. Add a separate 15%-30% fleet/infrastructure contingency. "
+            "Only the vehicle-price range is source-backed; infrastructure, delay and contingency percentages "
+            "are planning assumptions. Seated capacity and range require validation, especially for Boston express coaches. "
+            "Counts assume sufficient drivers, loading bays and charging between service windows."
+        )
+        st.markdown(f"[Spare-fleet context: FTA]({SPARE_FLEET_SOURCE})")
+        st.dataframe(pd.DataFrame([
+            {"Cost component": label, "Low ($)": estimate[f"{key}_low"], "High ($)": estimate[f"{key}_high"]}
+            for key, label in (
+                ("fleet", "Purchased fleet"), ("infrastructure", "Charging and depot allowance"),
+                ("contingency", "Fleet/infrastructure contingency"), ("corridor", "Corridor allowance"),
+                ("capital", "Total"),
+            )
+        ]), hide_index=True, width="stretch", column_config={
+            "Low ($)": st.column_config.NumberColumn(format="$%,.0f"),
+            "High ($)": st.column_config.NumberColumn(format="$%,.0f"),
+        })
+        st.markdown(f"[Bus-cost reference: California State Auditor]({BUS_COST_SOURCE})")
+        if concept.corridor_miles:
+            st.write(
+                f"Assume {concept.corridor_miles:g} corridor miles at USD 10-25 million per mile, "
+                "plus the fleet and charging allowance above. Length is a scenario, not a surveyed alignment. "
+                "The corridor allowance covers road conversion, stations and signal priority; it is an analyst "
+                "assumption informed by conceptual BRT budgets, not a local quote or a direct cost transfer. "
+                "Major land acquisition, tunneling and elevated structures are excluded."
+            )
+            st.markdown(f"[BRT cost context: Raleigh major investment study]({BRT_COST_SOURCE})")
+        st.caption(
+            "Reference-price USD (2025-26); no future escalation or financing model. Operating costs, maintenance, "
+            "replacement batteries and lifecycle emissions are excluded. Validate year-round demand, "
+            "agency plans, land availability and procurement costs before advancing."
+        )
+
+
 def _render_transit_solution_tab(
     city: str,
     artifacts: dict[str, Any],
     match: Any,
     recommendations: tuple[Any, ...],
-    scenarios: tuple[Any, ...],
     city_plan: Mapping[str, str],
 ) -> None:
     qualified_options = [item for item in recommendations if item.evidence_qualified]
@@ -643,14 +731,23 @@ def _render_transit_solution_tab(
         default=None,
     )
 
-    section_header("Recommended first action")
+    additional_action = city_plan.get("additional_recommended_action")
+    section_header("Recommended actions" if additional_action else "Recommended first action")
     if city_plan.get("recommended_action"):
         with st.container(border=True):
             st.markdown(f"### {city_plan['recommended_action']}")
             why = city_plan.get("why_this_action") or city_plan.get("rationale") or city_plan.get("specific_problem")
             if why:
                 st.markdown("**Why this action**")
-                st.write(why)
+                st.write(why.replace("$", r"\$"))
+        if additional_action:
+            with st.container(border=True):
+                st.markdown(f"### {additional_action}")
+                if additional_why := city_plan.get("additional_rationale"):
+                    st.markdown("**Why this action**")
+                    st.write(additional_why.replace("$", r"\$"))
+                if source := city_plan.get("additional_source_url"):
+                    st.caption(f"[Published transit operating plan]({source})")
     else:
         callout("warning", "No curated action plan yet", f"No hand-authored recommendation exists for {city}.")
 
@@ -661,8 +758,10 @@ def _render_transit_solution_tab(
     if city_plan.get("recommended_action") and focus_points:
         venue_context = HOST_CITIES.get(city, {})
         venue = {"name": match.venue, "lat": venue_context.get("lat"), "lon": venue_context.get("lon")}
+        figure = recommendation_focus_map(venue, focus_points)
+        add_road_controls(figure, artifacts.get("road_closures", {}).get(city, []))
         st.plotly_chart(
-            recommendation_focus_map(venue, focus_points),
+            figure,
             width="stretch",
             config={"displayModeBar": False},
             key="transit_solution_map",
@@ -670,11 +769,11 @@ def _render_transit_solution_tab(
         named = ", ".join(str(point.get("name")) for point in focus_points)
         st.caption(
             f"The real place(s) this recommendation names: {named}. This is independently-verified geography, "
-            "not the separately-modeled engine hub pick shown in Traffic management solution, which answers a "
-            "different (bounded GTFS connectivity) question."
+            "not an engineered route or an approved operating plan."
         )
+        _road_control_sources(artifacts.get("road_closures", {}).get(city, []))
 
-    _render_transit_solution_comparison(city, artifacts, str(match.match_id), city_plan)
+    _render_capital_alternative(city, artifacts, str(match.match_id))
 
     if screening_options:
         frequency_option = next(
@@ -715,7 +814,7 @@ def _render_transit_solution_tab(
             ]
         )
         with st.expander("Exact quantified screen", icon=":material/table_chart:"):
-            st.caption("Separate national screening models; these are not the four solution scenarios plotted above.")
+            st.caption("Separate national screening models, not the recommended action or capital concept shown above.")
             st.dataframe(
                 lens_table,
                 hide_index=True,
@@ -748,130 +847,17 @@ def _render_transit_solution_tab(
             "Movement, transit, factors, and intervention evidence must be complete before screening an option.",
         )
 
-    show_composites = st.toggle(
-        "Show advanced composite model tests",
-        value=False,
-        help="Operational and capital composites combine multiple measures for sensitivity testing; they are not funding recommendations.",
-        key="brief_show_composites",
-    )
-    if not show_composites:
+
+def _road_control_sources(records: list[dict[str, Any]]) -> None:
+    if not records:
         return
-
-    section_header(
-        "Composite scenario sensitivity",
-        "These fixed multi-measure bundles stress-test the model. They are not locally engineered plans or investment recommendations.",
-        "Advanced",
+    st.caption(
+        "Red: documented vehicle closures. Amber: restricted vehicle access. "
+        "Published 2026 event plans, not live status; only verified segments are mapped. "
+        "Road alignment: OpenStreetMap contributors (ODbL)."
     )
-    st.markdown("#### Exact composite definitions")
-    scenario_rows = pd.DataFrame(
-        [
-            {
-                "Composite": item.name,
-                "What it combines": _scenario_scope(item.package),
-                "Gap resolved": item.gap_resolved_passengers,
-                "Cost": item.cost_base,
-                "Net CO2e avoided": item.net_co2e_kg_base,
-                "Lead time": item.lead_time_band,
-                "Evidence": item.status,
-            }
-            for item in scenarios
-        ]
-    )
-    chart = scenario_rows.dropna(subset=["Gap resolved", "Cost"]).copy()
-    if not chart.empty:
-        chart["Climate magnitude"] = chart["Net CO2e avoided"].abs().fillna(0) + 1
-        figure = px.scatter(
-            chart,
-            x="Cost",
-            y="Gap resolved",
-            color="Composite",
-            size="Climate magnitude",
-            text="Composite",
-            color_discrete_map={
-                "Baseline": COLORS["slate"],
-                "Operational Package": COLORS["teal"],
-                "Capital Package": COLORS["blue"],
-            },
-        )
-        figure.update_traces(textposition="top center")
-        figure.update_xaxes(tickprefix="$", title="Planning cost")
-        st.plotly_chart(style_figure(figure, 390), width="stretch", config={"displayModeBar": False})
-    with st.expander("Exact composite outcome table"):
-        st.dataframe(scenario_rows, hide_index=True, width="stretch")
-
-    st.markdown("#### Tournament sensitivity")
-    scope_labels = {
-        "match": "Selected match",
-        "city_tournament": f"{city} tournament",
-        "us_tournament": "All U.S. matches",
-    }
-    scope_label = (
-        st.segmented_control(
-            "Time horizon",
-            list(scope_labels.values()),
-            default="Selected match",
-            key="brief_scope",
-        )
-        or "Selected match"
-    )
-    scope = next(key for key, label in scope_labels.items() if label == scope_label)
-    package_name = st.selectbox("Composite scenario", [item.name for item in scenarios], index=1, key="brief_package")
-    include_partial_portfolio = st.checkbox(
-        "Include partial or unavailable access evidence in screening totals",
-        value=False,
-        help="Default totals include only capacity-qualified access results. Opt-in totals remain scenario screens and retain the access status for every match.",
-        key="brief_include_partial",
-    )
-    factors = factor_registry_from_snapshot(artifacts["factor_snapshot"])
-    timeline = build_portfolio_timeline(
-        artifacts.get("match_events", []),
-        artifacts.get("intervention_outcomes", []),
-        artifacts.get("city_intervention_inputs", []),
-        factors,
-        package_name=package_name,
-        scope=scope,
-        city=city,
-        match_id=match.match_id,
-        access_rows=artifacts.get("access_gaps", []),
-        include_partial=include_partial_portfolio,
-    )
-    summary = portfolio_summary(timeline)
-    _metric_row(
-        [
-            (
-                str(summary.get("match_count", 0)),
-                "Matches included",
-                "scenario" if not timeline.empty else "unavailable",
-                f"{summary.get('omitted_matches', 0)} omitted for evidence",
-                "slate",
-            ),
-            (
-                _number(summary.get("gap_resolved_passengers"), " passengers"),
-                "Cumulative peak gaps addressed",
-                "scenario",
-                "Sum of match-level peak benefits",
-                "teal",
-            ),
-            (
-                _number(summary.get("net_co2e_kg"), " kg"),
-                "Cumulative net CO2e avoided",
-                "scenario",
-                "May be negative for poor service",
-                "blue",
-            ),
-            (
-                _money(summary.get("total_cost_base")),
-                "Cumulative planning cost",
-                "scenario",
-                "Capital + recurring operations",
-                "amber",
-            ),
-        ]
-    )
-    if not timeline.empty:
-        st.plotly_chart(_portfolio_chart(timeline), width="stretch", config={"displayModeBar": False})
-        with st.expander("Accessible table: cumulative outcome ledger"):
-            st.dataframe(timeline, hide_index=True, width="stretch")
+    for url, publisher in sorted({(row["source_url"], row["publisher"]) for row in records}):
+        st.caption(f"[Road-control source: {publisher}]({url})")
 
 
 def _render_congestion_hotspots(city: str, artifacts: dict[str, Any]) -> None:
@@ -888,6 +874,16 @@ def _render_congestion_hotspots(city: str, artifacts: dict[str, Any]) -> None:
     hotspots = [item for item in evidence.get("hotspots") or [] if isinstance(item, Mapping)]
 
     st.markdown("##### Documented traffic controls")
+    roads = artifacts.get("road_closures", {}).get(city, [])
+    if roads:
+        venue = HOST_CITIES.get(city, {})
+        st.plotly_chart(
+            road_controls_map({**venue, "name": venue.get("venue")}, roads),
+            width="stretch", config={"displayModeBar": False}, key=f"road_controls_{city}",
+        )
+        _road_control_sources(roads)
+    elif hotspots:
+        st.caption("Vehicle-closure boundaries are not mapped for this city; the documented controls below still apply.")
     if not hotspots:
         callout(
             "warning",
@@ -896,24 +892,18 @@ def _render_congestion_hotspots(city: str, artifacts: dict[str, Any]) -> None:
         )
         return
 
-    st.dataframe(
-        pd.DataFrame(
-            [
-                {
-                    "Location": item.get("location"),
-                    "What happens here": item.get("control"),
-                    "Source": item.get("source_url"),
-                }
-                for item in hotspots
-            ]
-        ),
-        hide_index=True,
-        width="stretch",
-        column_config={
-            "Location": st.column_config.TextColumn(width="medium"),
-            "What happens here": st.column_config.TextColumn(width="large"),
-            "Source": st.column_config.LinkColumn(display_text="Open source"),
-        },
+    rows = []
+    for item in hotspots:
+        url = str(item.get("source_url") or "")
+        source = f'<a href="{escape(url, quote=True)}" target="_blank" rel="noopener noreferrer">Open source</a>' if url.startswith("https://") else "Not available"
+        rows.append(
+            f"<tr><td>{escape(str(item.get('location') or ''))}</td>"
+            f"<td>{escape(str(item.get('control') or ''))}</td><td>{source}</td></tr>"
+        )
+    st.markdown(
+        "<table class='traffic-controls-table'><thead><tr><th scope='col'>Location</th>"
+        "<th scope='col'>What happens here</th><th scope='col'>Source</th></tr></thead>"
+        f"<tbody>{''.join(rows)}</tbody></table>", unsafe_allow_html=True,
     )
     if evidence.get("command_note"):
         command_source = (
@@ -924,11 +914,6 @@ def _render_congestion_hotspots(city: str, artifacts: dict[str, Any]) -> None:
         st.markdown(f"**Command and enforcement** — {evidence['command_note']}")
         if command_source:
             st.caption(f"{evidence.get('command_publisher', 'Publisher not available')} · {command_source}")
-    st.caption(
-        "Real, cited road closures, restrictions, and enforcement zones reported around this venue - not a "
-        "locally engineered patrol deployment plan. These are the documented control points officials and "
-        "traffic patrols would need to staff on match days, not exact patrol coordinates."
-    )
 
 
 def _render_traffic_management_tab(
@@ -976,7 +961,6 @@ def render_decision_brief(
     match_id = row.get("representative_match_id")
     match = decision.match(str(match_id)) if match_id else decision.match()
     access = decision.access(match.match_id)
-    scenarios = decision.scenario_set(match.match_id)
     recommendations = decision.recommendation_set(match.match_id)
     city_plan = CITY_ACTION_PLANS.get(city, {})
 
@@ -984,6 +968,10 @@ def render_decision_brief(
         "City action plan",
         city,
         match.venue,
+        meta=(
+            f"Readiness rank #{int(row['strict_rank'])} of {int(comparison['strict_rank'].notna().sum())}"
+            if pd.notna(row["strict_rank"]) else "Readiness rank unavailable",
+        ),
         metric=(
             "Estimated peak movement demand",
             _number(access.peak_demand_per_hour),
@@ -1003,7 +991,7 @@ def render_decision_brief(
     )
     renderers = (
         lambda: _render_city_overview_tab(city, artifacts, match, access, decision.metric, city_plan),
-        lambda: _render_transit_solution_tab(city, artifacts, match, recommendations, scenarios, city_plan),
+        lambda: _render_transit_solution_tab(city, artifacts, match, recommendations, city_plan),
         lambda: _render_traffic_management_tab(city, artifacts),
     )
     for tab, renderer in zip(tabs, renderers):

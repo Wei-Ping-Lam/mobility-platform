@@ -37,7 +37,7 @@ from dashboard.mobility_platform.sources import GTFS_SOURCE, rice_source
 # TRAFFIC_MANAGEMENT_SCORES in dashboard/domain/action_plans.py) - decision
 # support, like CITY_ACTION_PLANS, not a directly measured quantity.
 DEFAULT_WEIGHTS = {
-    "balanced": {"gap": 0.30, "heat": 0.25, "access": 0.25, "traffic": 0.20},
+    "balanced": {"gap": 0.30, "heat": 0.25, "access": 0.15, "traffic": 0.30},
     "transit_access": {"gap": 0.45, "heat": 0.10, "access": 0.25, "traffic": 0.20},
     "heat_resilience": {"gap": 0.20, "heat": 0.55, "access": 0.10, "traffic": 0.15},
     "sustainability": {"gap": 0.25, "heat": 0.30, "access": 0.25, "traffic": 0.20},

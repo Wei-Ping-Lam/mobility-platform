@@ -207,6 +207,11 @@ def apply_theme() -> None:
         .callout.prominent .callout-title { font-size: 1.1rem; line-height: 1.4; }
         .callout.prominent .callout-body { font-size: 1.1rem; line-height: 1.65; }
         .callout.prominent > div { min-width: 0; overflow-wrap: anywhere; }
+        .traffic-controls-table { width: 100%; table-layout: fixed; border-collapse: collapse; margin-bottom: 1rem; }
+        .traffic-controls-table th, .traffic-controls-table td { white-space: normal; overflow-wrap: anywhere; word-break: normal; vertical-align: top; padding: .7rem; border-bottom: 1px solid #cfe0d9; text-align: left; }
+        .traffic-controls-table th:nth-child(1) { width: 30%; }
+        .traffic-controls-table th:nth-child(2) { width: 55%; }
+        .traffic-controls-table th:nth-child(3) { width: 15%; }
         @media (max-width: 900px) {
             .hero-layout { grid-template-columns: minmax(0, 1fr); gap: 1.25rem; }
             .hero-metric { border-left: 0; border-top: 1px solid #cfe0d9; padding-left: 0; padding-top: 1.25rem; }
@@ -249,7 +254,7 @@ def apply_theme() -> None:
         .metric-card.accent-coral::before { background: var(--coral); }
         .metric-card.accent-violet::before { background: var(--violet); }
         .metric-card.accent-slate::before { background: var(--slate); }
-        .metric-value { color: var(--ink); font-size: clamp(1.55rem, 2vw, 2.05rem); font-weight: 770; letter-spacing: -.045em; line-height: 1.05; }
+        .metric-value { color: var(--ink); font-size: 2rem; font-weight: 770; letter-spacing: 0; line-height: 1.15; overflow-wrap: anywhere; }
         .metric-label { color: var(--ink-soft); font-size: .72rem; font-weight: 700; letter-spacing: .025em; margin-top: .48rem; }
         .metric-note { color: #738682; font-size: .65rem; line-height: 1.35; margin-top: .38rem; }
         .status-badge {

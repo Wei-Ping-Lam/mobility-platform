@@ -4,13 +4,51 @@ from __future__ import annotations
 
 import math
 from collections.abc import Mapping, Sequence
+from html import escape
+from textwrap import wrap
 from typing import Any
 
 import plotly.graph_objects as go
 
 from dashboard.viz.style import COLORS, style_map
 
-HALF_MILE_METERS = 804.672
+ROAD_CLOSURE_RED = "#C9343D"
+
+
+def add_road_controls(figure: go.Figure, records: Sequence[Mapping[str, Any]]) -> None:
+    """Only documented vehicle closures are red; restricted access is a separate trace."""
+    seen = set()
+    for row in records:
+        kind = row.get("type")
+        if kind not in {"closed", "restricted"}:
+            continue
+        lat, lon, _ = _line_coordinates([row])
+        if len([value for value in lat if value is not None]) < 2:
+            continue
+        label = "Road closures (event plan)" if kind == "closed" else "Restricted vehicle access"
+        details = f"{row.get('from', '')} to {row.get('to', '')}. {row.get('timing', '')}"
+        hover = f"<b>{escape(str(row.get('name', 'Road')))}</b><br>" + "<br>".join(escape(line) for line in wrap(details, 48))
+        hover += "<br>Published 2026 plan; not live status."
+        figure.add_trace(go.Scattermap(
+            lat=lat, lon=lon, mode="lines", connectgaps=False,
+            line=dict(color=ROAD_CLOSURE_RED if kind == "closed" else COLORS["amber"], width=5),
+            name=label, legendgroup=f"road_{kind}", showlegend=kind not in seen,
+            text=[hover] * len(lat), hovertemplate="%{text}<extra></extra>",
+        ))
+        seen.add(kind)
+
+
+def road_controls_map(venue: Mapping[str, Any], records: Sequence[Mapping[str, Any]]) -> go.Figure:
+    figure = go.Figure()
+    add_road_controls(figure, records)
+    lat, lon = _number(venue.get("lat")), _number(venue.get("lon"))
+    if lat is None or lon is None:
+        return style_map(figure, 420, zoom=3, lat=38.5, lon=-96)
+    figure.add_trace(go.Scattermap(
+        lat=[lat], lon=[lon], mode="markers", marker=dict(size=16, color=COLORS["ink"]),
+        name=str(venue.get("name") or "Venue"), hovertemplate="%{fullData.name}<extra></extra>",
+    ))
+    return style_map(figure, 420, zoom=12.4, lat=lat, lon=lon)
 
 
 def _number(value: Any) -> float | None:
@@ -58,27 +96,6 @@ def _line_coordinates(records: object) -> tuple[list[float | None], list[float |
     return latitudes, longitudes, labels
 
 
-def _circle(latitude: float, longitude: float, radius_m: float) -> tuple[list[float], list[float]]:
-    earth_radius_m = 6_371_008.8
-    angular = radius_m / earth_radius_m
-    latitude_rad = math.radians(latitude)
-    latitudes: list[float] = []
-    longitudes: list[float] = []
-    for step in range(73):
-        bearing = math.radians(step * 5)
-        point_lat = math.asin(
-            math.sin(latitude_rad) * math.cos(angular)
-            + math.cos(latitude_rad) * math.sin(angular) * math.cos(bearing)
-        )
-        point_lon = math.radians(longitude) + math.atan2(
-            math.sin(bearing) * math.sin(angular) * math.cos(latitude_rad),
-            math.cos(angular) - math.sin(latitude_rad) * math.sin(point_lat),
-        )
-        latitudes.append(math.degrees(point_lat))
-        longitudes.append(math.degrees(point_lon))
-    return latitudes, longitudes
-
-
 def access_overlap_map(
     venue: Mapping[str, Any],
     layers: Mapping[str, Any],
@@ -99,18 +116,6 @@ def access_overlap_map(
     figure = go.Figure()
     if venue_lat is None or venue_lon is None:
         return style_map(figure, 390, zoom=3, lat=38.5, lon=-96)
-
-    circle_lat, circle_lon = _circle(venue_lat, venue_lon, HALF_MILE_METERS)
-    figure.add_trace(
-        go.Scattermap(
-            lat=circle_lat,
-            lon=circle_lon,
-            mode="lines",
-            line=dict(color=COLORS["amber"], width=3),
-            name="Half-mile service screen",
-            hovertemplate="Half-mile scheduled-service screen<extra></extra>",
-        )
-    )
 
     route_lat, route_lon, route_labels = _line_coordinates(layers.get("gtfs_routes", []))
     if route_lat:
@@ -161,6 +166,30 @@ def access_overlap_map(
             )
         )
 
+    highlight_lat, highlight_lon, highlight_labels = _line_coordinates(layers.get("highlight_routes", []))
+    if highlight_lat:
+        figure.add_trace(go.Scattermap(
+            lat=highlight_lat, lon=highlight_lon, mode="lines",
+            line=dict(color=COLORS["teal"], width=5),
+            name="Meadowlands Rail Line", text=highlight_labels,
+            hovertemplate="%{text}<extra></extra>", connectgaps=False,
+        ))
+    highlight_stops = [
+        (row, _number(row.get("lat")), _number(row.get("lon")))
+        for row in layers.get("highlight_stops", []) if isinstance(row, Mapping)
+    ]
+    highlight_stops = [(row, lat, lon) for row, lat, lon in highlight_stops if lat is not None and lon is not None]
+    if highlight_stops:
+        figure.add_trace(go.Scattermap(
+            lat=[lat for _, lat, _ in highlight_stops],
+            lon=[lon for _, _, lon in highlight_stops],
+            mode="markers+text", marker=dict(size=11, color=COLORS["teal"]),
+            text=[str(row["name"]) for row, _, _ in highlight_stops],
+            textposition="bottom center", textfont=dict(size=11, color=COLORS["ink"]),
+            name="Rail connection stations", hovertemplate="%{text}<extra></extra>",
+        ))
+
+    add_road_controls(figure, layers.get("road_closures", []))
     venue_name = str(venue.get("name") or "Venue")
     figure.add_trace(
         go.Scattermap(
@@ -173,6 +202,14 @@ def access_overlap_map(
             hovertemplate="%{text}<extra></extra>",
         )
     )
+    if highlight_lat:
+        latitudes = [lat for lat in highlight_lat if lat is not None] + [venue_lat]
+        longitudes = [lon for lon in highlight_lon if lon is not None] + [venue_lon]
+        return style_map(
+            figure, 460, zoom=11,
+            lat=(min(latitudes) + max(latitudes)) / 2,
+            lon=(min(longitudes) + max(longitudes)) / 2,
+        )
     return style_map(figure, 390, zoom=11.2, lat=venue_lat, lon=venue_lon)
 
 

@@ -58,6 +58,16 @@ def resolve_weight_settings() -> tuple[dict[str, float], bool]:
     if profile not in DEFAULT_WEIGHTS:
         profile = "balanced"
     defaults = dict(DEFAULT_WEIGHTS[profile])
+    # Upgrade open sessions using the previous defaults, preserving custom weights.
+    if not st.session_state.get("_balanced_weights_updated"):
+        previous = {"gap": 0.30, "heat": 0.25, "access": 0.25, "traffic": 0.20}
+        if profile == "balanced" and all(
+            st.session_state.get(key) == previous[field]
+            for field, key in WEIGHT_FIELD_KEYS.items()
+        ):
+            for field, key in WEIGHT_FIELD_KEYS.items():
+                st.session_state[key] = float(defaults[field])
+        st.session_state["_balanced_weights_updated"] = True
     weights = {
         field: float(st.session_state.get(key, defaults[field]))
         for field, key in WEIGHT_FIELD_KEYS.items()
@@ -78,12 +88,11 @@ def render_weight_settings() -> None:
 
     profile_descriptions = {
         "balanced": (
-            "Weights all four criteria close to evenly, with first/last-mile access and heat safety given "
-            "slightly more emphasis - a general-purpose default that doesn't favor any one concern."
+            "First/last-mile access 30%, traffic management 30%, heat safety 25%, and venue support 15%."
         ),
         "transit_access": (
             "Emphasizes first/last-mile access (45%, from transit density, transit frequency, published-service "
-            "evidence, and pedestrian infrastructure) alongside venue support and traffic management (20% each) "
+            "evidence, and pedestrian infrastructure) alongside venue support (25%) and traffic management (20%) "
             "- use this when getting to and from the venue matters most to the comparison."
         ),
         "heat_resilience": (

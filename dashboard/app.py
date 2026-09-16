@@ -17,10 +17,10 @@ from dashboard.domain.decision_support import build_transportation_bundle  # noq
 from dashboard.domain.scoring import build_city_metrics  # noqa: E402
 from dashboard.mobility_platform.config import project_paths  # noqa: E402
 from dashboard.mobility_platform.mappings import HOST_CITIES  # noqa: E402
-from dashboard.ui.data import load_artifacts  # noqa: E402
 from dashboard.ui.pages.home import render_home  # noqa: E402
 from dashboard.ui.pages.overview import render_decision_brief  # noqa: E402
 from dashboard.ui.portfolio.shared import resolve_weight_settings  # noqa: E402
+from dashboard.ui.session_data import session_artifacts  # noqa: E402
 from dashboard.ui.theme import apply_theme, brand_block  # noqa: E402
 from dashboard.ui.workspaces import (  # noqa: E402
     active_workspace_keys,
@@ -33,13 +33,7 @@ st.set_page_config(page_title="Mobility Readiness 2026", page_icon="🚇", layou
 apply_theme()
 
 
-@st.cache_data(show_spinner="Loading verified mobility artifacts...")
-def load_dashboard_data():
-    paths = project_paths()
-    return paths, load_artifacts(paths)
-
-
-_, artifacts = load_dashboard_data()
+artifacts = session_artifacts(project_paths())
 
 city_options = sorted(HOST_CITIES)
 city_context_key = "selected_city_context"

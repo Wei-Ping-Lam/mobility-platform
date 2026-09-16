@@ -42,6 +42,25 @@ def test_every_city_has_sourced_dedicated_service_evidence() -> None:
         assert str(evidence["publisher"]).strip(), city
 
 
+def test_boston_evidence_distinguishes_existing_bus_connection_from_train_service() -> None:
+    evidence = _snapshot()["benchmarks"]["Boston"]["dedicated_service_evidence"]
+    assert "Rhode Island Convention Center" in evidence["basis"]
+    assert "direct express-bus connection, not a direct stadium train" in evidence["basis"]
+    assert "$80" in evidence["basis"] and "$95" in evidence["basis"]
+    assert evidence["publisher"] == "Boston 26 Host Committee"
+    assert evidence["source_url"].startswith("https://bostonfwc26.com/")
+
+
+def test_sf_detour_evidence_does_not_claim_a_universal_distance_penalty() -> None:
+    evidence = _snapshot()["benchmarks"]["San Francisco"]["sustainability_evidence"]
+    basis = evidence["pedestrian_infrastructure_basis"]
+    assert "Cyclists are directed via" in basis
+    assert "pedestrians via Mission College Boulevard" in basis
+    assert "not every stadium trip" in basis
+    assert "two-mile" not in basis
+    assert evidence["pedestrian_infrastructure_publisher"] == "City of Santa Clara"
+
+
 def test_every_city_has_sourced_fleet_electrification_evidence() -> None:
     # sustainability_evidence isn't required by validate_snapshot either (an
     # optional supplement scoring.py reads for the sustainability score), but

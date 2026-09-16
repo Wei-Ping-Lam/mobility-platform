@@ -578,6 +578,25 @@ def test_readiness_components_chart_exposes_all_four_defined_criteria() -> None:
     assert list(figure.data[0].z[0]) == [71, 30, 74, 72]
 
 
+def test_readiness_heatmap_supports_a_single_city_without_substituting_transit_density() -> None:
+    metrics = pd.DataFrame([{
+        "city": "Dallas", "gap_score": 50, "gap_status": "derived",
+        "transit_score": 0, "transit_status": "observed",
+        "traffic_score": 80, "traffic_status": "derived",
+        "heat_score": 48, "heat_status": "derived",
+        "access_score": None, "access_status": "unavailable",
+    }])
+    figure = readiness_components_chart(metrics, ["Dallas"])
+    trace = figure.data[0]
+    assert trace.type == "heatmap"
+    assert list(trace.y) == ["Dallas"]
+    assert list(trace.x) == ["First/last-mile<br>access", "Traffic<br>management", "Heat<br>safety", "Venue<br>support"]
+    assert list(trace.z[0][:3]) == [50, 80, 48]
+    assert pd.isna(trace.z[0][3])
+    assert list(trace.customdata[0]) == ["derived", "derived", "derived", "unavailable"]
+    assert (trace.zmin, trace.zmax) == (0, 100)
+
+
 def test_portfolio_traffic_chart_uses_baseline_trip_cases_without_congestion_claims() -> None:
     figure = portfolio_traffic_chart(_portfolio_frame())
 
@@ -743,7 +762,7 @@ def test_walking_shapes_share_one_legend_entry_without_losing_hover_detail() -> 
     }
 
 
-def test_access_overlap_map_keeps_service_screen_routes_stops_and_walk_distinct() -> None:
+def test_access_overlap_map_shows_routes_stops_and_walk_without_service_screen() -> None:
     figure = access_overlap_map(
         {"name": "MetLife Stadium", "lat": 40.8135, "lon": -74.0745},
         {
@@ -754,13 +773,11 @@ def test_access_overlap_map_keeps_service_screen_routes_stops_and_walk_distinct(
     )
 
     assert [trace.name for trace in figure.data] == [
-        "Half-mile service screen",
         "Event-valid GTFS routes",
         "Event-relevant stops",
         "Walking evidence",
         "MetLife Stadium",
     ]
-    assert len(figure.data[0].lat) == 73
     assert figure.layout.map.zoom == 11.2
 
 

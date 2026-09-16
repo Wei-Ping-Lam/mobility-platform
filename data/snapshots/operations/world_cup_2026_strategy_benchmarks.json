@@ -1,5 +1,5 @@
 {
-  "artifact_sha256": "4936daba07d9a1a257a0da283b2165227e63fb9e0862ea8510ed60ec41b0dd6f",
+  "artifact_sha256": "2e63c0973f0586e08118a7a00f4b271e60fac8c099d167bd87e80e75ec6c800e",
   "benchmarks": {
     "Atlanta": {
       "city": "Atlanta",
@@ -79,10 +79,10 @@
         ]
       },
       "dedicated_service_evidence": {
-        "basis": "A dedicated MBTA commuter-rail stop sits adjacent to Gillette Stadium, but 2026 World Cup round trips were priced at $80 - four times the regular fare - and the MBTA confirmed it would not run direct service from Rhode Island, unlike past Patriots-game trains. The plan also includes over 20 express-bus pickup points and about 14 commuter-rail trains per match, with direct hotel and airport connections.",
-        "publisher": "GBH News",
-        "source_title": "World Cup fans embrace trains to 'Boston Stadium', despite the steep price tag",
-        "source_url": "https://www.wgbh.org/news/local/2026-06-19/world-cup-fans-embrace-trains-to-boston-stadium-despite-the-steep-price-tag",
+        "basis": "The published 2026 plan offered $80 round-trip stadium trains from South Station to Foxboro, with no intermediate stops, and $95 round-trip express buses from regional origins including the Rhode Island Convention Center and Logan Airport. Both required advance booking and a same-day match ticket; train ticket sales stopped at capacity. Rhode Island had a direct express-bus connection, not a direct stadium train. Organizers warned that weekday commuter traffic and local road closures could delay stadium journeys.",
+        "publisher": "Boston 26 Host Committee",
+        "source_title": "Boston Host Committee details know-before-you-go information for residents and ticketholders",
+        "source_url": "https://bostonfwc26.com/newsroom/boston-host-committee-details-know-before-you-go-information-for-residents-and-ticketholders-for-fifa-world-cup-2026/",
         "tier": 60
       },
       "evidence_level": "full operating",
@@ -480,11 +480,11 @@
         "command_source_url": "",
         "hotspots": [
           {
-            "control": "Closed Jan. 28-Feb. 13, 2026 for Super Bowl LX, the direct precedent for World Cup closures; on game day the closure expanded to include Old Ironsides Drive and Lick Mill Boulevard.",
-            "location": "Tasman Drive between Calle Del Sol and Great America Parkway (Levi's Stadium, Santa Clara)",
-            "publisher": "CBS News San Francisco",
-            "source_title": "Road closures in Santa Clara, San Francisco and San Jose as Super Bowl LX nears",
-            "source_url": "https://www.cbsnews.com/sanfrancisco/news/super-bowl-lx-santa-clara-san-francisco-san-jose-road-closures/"
+            "control": "World Cup Phase 1 closes Tasman Drive from Great America Parkway to Calle del Sol; Phase 2 expands to Lick Mill Boulevard. Hours vary by match. Posted detours and local access provisions apply.",
+            "location": "Tasman Drive from Great America Parkway to Lick Mill Boulevard (expanded match-day Phase 2)",
+            "publisher": "City of Santa Clara",
+            "source_title": "FIFA World Cup Match Day Road Closures and Transportation Impacts [Updated Bicycle Detour]",
+            "source_url": "https://content.govdelivery.com/accounts/CASANTACLARA/bulletins/41ac963"
           },
           {
             "control": "Identified by the Bay Area Host Committee as the thoroughfares facing the heaviest match-day traffic impact.",
@@ -515,10 +515,10 @@
       "sustainability_evidence": {
         "fleet_electrification_basis": "VTA's light rail is electric, but its bus fleet remains mostly diesel and hybrid, with only a handful of battery-electric buses in service so far; the agency's zero-emission deadline is 2040, the furthest out of any host's fleet plan found.",
         "fleet_electrification_tier": 60,
-        "pedestrian_infrastructure_basis": "Levi's Stadium is a real 0.2-mile walk from the Great America VTA station, next to the San Tomas Aquino Creek Trail - though about a mile of that trail closes during events, requiring a two-mile on-street detour via Agnew Road and Mission College Boulevard.",
-        "pedestrian_infrastructure_publisher": "Levi's Stadium",
-        "pedestrian_infrastructure_source_title": "Public Transportation - Levi's Stadium",
-        "pedestrian_infrastructure_source_url": "https://levisstadium.com/getting-here/public-transportation/",
+        "pedestrian_infrastructure_basis": "Santa Clara's June 8, 2026 notice lists San Tomas Aquino Creek Trail closures on all six World Cup match days. Cyclists are directed via Agnew Road, Lakeshore Drive, Gianera Street, and Stars and Stripes Drive; pedestrians via Mission College Boulevard and Great America Parkway. This affects journeys using the closed trail, not every stadium trip. The notice does not quantify affected users, additional distance per person, or changes in travel mode.",
+        "pedestrian_infrastructure_publisher": "City of Santa Clara",
+        "pedestrian_infrastructure_source_title": "FIFA World Cup Match Day Road Closures and Transportation Impacts [Updated Bicycle Detour]",
+        "pedestrian_infrastructure_source_url": "https://content.govdelivery.com/accounts/CASANTACLARA/bulletins/41ac963",
         "publisher": "Santa Clara Valley Transportation Authority (VTA)",
         "source_title": "VTA Rolls Toward Cleaner, Greener Future Fleet",
         "source_url": "https://www.vta.org/blog/vta-rolls-toward-cleaner-greener-future-fleet"

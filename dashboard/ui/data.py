@@ -161,6 +161,7 @@ def _load_public_supplements(paths: ProjectPaths) -> dict[str, Any]:
     gtfs = _load_json(snapshot_root / "gtfs" / "gtfs_venue_access.json")
     operations = _load_json(snapshot_root / "operations" / "world_cup_2026_operations.json")
     traffic_management = _load_json(snapshot_root / "operations" / "world_cup_2026_traffic_management.json")
+    road_closures = _load_json(snapshot_root / "operations" / "road_closure_segments.json")
     strategy_benchmarks = _load_json(
         snapshot_root / "operations" / "world_cup_2026_strategy_benchmarks.json"
     )
@@ -215,6 +216,13 @@ def _load_public_supplements(paths: ProjectPaths) -> dict[str, Any]:
         validate_snapshot(strategy_benchmarks)
         bundle["strategy_benchmark_snapshot"] = strategy_benchmarks
         bundle["strategy_benchmarks"] = strategy_benchmarks.get("benchmarks", {})
+    if isinstance(road_closures, dict):
+        from dashboard.pipeline.public.road_closures import validate_snapshot as validate_road_closures
+
+        validate_road_closures(road_closures)
+        bundle["road_closures"] = road_closures.get("cities", {})
+        for city, rows in road_closures.get("cities", {}).items():
+            bundle.setdefault("map_layers", {}).setdefault(city, {})["road_closures"] = rows
     if isinstance(environment, dict):
         bundle["environment_snapshot"] = environment
         bundle.setdefault("source_references", []).extend(

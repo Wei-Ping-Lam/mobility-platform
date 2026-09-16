@@ -274,6 +274,19 @@ def _event_route_shapes(
     return results, stop_routes
 
 
+def _select_route_shapes(route_shapes: list[dict[str, Any]], maximum: int = 100) -> tuple[list[dict[str, Any]], int]:
+    """Retain each route before spending the map budget on additional trip variants."""
+    unique = {(str(row["agency"]), str(row["route_id"]), str(row["shape_id"])): row for row in route_shapes}
+    counts: Counter[tuple[str, str]] = Counter()
+    ranked = []
+    for key in sorted(unique):
+        route = key[:2]
+        ranked.append((counts[route], key, unique[key]))
+        counts[route] += 1
+    ordered = [row for _, _, row in sorted(ranked, key=lambda item: (item[0], item[1]))]
+    return ordered[:maximum], max(len(ordered) - maximum, 0)
+
+
 def _regional_hub_candidates(
     stops: pd.DataFrame,
     stop_times: pd.DataFrame,
@@ -867,10 +880,7 @@ def fetch_city(city: str, feeds: list[GtfsFeedSource], events: list[dict[str, An
                 str(service.get("mode", "")),
             ),
         )
-    unique_shapes = {(str(row["agency"]), str(row["route_id"]), str(row["shape_id"])): row for row in route_shapes}
-    ordered_shapes = [unique_shapes[key] for key in sorted(unique_shapes)]
-    omitted_shapes = max(len(ordered_shapes) - 100, 0)
-    ordered_shapes = ordered_shapes[:100]
+    ordered_shapes, omitted_shapes = _select_route_shapes(route_shapes)
     unique_hubs = {(str(row["agency"]), str(row["stop_id"])): row for row in regional_hubs}
     ordered_hubs = sorted(
         unique_hubs.values(),
