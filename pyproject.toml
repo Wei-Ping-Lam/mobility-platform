@@ -2,7 +2,6 @@
 name = "fifa-2026-mobility-platform"
 version = "0.3.0"
 description = "Evidence-first transportation decision platform for FIFA 2026 U.S. host cities"
-readme = "dashboard/README.md"
 requires-python = ">=3.11,<3.12"
 dependencies = [
     "matplotlib>=3.8.0",

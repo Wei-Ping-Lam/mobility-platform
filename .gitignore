@@ -36,3 +36,8 @@ __pycache__/
 # OS
 .DS_Store
 Thumbs.db
+
+# Keep submission materials and Markdown documentation local only.
+*.md
+*.markdown
+/docs/

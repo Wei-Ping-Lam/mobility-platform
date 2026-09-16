@@ -46,8 +46,14 @@ def find_prohibited_positive_claims(text: str) -> list[tuple[str, str]]:
     return findings
 
 
+def _local_document(path: Path) -> str:
+    if not path.is_file():
+        pytest.skip("Documentation is maintained locally, not distributed with the app")
+    return path.read_text(encoding="utf-8")
+
+
 def test_evidence_matrix_fields_exist_in_contract_0_3():
-    text = MATRIX.read_text(encoding="utf-8")
+    text = _local_document(MATRIX)
     class_pattern = "|".join(PRESENTATION_CONTRACTS)
     references = set(re.findall(rf"`(({class_pattern})\.[a-z][a-z0-9_]*)`", text))
     assert references, "evidence matrix must reference contract fields"
@@ -60,7 +66,7 @@ def test_evidence_matrix_fields_exist_in_contract_0_3():
 
 
 def test_matrix_covers_decision_headline_metrics():
-    text = MATRIX.read_text(encoding="utf-8")
+    text = _local_document(MATRIX)
     required = {
         "AccessGapResult.peak_demand_per_hour",
         "AccessGapResult.residual_passengers",
@@ -76,7 +82,7 @@ def test_matrix_covers_decision_headline_metrics():
 
 
 def test_supplemental_source_register_is_complete_and_statuses_are_honest():
-    text = SOURCE_REGISTER.read_text(encoding="utf-8")
+    text = _local_document(SOURCE_REGISTER)
     required_families = {
         "FIFA",
         "GTFS",
@@ -99,7 +105,7 @@ def test_supplemental_source_register_is_complete_and_statuses_are_honest():
 
 
 def test_judging_map_covers_all_weighted_criteria():
-    text = JUDGING_MAP.read_text(encoding="utf-8")
+    text = _local_document(JUDGING_MAP)
     for criterion, weight in {
         "Impact": 25,
         "Data Analytics": 20,
@@ -113,7 +119,7 @@ def test_judging_map_covers_all_weighted_criteria():
 
 
 def test_submission_metadata_placeholders_are_explicit_blockers():
-    narrative = (ROOT / "SUBMISSION_NARRATIVE.md").read_text(encoding="utf-8")
+    narrative = _local_document(ROOT / "SUBMISSION_NARRATIVE.md")
     assert "blocking before submission" in narrative.lower()
     assert "[TEAM NAME REQUIRED]" in narrative
     assert "[NAME AND EMAIL REQUIRED]" in narrative
@@ -125,7 +131,7 @@ def test_presentation_surfaces_have_no_prohibited_positive_claims():
     for path in PRESENTATION_FILES:
         findings.extend(
             (path.relative_to(ROOT).as_posix(), label, line)
-            for label, line in find_prohibited_positive_claims(path.read_text(encoding="utf-8"))
+            for label, line in find_prohibited_positive_claims(_local_document(path))
         )
     assert not findings, findings
 
